@@ -1,73 +1,227 @@
-# Welcome to your Lovable project
+# InventoryMS 
 
-## Project info
+InventoryMS is a modern, full-featured inventory management system built with React, TypeScript, and TailwindCSS. Manage your inventory, track sales, and analyze business performance with an intuitive interface.
 
-**URL**: https://lovable.dev/projects/0365d4cc-253e-4c3d-bc36-39b29fa14576
+## Features
 
-## How can I edit this code?
+- **Authentication** - Secure cookie-based authentication with client-side validation
+- **Dashboard** - Real-time overview of inventory stats and sales metrics
+- **Inventory Management** - Full CRUD operations for inventory items with image upload
+- **Point of Sale (POS)** - Quick and easy sales transaction processing
+- **Analytics** - Visual insights into sales trends and top-performing items
+- **Modern UI** - Beautiful, responsive design with shadcn/ui components
+- **API Integration** - RESTful API communication with external backend
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- **Frontend Framework:** React 18 + TypeScript
+- **Styling:** TailwindCSS + shadcn/ui
+- **Routing:** React Router v6
+- **State Management:** React Context API
+- **Data Fetching:** Custom API hooks with fetch
+- **Charts:** Recharts
+- **Icons:** Lucide React
+- **Build Tool:** Vite
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/0365d4cc-253e-4c3d-bc36-39b29fa14576) and start prompting.
+## Prerequisites
 
-Changes made via Lovable will be committed automatically to this repo.
+Before you begin, ensure you have the following installed:
+- **Node.js** (v18 or higher)
+- **npm** or **yarn** or **bun**
+- **Git**
 
-**Use your preferred IDE**
+## Installation & Setup
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 1. Clone the Repository
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+git clone https://github.com/your-username/InventoryMS.git
+cd InventoryMS
 ```
 
-**Edit a file directly in GitHub**
+### 2. Install Dependencies
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+npm install
+# or
+yarn install
+# or
+bun install
+```
 
-**Use GitHub Codespaces**
+### 3. Environment Configuration
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Create a `.env` file in the root directory:
 
-## What technologies are used for this project?
+```bash
+cp .env.example .env
+```
 
-This project is built with:
+Update the `.env` file with your API configuration:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```env
+VITE_API_BASE_URL=http://localhost:5291/api
+```
 
-## How can I deploy this project?
+**Note:** Replace the URL with your backend API endpoint.
 
-Simply open [Lovable](https://lovable.dev/projects/0365d4cc-253e-4c3d-bc36-39b29fa14576) and click on Share -> Publish.
+### 4. Run Development Server
 
-## Can I connect a custom domain to my Lovable project?
+```bash
+npm run dev
+# or
+yarn dev
+# or
+bun dev
+```
 
-Yes, you can!
+The application will start at `http://localhost:5173` (or another available port).
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### 5. Build for Production
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```bash
+npm run build
+# or
+yarn build
+# or
+bun run build
+```
+
+The production-ready files will be in the `dist` directory.
+
+### 6. Preview Production Build
+
+```bash
+npm run preview
+# or
+yarn preview
+# or
+bun preview
+```
+
+## Backend Integration
+
+This is the frontend application. For the complete system, you need to set up the backend API.
+
+**Backend Repository:** [InventoryX](https://github.com/maestro-00/InventoryX)
+
+### API Endpoints Required
+
+The frontend expects the following API endpoints:
+
+#### Authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `POST /api/auth/logout` - User logout
+- `GET /api/auth/pingauth` - Check authentication status
+
+#### Inventory
+- `GET /api/inventory` - Get all inventory items
+- `POST /api/inventory` - Create new item
+- `PUT /api/inventory/:id` - Update item
+- `DELETE /api/inventory/:id` - Delete item
+- `POST /api/inventory/upload-image` - Upload item image
+
+#### Sales
+- `GET /api/sales` - Get all sales
+- `POST /api/sales` - Create new sale
+- `GET /api/sales/stats` - Get sales statistics
+- `GET /api/sales/today` - Get today's sales
+
+#### Analytics
+- `GET /api/analytics/overview` - Get analytics overview
+- `GET /api/analytics/revenue` - Get revenue data
+- `GET /api/analytics/top-items` - Get top selling items
+
+## Project Structure
+
+```
+InventoryMS/
+├── public/              # Static assets
+├── src/
+│   ├── components/      # Reusable UI components
+│   │   ├── ui/         # shadcn/ui components
+│   │   └── Layout.tsx  # Main layout wrapper
+│   ├── config/         # Configuration files
+│   │   └── api.ts      # API endpoints configuration
+│   ├── contexts/       # React contexts
+│   │   └── AuthContext.tsx
+│   ├── hooks/          # Custom React hooks
+│   │   └── use-api.ts  # API communication hook
+│   ├── pages/          # Page components
+│   │   ├── Auth.tsx
+│   │   ├── Dashboard.tsx
+│   │   ├── Inventory.tsx
+│   │   ├── POS.tsx
+│   │   └── Analytics.tsx
+│   ├── services/       # API service layers
+│   │   ├── authService.ts
+│   │   ├── inventoryService.ts
+│   │   ├── salesService.ts
+│   │   └── analyticsService.ts
+│   ├── lib/            # Utility functions
+│   ├── App.tsx         # Root component
+│   └── main.tsx        # Entry point
+├── .env.example        # Environment variables template
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+└── tailwind.config.ts
+```
+
+## Key Features Explained
+
+### Cookie-Based Authentication
+The application uses HTTP-only cookies for authentication, providing better security than JWT tokens stored in localStorage.
+
+### Dynamic API Hook
+The custom `useApi` hook supports:
+- Dynamic query parameters
+- Dynamic path parameters
+- Automatic error handling
+- Request timeout management
+- Cookie credentials
+
+### Client-Side Validation
+Password validation with real-time feedback:
+- Minimum 6 characters
+- At least one lowercase letter
+- At least one uppercase letter
+- At least one digit
+- At least one special character
+
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for details on how to contribute to this project.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+
+## Acknowledgments
+
+- UI components built with [shadcn/ui](https://ui.shadcn.com/)
+- Design inspiration from [TailAdmin](https://tailadmin.com/)
+- Icons by [Lucide](https://lucide.dev/)
+
+## Support
+
+If you encounter any issues or have questions:
+- Open an issue on GitHub
+- Check existing issues for solutions
+- Review the [CONTRIBUTING.md](./CONTRIBUTING.md) guide
+
+## Roadmap
+
+- [ ] Multi-language support
+- [ ] Dark mode toggle
+- [ ] Export reports (PDF/Excel)
+- [ ] Barcode scanning
+- [ ] Email notifications
+- [ ] Advanced filtering and search
+- [ ] Batch operations
+- [ ] Mobile app version
+
+---
+
+**Built with ❤️ using React + TypeScript**
