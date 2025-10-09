@@ -1,8 +1,32 @@
 {
-  "name": "vite_react_shadcn_ts",
-  "private": true,
-  "version": "0.0.0",
+  "name": "inventoryms",
+  "private": false,
+  "version": "0.1.0",
   "type": "module",
+  "description": "A modern, full-featured inventory management system built with React, TypeScript, and TailwindCSS",
+  "author": "Adam Tungtaiya Lukman <your-email@example.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/maestro-00/InventoryMS.git"
+  },
+  "bugs": {
+    "url": "https://github.com/maestro-00/InventoryMS/issues"
+  },
+  "homepage": "https://github.com/maestro-00/InventoryMS#readme",
+  "keywords": [
+    "inventory",
+    "management",
+    "pos",
+    "point-of-sale",
+    "react",
+    "typescript",
+    "tailwindcss",
+    "vite",
+    "shadcn-ui",
+    "analytics",
+    "dashboard"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
