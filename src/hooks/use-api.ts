@@ -10,7 +10,7 @@ interface ApiError {
 interface UseApiOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   headers?: Record<string, string>;
-  body?: any;
+  body?: unknown;
   token?: string | null;
   params?: Record<string, string | number | boolean>;
   pathParams?: Record<string, string | number>;
@@ -59,7 +59,7 @@ function buildQueryString(params?: Record<string, string | number | boolean>): s
  * Custom hook for making API requests
  * @template T - The expected response data type
  */
-export function useApi<T = any>(): UseApiResponse<T> {
+export function useApi<T = unknown>(): UseApiResponse<T> {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [loading, setLoading] = useState(false);
@@ -161,11 +161,11 @@ export function useApi<T = any>(): UseApiResponse<T> {
       setData(responseData);
       setError(null);
       return { data: responseData, error: null };
-    } catch (err: any) {
+    } catch (err: unknown) {
       const apiError: ApiError = {
-        message: err.name === 'AbortError' 
+        message: err instanceof Error && err.name === 'AbortError' 
           ? 'Request timeout' 
-          : err.message || 'Network error occurred',
+          : err instanceof Error ? err.message : 'Network error occurred',
         status: 0,
       };
       setError(apiError);
@@ -182,7 +182,7 @@ export function useApi<T = any>(): UseApiResponse<T> {
 /**
  * Utility function for making one-off API requests without hook
  */
-export async function apiRequest<T = any>(
+export async function apiRequest<T = unknown>(
   endpoint: string,
   options: UseApiOptions = {}
 ): Promise<{ data: T | null; error: ApiError | null }> {
@@ -272,11 +272,11 @@ export async function apiRequest<T = any>(
     }
 
     return { data: responseData, error: null };
-  } catch (err: any) {
+  } catch (err: unknown) {
     const apiError: ApiError = {
-      message: err.name === 'AbortError' 
+      message: err instanceof Error && err.name === 'AbortError' 
         ? 'Request timeout' 
-        : err.message || 'Network error occurred',
+        : err instanceof Error ? err.message : 'Network error occurred',
       status: 0,
     };
     return { data: null, error: apiError };

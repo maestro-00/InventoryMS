@@ -36,6 +36,7 @@ const POS = () => {
     if (user) {
       loadItems();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadItems = async () => {
@@ -156,10 +157,10 @@ const POS = () => {
       setCart([]);
       setCustomerName("");
       loadItems();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message || "Failed to complete sale",
+        description: error instanceof Error ? error.message : "Failed to complete sale",
         variant: "destructive",
       });
     } finally {
