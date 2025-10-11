@@ -29,7 +29,7 @@ export interface CreateInventoryItemData {
   image_url?: string | null;
 }
 
-export interface UpdateInventoryItemData extends Partial<CreateInventoryItemData> {}
+export type UpdateInventoryItemData = Partial<CreateInventoryItemData>;
 
 /**
  * Get all inventory items for the current user
@@ -154,10 +154,10 @@ export const uploadInventoryImage = async (file: File): Promise<{
 
     const data = await response.json();
     return { data, error: null };
-  } catch (err: any) {
+  } catch (err: unknown) {
     return {
       data: null,
-      error: { message: err.message || 'Failed to upload image' },
+      error: { message: err instanceof Error ? err.message : 'Failed to upload image' },
     };
   }
 };

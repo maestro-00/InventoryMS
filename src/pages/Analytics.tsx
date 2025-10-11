@@ -10,13 +10,14 @@ import Layout from "@/components/Layout";
 const Analytics = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [salesData, setSalesData] = useState<any[]>([]);
-  const [topItems, setTopItems] = useState<any[]>([]);
+  const [salesData, setSalesData] = useState<Array<{ date: string; amount: number }>>([]);
+  const [topItems, setTopItems] = useState<Array<{ name: string; quantity: number; revenue: number }>>([]);
 
   useEffect(() => {
     if (user) {
       loadAnalytics();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadAnalytics = async () => {

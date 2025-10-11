@@ -91,10 +91,10 @@ export const signInWithGoogle = async (): Promise<AuthResponse> => {
     window.location.href = `${API_ENDPOINTS.AUTH.GOOGLE_AUTH}?redirect_uri=${encodeURIComponent(redirectUrl)}`;
     
     return { data: null, error: null };
-  } catch (err: any) {
+  } catch (err: unknown) {
     return { 
       data: null, 
-      error: { message: err.message || 'Failed to initiate Google sign-in' } 
+      error: { message: err instanceof Error ? err.message : 'Failed to initiate Google sign-in' } 
     };
   }
 };
