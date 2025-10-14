@@ -20,12 +20,14 @@ export interface AuthResponse {
  * Sign up a new user
  */
 export const signUp = async (
+  name: string,
   email: string,
   password: string
 ): Promise<AuthResponse> => {
   const { data, error } = await apiRequest<Session>(API_ENDPOINTS.AUTH.SIGN_UP, {
     method: 'POST',
     body: {
+      name,
       email,
       password,
     },

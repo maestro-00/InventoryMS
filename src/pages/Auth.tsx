@@ -18,6 +18,7 @@ const Auth = () => {
   const [signUpData, setSignUpData] = useState({
     email: "",
     password: "", 
+    name: ""
   });
   const [signInData, setSignInData] = useState({
     email: "",
@@ -61,7 +62,7 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
-    if (!signUpData.email || !signUpData.password) {
+    if (!signUpData.name || !signUpData.email || !signUpData.password) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -83,7 +84,7 @@ const Auth = () => {
       return;
     }
 
-    const { error } = await signUp(signUpData.email, signUpData.password);
+    const { error } = await signUp(signUpData.name,signUpData.email, signUpData.password);
 
     if (error) {
       // Format validation errors if present
@@ -110,7 +111,7 @@ const Auth = () => {
       
       toast({
         title: "Success",
-        description: "Account created successfully!",
+        description: "Account created successfully! You can now login with your credentials",
       });
       setLoading(false);
       navigate("/");
@@ -254,6 +255,17 @@ const Auth = () => {
             
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">              
+                <div className="space-y-2">
+                  <Label htmlFor="signup-name">Name</Label>
+                  <Input
+                    id="signup-name"
+                    type="text"
+                    placeholder="Name"
+                    value={signUpData.name}
+                    onChange={(e) => setSignUpData({ ...signUpData, name: e.target.value })}
+                    required
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
                   <Input
