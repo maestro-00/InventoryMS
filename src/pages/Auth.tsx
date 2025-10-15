@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { signIn, signUp, signInWithGoogle } from "@/services/authService";
+import { signIn, signUp, signInWithGoogle, getUserInfo } from "@/services/authService";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Package, Loader2, Check, X } from "lucide-react";
@@ -113,6 +113,16 @@ const Auth = () => {
         title: "Success",
         description: "Account created successfully! You can now login with your credentials",
       });
+      
+      // Show email verification notification
+      setTimeout(() => {
+        toast({
+          title: "Verify Your Email",
+          description: "Please check your email and verify your address. You can still use the app without verification.",
+          duration: 7000,
+        });
+      }, 1000);
+      
       setLoading(false);
       navigate("/");
     }
@@ -148,6 +158,19 @@ const Auth = () => {
         title: "Success",
         description: "Signed in successfully!",
       });
+      
+      // Check email verification status and show notification if not verified
+      const { data: userInfo } = await getUserInfo(); 
+      if (userInfo && !userInfo.isEmailConfirmed) {
+        setTimeout(() => {
+          toast({
+            title: "Email Not Verified",
+            description: "Please verify your email address. You can still use the app, but some features may be limited.",
+            duration: 7000,
+          });
+        }, 1000);
+      }
+      
       setLoading(false);
       navigate("/");
     }
@@ -200,7 +223,12 @@ const Auth = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="signin-password">Password</Label>
+                    <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                      Forgot password?
+                    </Link>
+                  </div>
                   <Input
                     id="signin-password"
                     type="password"

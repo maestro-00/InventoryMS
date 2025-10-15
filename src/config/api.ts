@@ -1,5 +1,6 @@
 // API Configuration
 export const API_CONFIG = {
+  
   BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
   TIMEOUT: 30000,
 };
@@ -14,6 +15,16 @@ export const API_ENDPOINTS = {
     GOOGLE_AUTH: '/auth/google',
     GET_SESSION: '/auth/pingauth',
     REFRESH_TOKEN: '/auth/refresh',
+    MANAGE_INFO: '/auth/manage/info',
+    SEND_CONFIRM_EMAIL: '/auth/resendConfirmationEmail',
+    CONFIRM_EMAIL: '/auth/confirmEmail',
+    FORGOT_PASSWORD: '/auth/forgotPassword',
+    RESET_PASSWORD: '/auth/resetPassword',
+    CHANGE_PASSWORD: '/auth/manage/info',
+    UPDATE_EMAIL: '/auth/manage/info',
+    ENABLE_2FA: '/auth/manage/2fa',
+    DISABLE_2FA: '/auth/manage/2fa',
+    GET_2FA_INFO: '/auth/manage/2fa',
   },
   // Inventory endpoints
   INVENTORY: {

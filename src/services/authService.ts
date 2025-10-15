@@ -4,11 +4,23 @@ import { API_ENDPOINTS } from '@/config/api';
 export interface User {
   id: string;
   email: string;
+  emailConfirmed?: boolean;
+  twoFactorEnabled?: boolean;
   created_at: string;
 }
 
 export interface Session {
   email: string;
+  emailConfirmed?: boolean;
+  twoFactorEnabled?: boolean;
+}
+
+export interface TwoFactorInfo {
+  sharedKey: string;
+  recoveryCodesLeft: number;
+  recoveryCodes?: string[];
+  isTwoFactorEnabled: boolean;
+  isMachineRemembered: boolean;
 }
 
 export interface AuthResponse {
@@ -165,4 +177,198 @@ export const getStoredUserEmail = (): string | null => {
 export const isAuthenticated = (): boolean => { 
   const email = getStoredUserEmail();
   return !!(email);
+};
+
+/**
+ * Resend email confirmation
+ */
+export const resendConfirmationEmail = async (
+  email: string
+): Promise<{ error: { message: string } | null }> => {
+  const { error } = await apiRequest(API_ENDPOINTS.AUTH.SEND_CONFIRM_EMAIL, {
+    method: 'POST',
+    body: { email },
+  });
+
+  return { error: error || null };
+};
+
+/**
+ * Confirm email with userId and code from email link
+ */
+export const confirmEmail = async (
+  userId: string,
+  code: string,
+  changedEmail?: string
+): Promise<{ error: { message: string } | null }> => {
+  const { error } = await apiRequest(API_ENDPOINTS.AUTH.CONFIRM_EMAIL, {
+    method: 'GET',
+    params: { 
+      userId, 
+      code,
+      ...(changedEmail && { changedEmail })
+    },
+  });
+
+  return { error: error || null };
+};
+
+/**
+ * Request password reset
+ */
+export const forgotPassword = async (
+  email: string
+): Promise<{ error: { message: string } | null }> => {
+  const { error } = await apiRequest(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
+    method: 'POST',
+    body: { email },
+  });
+
+  return { error: error || null };
+};
+
+/**
+ * Reset password with code from email
+ */
+export const resetPassword = async (
+  email: string,
+  resetCode: string,
+  newPassword: string
+): Promise<{ error: { message: string } | null }> => {
+  const { error } = await apiRequest(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
+    method: 'POST',
+    body: {
+      email,
+      resetCode,
+      newPassword,
+    },
+  });
+
+  return { error: error || null };
+};
+
+/**
+ * Get user info
+ */
+export const getUserInfo = async (): Promise<{
+  data: { email: string; isEmailConfirmed: boolean } | null;
+  error: { message: string } | null;
+}> => {
+  const { data, error } = await apiRequest<{ email: string; isEmailConfirmed: boolean }>(
+    API_ENDPOINTS.AUTH.MANAGE_INFO,
+    {
+      method: 'GET',
+    }
+  );
+  return { data, error: error || null };
+};
+
+/**
+ * Update user email
+ */
+export const updateEmail = async (
+  newEmail: string,
+  password: string
+): Promise<{ error: { message: string } | null }> => {
+  const { error } = await apiRequest(API_ENDPOINTS.AUTH.UPDATE_EMAIL, {
+    method: 'POST',
+    body: {
+      newEmail,
+      password,
+    },
+  });
+
+  return { error: error || null };
+};
+
+/**
+ * Change password
+ */
+export const changePassword = async (
+  oldPassword: string,
+  newPassword: string
+): Promise<{ error: { message: string } | null }> => {
+  const { error } = await apiRequest(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, {
+    method: 'POST',
+    body: {
+      oldPassword,
+      newPassword,
+    },
+  });
+
+  return { error: error || null };
+};
+
+/**
+ * Get 2FA info
+ */
+export const get2FAInfo = async (): Promise<{
+  data: TwoFactorInfo | null;
+  error: { message: string } | null;
+}> => {
+  const { data, error } = await apiRequest<TwoFactorInfo>(
+    API_ENDPOINTS.AUTH.GET_2FA_INFO,
+    {
+      method: 'GET',
+    }
+  );
+
+  return { data, error: error || null };
+};
+
+/**
+ * Enable 2FA
+ */
+export const enable2FA = async (
+  code: string
+): Promise<{
+  data: { recoveryCodes: string[] } | null;
+  error: { message: string } | null;
+}> => {
+  const { data, error } = await apiRequest<{ recoveryCodes: string[] }>(
+    API_ENDPOINTS.AUTH.ENABLE_2FA,
+    {
+      method: 'POST',
+      body: { 
+        enable: true,
+        twoFactorCode: code,
+      },
+    }
+  );
+
+  return { data, error: error || null };
+};
+
+/**
+ * Disable 2FA
+ */
+export const disable2FA = async (): Promise<{ error: { message: string } | null }> => {
+  const { error } = await apiRequest(API_ENDPOINTS.AUTH.DISABLE_2FA, {
+    method: 'POST',
+    body: { 
+      enable: false,
+    },
+  });
+
+  return { error: error || null };
+};
+
+/**
+ * Reset 2FA recovery codes
+ */
+export const reset2FARecoveryCodes = async (): Promise<{
+  data: { recoveryCodes: string[] } | null;
+  error: { message: string } | null;
+}> => {
+  const { data, error } = await apiRequest<{ recoveryCodes: string[] }>(
+    API_ENDPOINTS.AUTH.ENABLE_2FA,
+    {
+      method: 'POST',
+      body: { 
+        resetRecoveryCodes: true,
+      },
+    }
+  );
+
+  return { data, error: error || null };
 };
