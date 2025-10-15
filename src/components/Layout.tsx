@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Package, LayoutDashboard, ShoppingCart, TrendingUp, LogOut } from "lucide-react";
+import { Package, LayoutDashboard, ShoppingCart, TrendingUp, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { signOut } from "@/services/authService";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,6 +42,7 @@ const Layout = ({ children }: LayoutProps) => {
     { path: "/inventory", icon: Package, label: "Inventory" },
     { path: "/pos", icon: ShoppingCart, label: "POS" },
     { path: "/analytics", icon: TrendingUp, label: "Analytics" },
+    { path: "/settings", icon: SettingsIcon, label: "Settings" },
   ];
 
   return (

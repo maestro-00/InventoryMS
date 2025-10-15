@@ -9,6 +9,10 @@ import Inventory from "./pages/Inventory";
 import POS from "./pages/POS";
 import Analytics from "./pages/Analytics";
 import Auth from "./pages/Auth";
+import Settings from "./pages/Settings";
+import EmailVerification from "./pages/EmailVerification";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -90,6 +94,14 @@ const App = () => (
               }
             />
             <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/auth"
               element={
                 <PublicRoute>
@@ -97,6 +109,9 @@ const App = () => (
                 </PublicRoute>
               }
             />
+            <Route path="auth/verify-email" element={<EmailVerification />} />
+            <Route path="auth/forgot-password" element={<ForgotPassword />} />
+            <Route path="auth/reset-password" element={<ResetPassword />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
