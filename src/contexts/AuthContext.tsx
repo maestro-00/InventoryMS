@@ -35,7 +35,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
         setSession(null);
       } else {
-        setUser({email: data.email} as User);
+        setUser({
+          email: data.email,
+          emailConfirmed: data.emailConfirmed,
+          twoFactorEnabled: data.twoFactorEnabled,
+        } as User);
         setSession(data);
       }
     } catch (error) {
