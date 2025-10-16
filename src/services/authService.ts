@@ -71,6 +71,7 @@ export const signIn = async (
   });
 
   if (error) {
+    if (error.status === 401) { error.message = "Email or password is invalid." }
     return { data: null, error };
   }
 
