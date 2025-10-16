@@ -113,7 +113,7 @@ const ResetPassword = () => {
                 Please request a new password reset.
               </AlertDescription>
             </Alert>
-            <Link to="/forgot-password" className="block">
+            <Link to="/auth/forgot-password" className="block">
               <Button className="w-full">Request New Reset Link</Button>
             </Link>
             <Link to="/auth" className="block">

@@ -225,7 +225,7 @@ const Auth = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="signin-password">Password</Label>
-                    <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                    <Link to="/auth/forgot-password" className="text-sm text-primary hover:underline">
                       Forgot password?
                     </Link>
                   </div>
