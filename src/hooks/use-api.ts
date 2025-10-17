@@ -138,7 +138,7 @@ export function useApi<T = unknown>(): UseApiResponse<T> {
         
         if (typeof responseData === 'object') {
           // Handle ASP.NET Core ProblemDetails format
-          errorMessage = responseData?.title || responseData?.detail || responseData?.message || responseData?.error || errorMessage;
+          errorMessage = responseData?.detail || responseData?.title || responseData?.message || responseData?.error || errorMessage;
           
           // Extract validation errors if present
           if (responseData?.errors && typeof responseData.errors === 'object') {
@@ -253,7 +253,7 @@ export async function apiRequest<T = unknown>(
       
       if (typeof responseData === 'object') {
         // Handle ASP.NET Core ProblemDetails format
-        errorMessage = responseData?.title || responseData?.detail || responseData?.message || responseData?.error || errorMessage;
+        errorMessage = responseData?.detail || responseData?.title || responseData?.message || responseData?.error || errorMessage;
         
         // Extract validation errors if present
         if (responseData?.errors && typeof responseData.errors === 'object') {
