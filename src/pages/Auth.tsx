@@ -144,6 +144,13 @@ const Auth = () => {
 
     const { error } = await signIn(signInData.email, signInData.password);
     if (error) {
+      // Check if 2FA is required
+      if (error.status === 401 && error.message === "RequiresTwoFactor") {
+        setLoading(false);
+        navigate("/auth/2fa", { state: { email: signInData.email, password: signInData.password } });
+        return;
+      }
+      
       toast({
         title: "Error",
         description: error.message,

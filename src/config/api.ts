@@ -22,9 +22,7 @@ export const API_ENDPOINTS = {
     RESET_PASSWORD: '/auth/resetPassword',
     CHANGE_PASSWORD: '/auth/manage/info',
     UPDATE_EMAIL: '/auth/manage/info',
-    ENABLE_2FA: '/auth/manage/2fa',
-    DISABLE_2FA: '/auth/manage/2fa',
-    GET_2FA_INFO: '/auth/manage/2fa',
+    MANAGE_2FA: '/auth/manage/2fa',
   },
   // Inventory endpoints
   INVENTORY: {

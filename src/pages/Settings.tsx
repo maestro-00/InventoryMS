@@ -210,8 +210,11 @@ const Settings = () => {
         variant: "destructive",
       });
     } else if (data) {
-      setRecoveryCodes(data.recoveryCodes);
-      setShowRecoveryCodes(true);
+      // Check if we got recovery codes
+      if (data.recoveryCodes && data.recoveryCodes.length > 0) {
+        setRecoveryCodes(data.recoveryCodes);
+        setShowRecoveryCodes(true);
+      }
       setMfaCode("");
       await refreshSession();
       await load2FAInfo();
@@ -222,6 +225,7 @@ const Settings = () => {
     }
   };
 
+  
   const handleDisable2FA = async () => {
     setLoading(true);
     const { error } = await disable2FA();
@@ -254,7 +258,7 @@ const Settings = () => {
         description: error.message,
         variant: "destructive",
       });
-    } else if (data) {
+    } else if (data && data.recoveryCodes) {
       setRecoveryCodes(data.recoveryCodes);
       setShowRecoveryCodes(true);
       toast({
