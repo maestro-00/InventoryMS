@@ -1,5 +1,5 @@
 import { apiRequest } from '@/hooks/use-api';
-import { API_ENDPOINTS } from '@/config/api';
+import API_CONFIG, { API_ENDPOINTS } from '@/config/api';
 
 export interface User {
   id: string;
@@ -7,6 +7,16 @@ export interface User {
   emailConfirmed?: boolean;
   twoFactorEnabled?: boolean;
   created_at: string;
+}
+
+export interface ExternalLogin {
+  providerKey: string;
+  providerDisplayName: string;
+}
+
+export interface ExternalLoginRequest {
+  provider: string;
+  returnUrl: string;
 }
 
 export interface Session {
@@ -167,21 +177,12 @@ export const signOut = async (): Promise<{ error: { message: string } | null }> 
   return { error: error || null };
 };
 
-/**
- * Sign in with Google OAuth
- */
-export const signInWithGoogle = async (): Promise<AuthResponse> => {
+export const signInWithExternalProvider = async (provider: string) => {
   try {
-    // Redirect to Google OAuth endpoint
-    const redirectUrl = `${window.location.origin}/auth/callback`;
-    window.location.href = `${API_ENDPOINTS.AUTH.GOOGLE_AUTH}?redirect_uri=${encodeURIComponent(redirectUrl)}`;
-    
-    return { data: null, error: null };
+    const redirectUrl = encodeURIComponent(`${window.location.origin}/auth/callback`); 
+    window.location.href = `${API_CONFIG.BASE_URL}${API_ENDPOINTS.AUTH.EXTERNAL_AUTH}?provider=${provider}&returnUrl=${redirectUrl}`; 
   } catch (err: unknown) {
-    return { 
-      data: null, 
-      error: { message: err instanceof Error ? err.message : 'Failed to initiate Google sign-in' } 
-    };
+    console.log(err);
   }
 };
 
@@ -479,6 +480,59 @@ export const forget2FAMachine = async (): Promise<{
       },
     }
   );
+
+  return { error: error || null };
+};
+
+/**
+ * Get linked external logins (OAuth providers)
+ */
+export const getExternalLogins = async (): Promise<{
+  data: ExternalLogin[] | null;
+  error: { message: string } | null;
+}> => {
+  const { data, error } = await apiRequest<{ externalLogins: ExternalLogin[] }>(
+    API_ENDPOINTS.AUTH.GET_EXTERNAL_LOGINS,
+    {
+      method: 'GET',
+    }
+  );
+
+  if (error) {
+    return { data: null, error };
+  }
+
+  return { data: data?.externalLogins || [], error: null };
+};
+
+/**
+ * Link external login provider (e.g., Google)
+ * Redirects to OAuth provider for linking
+ */
+export const linkExternalLogin = async (provider: string): Promise<{ error: { message: string } | null }> => {
+  try {
+    const redirectUrl = `${window.location.origin}/auth/callback?action=link`;
+    window.location.href = `${API_ENDPOINTS.AUTH.LINK_EXTERNAL_LOGIN}/${provider}?redirect_uri=${encodeURIComponent(redirectUrl)}`;
+    return { error: null };
+  } catch (err: unknown) {
+    return { 
+      error: { message: err instanceof Error ? err.message : 'Failed to initiate external login linking' } 
+    };
+  }
+};
+
+/**
+ * Unlink external login provider
+ */
+export const unlinkExternalLogin = async (
+  provider: string
+): Promise<{ error: { message: string } | null }> => {
+  const { error } = await apiRequest(API_ENDPOINTS.AUTH.UNLINK_EXTERNAL_LOGIN, {
+    method: 'DELETE',
+    body: {
+      loginProvider: provider,
+    },
+  });
 
   return { error: error || null };
 };

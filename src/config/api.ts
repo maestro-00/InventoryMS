@@ -13,6 +13,7 @@ export const API_ENDPOINTS = {
     SIGN_IN: '/auth/login',
     SIGN_OUT: '/auth/logout',
     GOOGLE_AUTH: '/auth/google',
+    EXTERNAL_AUTH: '/auth/external-login',
     GET_SESSION: '/auth/pingauth',
     REFRESH_TOKEN: '/auth/refresh',
     MANAGE_INFO: '/auth/manage/info',
@@ -23,6 +24,9 @@ export const API_ENDPOINTS = {
     CHANGE_PASSWORD: '/auth/manage/info',
     UPDATE_EMAIL: '/auth/manage/info',
     MANAGE_2FA: '/auth/manage/2fa',
+    LINK_EXTERNAL_LOGIN: '/auth/manage/linklogin',
+    GET_EXTERNAL_LOGINS: '/auth/manage/info',
+    UNLINK_EXTERNAL_LOGIN: '/auth/manage/linklogin',
   },
   // Inventory endpoints
   INVENTORY: {
