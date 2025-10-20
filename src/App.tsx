@@ -14,6 +14,7 @@ import EmailVerification from "./pages/EmailVerification";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import TwoFactorAuth from "./pages/TwoFactorAuth";
+import OAuthCallback from "./pages/OAuthCallback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -114,6 +115,7 @@ const App = () => (
             <Route path="auth/forgot-password" element={<ForgotPassword />} />
             <Route path="auth/reset-password" element={<ResetPassword />} />
             <Route path="auth/2fa" element={<TwoFactorAuth />} />
+            <Route path="auth/callback" element={<OAuthCallback />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
