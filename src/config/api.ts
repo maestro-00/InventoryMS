@@ -30,11 +30,11 @@ export const API_ENDPOINTS = {
   },
   // Inventory endpoints
   INVENTORY: {
-    LIST: '/inventory',
-    CREATE: '/inventory',
-    UPDATE: (id: string) => `/inventory/${id}`,
+    LIST: '/InventoryItems',
+    CREATE: '/InventoryItems',
+    UPDATE: (id: string) => `/InventoryItems/${id}`,
     DELETE: (id: string) => `/inventory/${id}`,
-    GET: (id: string) => `/inventory/${id}`,
+    GET: (id: string) => `/InventoryItems/${id}`,
     UPLOAD_IMAGE: '/inventory/upload-image',
   },
   // Sales endpoints

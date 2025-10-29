@@ -1,4 +1,4 @@
-import { apiRequest } from '@/hooks/use-api';
+import { apiRequest, ApiResponse } from '@/hooks/use-api';
 import { API_ENDPOINTS } from '@/config/api';
 
 export interface InventoryItem {
@@ -8,7 +8,7 @@ export interface InventoryItem {
   description: string | null;
   sku: string | null;
   price: number;
-  cost: number | null;
+  retailQuantity: number | null;
   quantity: number;
   reorder_level: number;
   image_url: string | null;
@@ -22,8 +22,9 @@ export interface CreateInventoryItemData {
   description?: string | null;
   sku?: string | null;
   price: number;
-  cost?: number | null;
-  quantity: number;
+  retailQuantity?: number | null;
+  totalAmount: number;
+  typeId: number;
   reorder_level: number;
   category?: string | null;
   image_url?: string | null;
@@ -38,11 +39,12 @@ export const getInventoryItems = async (): Promise<{
   data: InventoryItem[] | null;
   error: { message: string } | null;
 }> => {
-  const { data, error } = await apiRequest<InventoryItem[]>(API_ENDPOINTS.INVENTORY.LIST, {
+  const { data, error } = await apiRequest<ApiResponse<InventoryItem[]>>(API_ENDPOINTS.INVENTORY.LIST, {
     method: 'GET',
   });
 
-  return { data, error: error || null };
+
+  return { data: data.body, error: error || null };
 };
 
 /**
@@ -58,7 +60,6 @@ export const getInventoryItem = async (id: string): Promise<{
       method: 'GET',
     }
   );
-
   return { data, error: error || null };
 };
 
@@ -72,7 +73,7 @@ export const createInventoryItem = async (
   error: { message: string } | null;
 }> => {
   const { data, error } = await apiRequest<InventoryItem>(
-    API_ENDPOINTS.INVENTORY.CREATE,
+    API_ENDPOINTS.INVENTORY.CREATE + `?retailQuantity=${itemData.retailQuantity}`,
     {
       method: 'POST',
       body: itemData,
@@ -192,5 +193,5 @@ export const updateInventoryQuantity = async (
   data: InventoryItem | null;
   error: { message: string } | null;
 }> => {
-  return updateInventoryItem(id, { quantity });
+  return updateInventoryItem(id, { totalAmount: quantity });
 };

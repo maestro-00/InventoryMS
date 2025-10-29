@@ -16,7 +16,7 @@ interface InventoryItem {
   description: string | null;
   sku: string | null;
   price: number;
-  cost: number | null;
+  retailQuantity: number | null;
   quantity: number;
   reorder_level: number;
   image_url: string | null;
@@ -36,7 +36,7 @@ const Inventory = () => {
     description: "",
     sku: "",
     price: "",
-    cost: "",
+    retailQuantity: "",
     quantity: "0",
     reorder_level: "10",
     category: "",
@@ -88,18 +88,37 @@ const Inventory = () => {
     setUploading(false);
   };
 
+  const validateRetailQuantity = () => { 
+    if(formData.retailQuantity > formData.quantity) {
+      return "Retail quantity cannot be more than specified item quantity."
+    }
+    return null;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate retailQuantity
+    const retailQuantityError = validateRetailQuantity();
+    if (retailQuantityError) {
+      toast({
+        title: "Invalid Password",
+        description: retailQuantityError,
+        variant: "destructive",
+      }); 
+      return;
+    }
 
     const itemData = {
       name: formData.name,
       description: formData.description || null,
       sku: formData.sku || null,
       price: parseFloat(formData.price),
-      cost: formData.cost ? parseFloat(formData.cost) : null,
-      quantity: parseInt(formData.quantity),
+      retailQuantity: formData.retailQuantity ? parseFloat(formData.retailQuantity) : null,
+      totalAmount: parseInt(formData.quantity),
       reorder_level: parseInt(formData.reorder_level),
       category: formData.category || null,
+      typeId: 1,
       image_url: formData.image_url || null,
     };
 
@@ -168,7 +187,7 @@ const Inventory = () => {
       description: "",
       sku: "",
       price: "",
-      cost: "",
+      retailQuantity: "",
       quantity: "0",
       reorder_level: "10",
       category: "",
@@ -183,7 +202,7 @@ const Inventory = () => {
       description: item.description || "",
       sku: item.sku || "",
       price: item.price.toString(),
-      cost: item.cost?.toString() || "",
+      retailQuantity: item.retailQuantity?.toString() || "",
       quantity: item.quantity.toString(),
       reorder_level: item.reorder_level.toString(),
       category: item.category || "",
@@ -290,13 +309,13 @@ const Inventory = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="cost">Cost</Label>
+                    <Label htmlFor="retailQuantity">Retail Quantity</Label>
                     <Input
-                      id="cost"
+                      id="retailQuantity"
                       type="number"
                       step="0.01"
-                      value={formData.cost}
-                      onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+                      value={formData.retailQuantity }
+                      onChange={(e) => setFormData({ ...formData, retailQuantity: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
@@ -404,10 +423,10 @@ const Inventory = () => {
                     <span className="text-muted-foreground">Price:</span>
                     <span className="font-medium">${item.price.toFixed(2)}</span>
                   </div>
-                  {item.cost && (
+                  {item.retailQuantity && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Cost:</span>
-                      <span className="font-medium">${item.cost.toFixed(2)}</span>
+                      <span className="text-muted-foreground">Retail Quantity:</span>
+                      <span className="font-medium">${item.retailQuantity.toFixed(2)}</span>
                     </div>
                   )}
                 </div>
