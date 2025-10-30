@@ -33,7 +33,7 @@ export const API_ENDPOINTS = {
     LIST: '/InventoryItems',
     CREATE: '/InventoryItems',
     UPDATE: (id: string) => `/InventoryItems/${id}`,
-    DELETE: (id: string) => `/inventory/${id}`,
+    DELETE: (id: string) => `/InventoryItems/${id}`,
     GET: (id: string) => `/InventoryItems/${id}`,
     UPLOAD_IMAGE: '/inventory/upload-image',
   },
