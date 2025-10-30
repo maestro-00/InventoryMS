@@ -37,6 +37,16 @@ export const API_ENDPOINTS = {
     GET: (id: string) => `/InventoryItems/${id}`,
     UPLOAD_IMAGE: '/inventory/upload-image',
   },
+  // Inventory Item endpoints
+  INVENTORYITEM: {
+    LIST: '/InventoryItemTypes',
+    CREATE: '/InventoryItemTypes',
+    UPDATE: (id: string) => `/InventoryItemTypes/${id}`,
+    DELETE: (id: string) => `/InventoryItemTypes/${id}`,
+    GET: (id: string) => `/InventoryItemTypes/${id}`,
+    UPLOAD_IMAGE: '/inventory/upload-image',
+  },
+  
   // Sales endpoints
   SALES: {
     LIST: '/sales',

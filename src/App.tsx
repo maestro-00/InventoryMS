@@ -16,6 +16,7 @@ import ResetPassword from "./pages/ResetPassword";
 import TwoFactorAuth from "./pages/TwoFactorAuth";
 import OAuthCallback from "./pages/OAuthCallback";
 import NotFound from "./pages/NotFound";
+import InventoryType from "./pages/InventoryType";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Inventory />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventorytypes"
+              element={
+                <ProtectedRoute>
+                  <InventoryType />
                 </ProtectedRoute>
               }
             />
