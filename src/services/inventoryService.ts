@@ -1,5 +1,6 @@
 import { apiRequest, ApiResponse } from '@/hooks/use-api';
 import { API_ENDPOINTS } from '@/config/api';
+import { InventoryItemType } from './inventoryTypeService';
 
 export interface InventoryItem {
   id: string;
@@ -9,10 +10,10 @@ export interface InventoryItem {
   sku: string | null;
   price: number;
   retailQuantity: number | null;
-  quantity: number;
+  totalAmount: number;
   reorder_level: number;
   image_url: string | null;
-  category: string | null;
+  type: InventoryItemType;
   created_at: string;
   updated_at: string;
 }
@@ -25,8 +26,7 @@ export interface CreateInventoryItemData {
   retailQuantity?: number | null;
   totalAmount: number;
   typeId: number;
-  reorder_level: number;
-  category?: string | null;
+  reorder_level: number; 
   image_url?: string | null;
 }
 
@@ -177,7 +177,7 @@ export const getLowStockItems = async (): Promise<{
   }
 
   const lowStockItems = data.filter(
-    (item) => item.quantity < item.reorder_level
+    (item) => item.totalAmount < item.reorder_level
   );
 
   return { data: lowStockItems, error: null };
