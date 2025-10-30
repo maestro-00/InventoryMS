@@ -23,6 +23,15 @@ interface UseApiResponse<T> {
   execute: (endpoint: string, options?: UseApiOptions) => Promise<{ data: T | null; error: ApiError | null }>;
 }
 
+export interface ApiResponse<T> {
+  id: string;
+  message: string;
+  statusCode: number;
+  body: T;
+  success: boolean;
+}
+
+
 /**
  * Build URL with path parameters
  * Example: buildUrl('/users/:id/posts/:postId', { id: '123', postId: '456' })

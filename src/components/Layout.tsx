@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Package, LayoutDashboard, ShoppingCart, TrendingUp, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Package, LayoutDashboard, ShoppingCart, TrendingUp, Settings as SettingsIcon, LogOut, BookCopy } from "lucide-react";
 import { signOut } from "@/services/authService";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,10 +40,11 @@ const Layout = ({ children }: LayoutProps) => {
   const navItems = [
     { path: "/", icon: LayoutDashboard, label: "Dashboard" },
     { path: "/inventory", icon: Package, label: "Inventory" },
+    { path: "/inventorytypes", icon: BookCopy, label: "Inventory Types" },
     { path: "/pos", icon: ShoppingCart, label: "POS" },
     { path: "/analytics", icon: TrendingUp, label: "Analytics" },
     { path: "/settings", icon: SettingsIcon, label: "Settings" },
-  ];
+  ];  
 
   return (
     <div className="flex min-h-screen bg-background">

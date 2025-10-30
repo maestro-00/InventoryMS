@@ -9,6 +9,8 @@ import { getInventoryItems, createInventoryItem, updateInventoryItem, deleteInve
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
+import { getInventoryItemTypes, InventoryItemType } from "@/services/inventoryTypeService";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface InventoryItem {
   id: string;
@@ -16,17 +18,18 @@ interface InventoryItem {
   description: string | null;
   sku: string | null;
   price: number;
-  cost: number | null;
-  quantity: number;
+  retailQuantity: number | null;
+  totalAmount: number;
   reorder_level: number;
   image_url: string | null;
-  category: string | null;
+  type: InventoryItemType;
 }
 
 const Inventory = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [items, setItems] = useState<InventoryItem[]>([]);
+  const [types, setTypes] = useState<InventoryItemType[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
@@ -36,16 +39,17 @@ const Inventory = () => {
     description: "",
     sku: "",
     price: "",
-    cost: "",
+    retailQuantity: "",
     quantity: "0",
     reorder_level: "10",
-    category: "",
+    typeId: "0",
     image_url: "",
   });
 
   useEffect(() => {
     if (user) {
       loadItems();
+      loadTypes();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -63,7 +67,20 @@ const Inventory = () => {
       setItems(data || []);
     }
   };
+  const loadTypes = async () => {
+    const { data, error } = await getInventoryItemTypes();
 
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      setTypes(data || []);
+    }
+  };
+  
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -88,18 +105,36 @@ const Inventory = () => {
     setUploading(false);
   };
 
+  const validateRetailQuantity = () => { 
+    if(+formData.retailQuantity > +formData.quantity) {
+      return "Retail quantity cannot be more than specified item quantity."
+    }
+    return null;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate retailQuantity
+    const retailQuantityError = validateRetailQuantity();
+    if (retailQuantityError) {
+      toast({
+        title: "Invalid Password",
+        description: retailQuantityError,
+        variant: "destructive",
+      }); 
+      return;
+    }
 
     const itemData = {
       name: formData.name,
       description: formData.description || null,
       sku: formData.sku || null,
       price: parseFloat(formData.price),
-      cost: formData.cost ? parseFloat(formData.cost) : null,
-      quantity: parseInt(formData.quantity),
-      reorder_level: parseInt(formData.reorder_level),
-      category: formData.category || null,
+      retailQuantity: formData.retailQuantity ? parseFloat(formData.retailQuantity) : null,
+      totalAmount: parseInt(formData.quantity),
+      reorder_level: parseInt(formData.reorder_level), 
+      typeId: parseInt(formData.typeId),
       image_url: formData.image_url || null,
     };
 
@@ -168,10 +203,10 @@ const Inventory = () => {
       description: "",
       sku: "",
       price: "",
-      cost: "",
+      retailQuantity: "",
       quantity: "0",
       reorder_level: "10",
-      category: "",
+      typeId: "0",
       image_url: "",
     });
   };
@@ -183,10 +218,10 @@ const Inventory = () => {
       description: item.description || "",
       sku: item.sku || "",
       price: item.price.toString(),
-      cost: item.cost?.toString() || "",
-      quantity: item.quantity.toString(),
-      reorder_level: item.reorder_level.toString(),
-      category: item.category || "",
+      retailQuantity: item.retailQuantity?.toString() || "",
+      quantity: item.totalAmount.toString(),
+      reorder_level: item.reorder_level?.toString() || "0",
+      typeId: item.type.id.toString(),
       image_url: item.image_url || "",
     });
   };
@@ -195,7 +230,7 @@ const Inventory = () => {
     (item) =>
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.category?.toLowerCase().includes(searchTerm.toLowerCase())
+      item.type.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -258,12 +293,17 @@ const Inventory = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
-                    <Input
-                      id="category"
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    />
+                    <Label htmlFor="category">Type</Label>
+                    <Select value={formData.typeId} onValueChange={(value) => setFormData({ ...formData, typeId: value})}>
+                      <SelectTrigger id="category">
+                        <SelectValue placeholder="Select a type"/>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {types.map((type,index) => (
+                          <SelectItem key={index} value={type.id.toString()}>{type.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="quantity">Quantity *</Label>
@@ -290,13 +330,13 @@ const Inventory = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="cost">Cost</Label>
+                    <Label htmlFor="retailQuantity">Retail Quantity</Label>
                     <Input
-                      id="cost"
+                      id="retailQuantity"
                       type="number"
                       step="0.01"
-                      value={formData.cost}
-                      onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+                      value={formData.retailQuantity }
+                      onChange={(e) => setFormData({ ...formData, retailQuantity: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
@@ -364,8 +404,8 @@ const Inventory = () => {
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="text-lg">{item.name}</CardTitle>
-                    {item.category && (
-                      <CardDescription className="text-xs">{item.category}</CardDescription>
+                    {item.type && (
+                      <CardDescription className="text-xs">{item.type.name}</CardDescription>
                     )}
                   </div>
                   <div className="flex gap-2">
@@ -396,18 +436,18 @@ const Inventory = () => {
                   )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Quantity:</span>
-                    <span className={`font-medium ${item.quantity < item.reorder_level ? 'text-destructive' : 'text-accent'}`}>
-                      {item.quantity}
+                    <span className={`font-medium ${item.totalAmount < item.reorder_level ? 'text-destructive' : 'text-accent'}`}>
+                      {item.totalAmount}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Price:</span>
                     <span className="font-medium">${item.price.toFixed(2)}</span>
                   </div>
-                  {item.cost && (
+                  {item.retailQuantity && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Cost:</span>
-                      <span className="font-medium">${item.cost.toFixed(2)}</span>
+                      <span className="text-muted-foreground">Retail Quantity:</span>
+                      <span className="font-medium">${item.retailQuantity.toFixed(2)}</span>
                     </div>
                   )}
                 </div>
