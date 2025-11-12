@@ -20,7 +20,7 @@ interface InventoryItem {
   price: number;
   retailQuantity: number | null;
   totalAmount: number;
-  reorder_level: number;
+  reOrderLevel: number;
   image_url: string | null;
   type: InventoryItemType;
 }
@@ -41,7 +41,7 @@ const Inventory = () => {
     price: "",
     retailQuantity: "",
     quantity: "0",
-    reorder_level: "10",
+    reOrderLevel: "10",
     typeId: "0",
     image_url: "",
   });
@@ -133,7 +133,7 @@ const Inventory = () => {
       price: parseFloat(formData.price),
       retailQuantity: formData.retailQuantity ? parseFloat(formData.retailQuantity) : null,
       totalAmount: parseInt(formData.quantity),
-      reorder_level: parseInt(formData.reorder_level), 
+      reOrderLevel: parseInt(formData.reOrderLevel), 
       typeId: parseInt(formData.typeId),
       image_url: formData.image_url || null,
     };
@@ -205,7 +205,7 @@ const Inventory = () => {
       price: "",
       retailQuantity: "",
       quantity: "0",
-      reorder_level: "10",
+      reOrderLevel: "10",
       typeId: "0",
       image_url: "",
     });
@@ -220,7 +220,7 @@ const Inventory = () => {
       price: item.price.toString(),
       retailQuantity: item.retailQuantity?.toString() || "",
       quantity: item.totalAmount.toString(),
-      reorder_level: item.reorder_level?.toString() || "0",
+      reOrderLevel: item.reOrderLevel?.toString() || "0",
       typeId: item.type.id.toString(),
       image_url: item.image_url || "",
     });
@@ -340,12 +340,12 @@ const Inventory = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="reorder_level">Reorder Level</Label>
+                    <Label htmlFor="reOrderLevel">Reorder Level</Label>
                     <Input
-                      id="reorder_level"
+                      id="reOrderLevel"
                       type="number"
-                      value={formData.reorder_level}
-                      onChange={(e) => setFormData({ ...formData, reorder_level: e.target.value })}
+                      value={formData.reOrderLevel}
+                      onChange={(e) => setFormData({ ...formData, reOrderLevel: e.target.value })}
                     />
                   </div>
                 </div>
@@ -436,7 +436,7 @@ const Inventory = () => {
                   )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Quantity:</span>
-                    <span className={`font-medium ${item.totalAmount < item.reorder_level ? 'text-destructive' : 'text-accent'}`}>
+                    <span className={`font-medium ${item.totalAmount < item.reOrderLevel ? 'text-destructive' : 'text-accent'}`}>
                       {item.totalAmount}
                     </span>
                   </div>

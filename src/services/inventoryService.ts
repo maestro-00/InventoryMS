@@ -11,7 +11,7 @@ export interface InventoryItem {
   price: number;
   retailQuantity: number | null;
   totalAmount: number;
-  reorder_level: number;
+  reOrderLevel: number;
   image_url: string | null;
   type: InventoryItemType;
   created_at: string;
@@ -26,7 +26,7 @@ export interface CreateInventoryItemData {
   retailQuantity?: number | null;
   totalAmount: number;
   typeId: number;
-  reorder_level: number; 
+  reOrderLevel: number; 
   image_url?: string | null;
 }
 
@@ -164,7 +164,7 @@ export const uploadInventoryImage = async (file: File): Promise<{
 };
 
 /**
- * Get low stock items (quantity < reorder_level)
+ * Get low stock items (quantity < reOrderLevel)
  */
 export const getLowStockItems = async (): Promise<{
   data: InventoryItem[] | null;
@@ -177,7 +177,7 @@ export const getLowStockItems = async (): Promise<{
   }
 
   const lowStockItems = data.filter(
-    (item) => item.totalAmount < item.reorder_level
+    (item) => item.totalAmount < item.reOrderLevel
   );
 
   return { data: lowStockItems, error: null };
