@@ -8,8 +8,7 @@ export interface InventoryItem {
   name: string;
   description: string | null;
   sku: string | null;
-  price: number;
-  retailQuantity: number | null;
+  price: number; 
   totalAmount: number;
   reOrderLevel: number;
   image_url: string | null;
@@ -94,7 +93,7 @@ export const updateInventoryItem = async (
   error: { message: string } | null;
 }> => {
   const { data, error } = await apiRequest<InventoryItem>(
-    API_ENDPOINTS.INVENTORY.UPDATE(id),
+    API_ENDPOINTS.INVENTORY.UPDATE(id) + `?retailQuantity=${itemData.retailQuantity}`,
     {
       method: 'PUT',
       body: itemData,

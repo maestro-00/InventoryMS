@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
 import { getInventoryItemTypes, InventoryItemType } from "@/services/inventoryTypeService";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getRetailStockByInventoryItemId, updateRetailStock, UpdateRetailStockData } from "@/services/retailStockService";
 
 interface InventoryItem {
   id: string;
@@ -18,7 +19,6 @@ interface InventoryItem {
   description: string | null;
   sku: string | null;
   price: number;
-  retailQuantity: number | null;
   totalAmount: number;
   reOrderLevel: number;
   image_url: string | null;
@@ -67,6 +67,21 @@ const Inventory = () => {
       setItems(data || []);
     }
   };
+
+  const getRetailQuantityOfInventoryItem = async (id: string) => {
+    const { data, error } = await getRetailStockByInventoryItemId(id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      return data.quantity;
+    }
+  };
+  
   const loadTypes = async () => {
     const { data, error } = await getInventoryItemTypes();
 
@@ -119,7 +134,7 @@ const Inventory = () => {
     const retailQuantityError = validateRetailQuantity();
     if (retailQuantityError) {
       toast({
-        title: "Invalid Password",
+        title: "Retail Quantity Error",
         description: retailQuantityError,
         variant: "destructive",
       }); 
@@ -148,10 +163,23 @@ const Inventory = () => {
           variant: "destructive",
         });
       } else {
-        toast({
-          title: "Success",
-          description: "Item updated successfully",
-        });
+        var retailStock : UpdateRetailStockData = {
+          inventoryItemId: editingItem.id,
+          quantity: parseInt(formData.retailQuantity)
+        }
+        const { error: retailQuantityError } = await updateRetailStock(retailStock);
+        if (retailQuantityError) {
+          toast({
+            title: "Retail Quantity Error",
+            description: "Failed to update retail quantity",
+            variant: "destructive",
+          });
+        }else {
+          toast({
+            title: "Success",
+            description: "Item updated successfully",
+          });
+        }
         setEditingItem(null);
         resetForm();
         loadItems();
@@ -211,14 +239,15 @@ const Inventory = () => {
     });
   };
 
-  const startEdit = (item: InventoryItem) => {
+  const startEdit = async (item: InventoryItem) => {
+    const retailQuantity = await getRetailQuantityOfInventoryItem(item.id);
     setEditingItem(item);
     setFormData({
       name: item.name,
       description: item.description || "",
       sku: item.sku || "",
       price: item.price.toString(),
-      retailQuantity: item.retailQuantity?.toString() || "",
+      retailQuantity: retailQuantity.toString() || "",
       quantity: item.totalAmount.toString(),
       reOrderLevel: item.reOrderLevel?.toString() || "0",
       typeId: item.type.id.toString(),
@@ -443,13 +472,7 @@ const Inventory = () => {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Price:</span>
                     <span className="font-medium">${item.price.toFixed(2)}</span>
-                  </div>
-                  {item.retailQuantity && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Retail Quantity:</span>
-                      <span className="font-medium">${item.retailQuantity.toFixed(2)}</span>
-                    </div>
-                  )}
+                  </div> 
                 </div>
               </CardContent>
             </Card>
