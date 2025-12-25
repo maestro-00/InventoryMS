@@ -151,7 +151,7 @@ const Inventory = () => {
           variant: "destructive",
         });
       } else {
-        var retailStock : UpdateRetailStockData = {
+        const retailStock : UpdateRetailStockData = {
           inventoryItemId: editingItem.id,
           quantity: parseInt(formData.retailQuantity)
         }
