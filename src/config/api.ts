@@ -56,11 +56,13 @@ export const API_ENDPOINTS = {
   
   // Sales endpoints
   SALES: {
-    LIST: '/sales',
-    CREATE: '/sales',
-    GET: (id: string) => `/sales/${id}`,
-    STATS: '/sales/stats',
-    TODAY: '/sales/today',
+    LIST: '/SaleGroups',
+    CREATE: '/SaleGroups',
+    UPDATE: (id: string) => `/SaleGroups/${id}`,
+    DELETE: (id: string) => `/SaleGroups/${id}`,
+    GET: (id: string) => `/SaleGroups/${id}`,
+    STATS: '/SaleGroups/stats',
+    TODAY: '/Sales/today',
   },
   // Analytics endpoints
   ANALYTICS: {

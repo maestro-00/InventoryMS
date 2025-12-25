@@ -14,22 +14,22 @@ export interface Sale {
 export interface SaleItem {
   id: string;
   sale_id: string;
-  item_id: string;
+  inventoryItemId: string;
   quantity: number;
   price: number;
-  subtotal: number;
-  item_name?: string;
+  subTotal: number;
+  itemName?: string;
 }
 
 export interface CreateSaleData {
-  total_amount: number;
-  payment_method: string;
-  customer_name?: string | null;
-  items: {
-    item_id: string;
+  totalAmount: number;
+  paymentMethod: string;
+  customerName?: string | null;
+  sales: {
+    inventoryItemId: string;
     quantity: number;
     price: number;
-    subtotal: number;
+    subTotal: number;
   }[];
 }
 

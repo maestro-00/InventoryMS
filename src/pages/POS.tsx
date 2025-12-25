@@ -128,14 +128,14 @@ const POS = () => {
     try {
       // Create sale with items
       const saleData = {
-        total_amount: calculateTotal(),
-        payment_method: paymentMethod,
-        customer_name: customerName || null,
-        items: cart.map((item) => ({
-          item_id: item.id,
+        totalAmount: calculateTotal(),
+        paymentMethod: paymentMethod,
+        customerName: customerName || null,
+        sales: cart.map((item) => ({
+          inventoryItemId: item.id,
           quantity: item.cartQuantity,
           price: item.price,
-          subtotal: item.price * item.cartQuantity,
+          subTotal: item.price * item.cartQuantity,
         })),
       };
 
@@ -186,7 +186,7 @@ const POS = () => {
         <body>
           <div class="header">
             <h2>Inventory POS</h2>
-            <p>Receipt #${saleId.slice(0, 8)}</p>
+            <p>Receipt #${saleId}</p>
             <p>${new Date().toLocaleString()}</p>
             ${customerName ? `<p>Customer: ${customerName}</p>` : ''}
           </div>
