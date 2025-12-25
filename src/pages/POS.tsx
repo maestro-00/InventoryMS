@@ -50,11 +50,11 @@ const POS = () => {
       });
     } else {
       // Filter items with quantity > 0 and map to required fields
-      const availableItems = (data || []).filter(item => item.totalAmount > 0).map(item => ({
+      const availableItems = (data || []).filter(item => item.retailQuantity > 0).map(item => ({
         id: item.id,
         name: item.name,
         price: item.price,
-        quantity: item.totalAmount,
+        quantity: item.retailQuantity,
       }));
       setItems(availableItems);
     }
@@ -87,6 +87,8 @@ const POS = () => {
     if (!item) return;
 
     if (quantity <= 0) {
+
+      
       removeFromCart(id);
       return;
     }

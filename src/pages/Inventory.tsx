@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
 import { getInventoryItemTypes, InventoryItemType } from "@/services/inventoryTypeService";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getRetailStockByInventoryItemId, updateRetailStock, UpdateRetailStockData } from "@/services/retailStockService";
+import { updateRetailStock, UpdateRetailStockData } from "@/services/retailStockService";
 
 interface InventoryItem {
   id: string;
@@ -20,6 +20,7 @@ interface InventoryItem {
   sku: string | null;
   price: number;
   totalAmount: number;
+  retailQuantity: number;
   reOrderLevel: number;
   image_url: string | null;
   type: InventoryItemType;
@@ -68,19 +69,6 @@ const Inventory = () => {
     }
   };
 
-  const getRetailQuantityOfInventoryItem = async (id: string) => {
-    const { data, error } = await getRetailStockByInventoryItemId(id);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      return data.quantity;
-    }
-  };
   
   const loadTypes = async () => {
     const { data, error } = await getInventoryItemTypes();
@@ -239,15 +227,14 @@ const Inventory = () => {
     });
   };
 
-  const startEdit = async (item: InventoryItem) => {
-    const retailQuantity = await getRetailQuantityOfInventoryItem(item.id);
+  const startEdit = async (item: InventoryItem) => { 
     setEditingItem(item);
     setFormData({
       name: item.name,
       description: item.description || "",
       sku: item.sku || "",
       price: item.price.toString(),
-      retailQuantity: retailQuantity.toString() || "",
+      retailQuantity: item.retailQuantity.toString() || "",
       quantity: item.totalAmount.toString(),
       reOrderLevel: item.reOrderLevel?.toString() || "0",
       typeId: item.type.id.toString(),
@@ -465,14 +452,20 @@ const Inventory = () => {
                   )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Quantity:</span>
-                    <span className={`font-medium ${item.totalAmount < item.reOrderLevel ? 'text-destructive' : 'text-accent'}`}>
+                    <span className={'font-medium'}>
                       {item.totalAmount}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Price:</span>
                     <span className="font-medium">${item.price.toFixed(2)}</span>
-                  </div> 
+                  </div>
+                  {item.retailQuantity && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Retail Quantity:</span>
+                      <span className={`font-medium ${item.retailQuantity < item.reOrderLevel ? 'text-destructive' : 'text-accent'}`}>{item.retailQuantity}</span>
+                    </div>
+                  )} 
                 </div>
               </CardContent>
             </Card>

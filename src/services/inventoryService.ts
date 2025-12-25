@@ -10,6 +10,7 @@ export interface InventoryItem {
   sku: string | null;
   price: number; 
   totalAmount: number;
+  retailQuantity: number;
   reOrderLevel: number;
   image_url: string | null;
   type: InventoryItemType;
