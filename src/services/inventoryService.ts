@@ -8,10 +8,10 @@ export interface InventoryItem {
   name: string;
   description: string | null;
   sku: string | null;
-  price: number;
-  retailQuantity: number | null;
+  price: number; 
   totalAmount: number;
-  reorder_level: number;
+  retailQuantity: number;
+  reOrderLevel: number;
   image_url: string | null;
   type: InventoryItemType;
   created_at: string;
@@ -26,7 +26,7 @@ export interface CreateInventoryItemData {
   retailQuantity?: number | null;
   totalAmount: number;
   typeId: number;
-  reorder_level: number; 
+  reOrderLevel: number; 
   image_url?: string | null;
 }
 
@@ -94,7 +94,7 @@ export const updateInventoryItem = async (
   error: { message: string } | null;
 }> => {
   const { data, error } = await apiRequest<InventoryItem>(
-    API_ENDPOINTS.INVENTORY.UPDATE(id),
+    API_ENDPOINTS.INVENTORY.UPDATE(id) + `?retailQuantity=${itemData.retailQuantity}`,
     {
       method: 'PUT',
       body: itemData,
@@ -164,7 +164,7 @@ export const uploadInventoryImage = async (file: File): Promise<{
 };
 
 /**
- * Get low stock items (quantity < reorder_level)
+ * Get low stock items (quantity < reOrderLevel)
  */
 export const getLowStockItems = async (): Promise<{
   data: InventoryItem[] | null;
@@ -177,7 +177,7 @@ export const getLowStockItems = async (): Promise<{
   }
 
   const lowStockItems = data.filter(
-    (item) => item.totalAmount < item.reorder_level
+    (item) => item.totalAmount < item.reOrderLevel
   );
 
   return { data: lowStockItems, error: null };

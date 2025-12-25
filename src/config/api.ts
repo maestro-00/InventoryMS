@@ -28,6 +28,12 @@ export const API_ENDPOINTS = {
     GET_EXTERNAL_LOGINS: '/auth/manage/info',
     UNLINK_EXTERNAL_LOGIN: '/auth/manage/linklogin',
   },
+  RETAILSTOCK: {
+    LIST: '/RetailStock',
+    UPDATE: `/RetailStock`,
+    GET: (id: string) => `/RetailStock/${id}`,
+    GETBYINVENTORYITEM: (id: string) => `/RetailStock/GetByInventoryItem/${id}`,
+  },
   // Inventory endpoints
   INVENTORY: {
     LIST: '/InventoryItems',
@@ -37,6 +43,7 @@ export const API_ENDPOINTS = {
     GET: (id: string) => `/InventoryItems/${id}`,
     UPLOAD_IMAGE: '/inventory/upload-image',
   },
+  
   // Inventory Item endpoints
   INVENTORYITEM: {
     LIST: '/InventoryItemTypes',
@@ -49,11 +56,13 @@ export const API_ENDPOINTS = {
   
   // Sales endpoints
   SALES: {
-    LIST: '/sales',
-    CREATE: '/sales',
-    GET: (id: string) => `/sales/${id}`,
-    STATS: '/sales/stats',
-    TODAY: '/sales/today',
+    LIST: '/SaleGroups',
+    CREATE: '/SaleGroups',
+    UPDATE: (id: string) => `/SaleGroups/${id}`,
+    DELETE: (id: string) => `/SaleGroups/${id}`,
+    GET: (id: string) => `/SaleGroups/${id}`,
+    STATS: '/SaleGroups/stats',
+    TODAY: '/Sales/today',
   },
   // Analytics endpoints
   ANALYTICS: {

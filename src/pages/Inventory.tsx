@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
 import { getInventoryItemTypes, InventoryItemType } from "@/services/inventoryTypeService";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { updateRetailStock, UpdateRetailStockData } from "@/services/retailStockService";
 
 interface InventoryItem {
   id: string;
@@ -18,9 +19,9 @@ interface InventoryItem {
   description: string | null;
   sku: string | null;
   price: number;
-  retailQuantity: number | null;
   totalAmount: number;
-  reorder_level: number;
+  retailQuantity: number;
+  reOrderLevel: number;
   image_url: string | null;
   type: InventoryItemType;
 }
@@ -41,7 +42,7 @@ const Inventory = () => {
     price: "",
     retailQuantity: "",
     quantity: "0",
-    reorder_level: "10",
+    reOrderLevel: "10",
     typeId: "0",
     image_url: "",
   });
@@ -67,6 +68,8 @@ const Inventory = () => {
       setItems(data || []);
     }
   };
+
+  
   const loadTypes = async () => {
     const { data, error } = await getInventoryItemTypes();
 
@@ -119,7 +122,7 @@ const Inventory = () => {
     const retailQuantityError = validateRetailQuantity();
     if (retailQuantityError) {
       toast({
-        title: "Invalid Password",
+        title: "Retail Quantity Error",
         description: retailQuantityError,
         variant: "destructive",
       }); 
@@ -133,7 +136,7 @@ const Inventory = () => {
       price: parseFloat(formData.price),
       retailQuantity: formData.retailQuantity ? parseFloat(formData.retailQuantity) : null,
       totalAmount: parseInt(formData.quantity),
-      reorder_level: parseInt(formData.reorder_level), 
+      reOrderLevel: parseInt(formData.reOrderLevel), 
       typeId: parseInt(formData.typeId),
       image_url: formData.image_url || null,
     };
@@ -148,10 +151,23 @@ const Inventory = () => {
           variant: "destructive",
         });
       } else {
-        toast({
-          title: "Success",
-          description: "Item updated successfully",
-        });
+        const retailStock : UpdateRetailStockData = {
+          inventoryItemId: editingItem.id,
+          quantity: parseInt(formData.retailQuantity)
+        }
+        const { error: retailQuantityError } = await updateRetailStock(retailStock);
+        if (retailQuantityError) {
+          toast({
+            title: "Retail Quantity Error",
+            description: "Failed to update retail quantity",
+            variant: "destructive",
+          });
+        }else {
+          toast({
+            title: "Success",
+            description: "Item updated successfully",
+          });
+        }
         setEditingItem(null);
         resetForm();
         loadItems();
@@ -205,22 +221,22 @@ const Inventory = () => {
       price: "",
       retailQuantity: "",
       quantity: "0",
-      reorder_level: "10",
+      reOrderLevel: "10",
       typeId: "0",
       image_url: "",
     });
   };
 
-  const startEdit = (item: InventoryItem) => {
+  const startEdit = async (item: InventoryItem) => { 
     setEditingItem(item);
     setFormData({
       name: item.name,
       description: item.description || "",
       sku: item.sku || "",
       price: item.price.toString(),
-      retailQuantity: item.retailQuantity?.toString() || "",
+      retailQuantity: item.retailQuantity.toString() || "",
       quantity: item.totalAmount.toString(),
-      reorder_level: item.reorder_level?.toString() || "0",
+      reOrderLevel: item.reOrderLevel?.toString() || "0",
       typeId: item.type.id.toString(),
       image_url: item.image_url || "",
     });
@@ -340,12 +356,12 @@ const Inventory = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="reorder_level">Reorder Level</Label>
+                    <Label htmlFor="reOrderLevel">Reorder Level</Label>
                     <Input
-                      id="reorder_level"
+                      id="reOrderLevel"
                       type="number"
-                      value={formData.reorder_level}
-                      onChange={(e) => setFormData({ ...formData, reorder_level: e.target.value })}
+                      value={formData.reOrderLevel}
+                      onChange={(e) => setFormData({ ...formData, reOrderLevel: e.target.value })}
                     />
                   </div>
                 </div>
@@ -436,7 +452,7 @@ const Inventory = () => {
                   )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Quantity:</span>
-                    <span className={`font-medium ${item.totalAmount < item.reorder_level ? 'text-destructive' : 'text-accent'}`}>
+                    <span className={'font-medium'}>
                       {item.totalAmount}
                     </span>
                   </div>
@@ -447,9 +463,9 @@ const Inventory = () => {
                   {item.retailQuantity && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Retail Quantity:</span>
-                      <span className="font-medium">${item.retailQuantity.toFixed(2)}</span>
+                      <span className={`font-medium ${item.retailQuantity < item.reOrderLevel ? 'text-destructive' : 'text-accent'}`}>{item.retailQuantity}</span>
                     </div>
-                  )}
+                  )} 
                 </div>
               </CardContent>
             </Card>
