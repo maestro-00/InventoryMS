@@ -21,8 +21,6 @@ playwright-report/
 playwright/.cache/
 blob-report/
 .lighthouseci/
-src/routeTree.gen.ts
-
 
 # Editor directories and files
 .vscode/*
