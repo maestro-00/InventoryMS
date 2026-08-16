@@ -21,6 +21,31 @@ export async function navigateApp(page: Page, label: string | RegExp) {
   });
 }
 
+function isTransientNavigationError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.includes("NS_BINDING_ABORTED") ||
+    message.includes("NS_ERROR_FAILURE") ||
+    message.includes("frame was detached") ||
+    message.includes("Navigation interrupted")
+  );
+}
+
+/** Firefox occasionally aborts back-to-back document navigations in CI. */
 export async function gotoStable(page: Page, route: string) {
-  await page.goto(route, { waitUntil: "domcontentloaded" });
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await page.goto(route, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("domcontentloaded");
+      return;
+    } catch (error) {
+      lastError = error;
+      if (!isTransientNavigationError(error) || attempt === 2) {
+        throw error;
+      }
+      await page.waitForTimeout(300 * (attempt + 1));
+    }
+  }
+  throw lastError;
 }
