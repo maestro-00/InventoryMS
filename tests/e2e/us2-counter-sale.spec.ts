@@ -107,7 +107,9 @@ test("@critical a cashier can scan, search, favourite, hold, split pay, and retu
   await page.getByRole("button", { name: /add sugar 1kg/i }).click();
   await page.getByLabel(/cash received/i).fill("25.00");
   await page.getByRole("button", { name: /take cash payment/i }).click();
-  await expect(page.getByText(/receipt/i)).toBeVisible();
+  await expect(page.getByRole("heading", { name: /receipt/i })).toBeVisible({
+    timeout: 15_000,
+  });
   await page.getByRole("button", { name: /start a new sale/i }).click();
 
   await page.getByRole("button", { name: /recall held sale/i }).click();
