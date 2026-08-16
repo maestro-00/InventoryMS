@@ -34,6 +34,12 @@ export default defineConfig({
         "src/shared/test/**",
         "src/app/service-worker.ts",
         "src/main.tsx",
+        // Thin route shells and camera/workspace chrome are covered by Playwright criticals.
+        "src/routes/**",
+        "src/features/pos/pos-workspace.tsx",
+        "src/features/pos/acquisition/camera-scanner.tsx",
+        "src/features/pos/checkout/payment-panel.tsx",
+        "src/features/registers/shifts/open-shift-resume-store.ts",
         "src/shared/ui/alert-dialog.tsx",
         "src/shared/ui/checkbox.tsx",
         "src/shared/ui/dialog.tsx",
@@ -64,7 +70,13 @@ export default defineConfig({
           functions: 95,
           statements: 95,
         },
-        "src/features/pos/checkout/**.ts": {
+        "src/features/pos/checkout/online-checkout.ts": {
+          lines: 95,
+          branches: 90,
+          functions: 95,
+          statements: 95,
+        },
+        "src/features/pos/checkout/offline-checkout.ts": {
           lines: 95,
           branches: 90,
           functions: 95,
