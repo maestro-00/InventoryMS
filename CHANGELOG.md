@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
+
 - Multi-language support
 - Dark mode toggle
 - Export reports (PDF/Excel)
@@ -20,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2025-10-09
 
 ### Added
+
 - Initial release of InventoryMS
 - Cookie-based authentication system with secure HTTP-only cookies
 - User registration and login with client-side validation
@@ -47,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vite build tool for fast development
 
 ### Security
+
 - HTTP-only cookie authentication
 - Client-side password validation
 - Secure API communication with credentials
@@ -54,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Input validation and sanitization
 
 ### Documentation
+
 - Comprehensive README with setup instructions
 - Contributing guidelines (CONTRIBUTING.md)
 - Code of Conduct (CODE_OF_CONDUCT.md)
@@ -65,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Project structure overview
 
 ### Developer Experience
+
 - TypeScript for type safety
 - Hot module replacement with Vite
 - ESLint for code linting
@@ -77,21 +82,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Release Notes Format
 
 ### Added
+
 - New features
 
 ### Changed
+
 - Changes in existing functionality
 
 ### Deprecated
+
 - Soon-to-be removed features
 
 ### Removed
+
 - Removed features
 
 ### Fixed
+
 - Bug fixes
 
 ### Security
+
 - Security improvements and fixes
 
 ---

@@ -1,76 +1,56 @@
 name: CI
 
 on:
-  push:
-    branches: [ main, develop ]
   pull_request:
-    branches: [ main, develop ]
+  push:
+    branches: [main, master, develop, feat/**]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  lint:
-    name: Lint
+  quality:
+    name: Quality gates
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 30
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
         with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Run ESLint
-        run: npm run lint
+          version: 11.20.0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint --max-warnings=0
+      - run: pnpm typecheck
+      - run: pnpm test:coverage
+      - run: pnpm api:check
+      - run: pnpm build
 
-  build:
-    name: Build
+  browsers:
+    name: P1-P3 critical browsers
     runs-on: ubuntu-latest
-    needs: lint
-    
+    timeout-minutes: 45
+    needs: quality
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
         with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Build project
-        run: npm run build
-      
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+          version: 11.20.0
+      - uses: actions/setup-node@v5
         with:
-          name: dist
-          path: dist/
-          retention-days: 7
-
-  type-check:
-    name: Type Check
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Run TypeScript type check
-        run: npx tsc --noEmit
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - name: Critical E2E (P1-P3; P4 gated)
+        env:
+          INVENTORYX_OFFLINE_READY: "false"
+        run: pnpm test:e2e:critical
+      - run: pnpm test:a11y
+      - run: pnpm test:performance
+        continue-on-error: true

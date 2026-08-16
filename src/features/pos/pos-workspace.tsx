@@ -1,0 +1,637 @@
+import { Link } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { isProblemError } from "../../shared/api/errors/problem-error";
+import { useSession } from "../../shared/auth/session-context";
+import { Button } from "../../shared/ui/button";
+import { TextField } from "../../shared/ui/forms/form-field";
+import { ProblemSummary, toProblem } from "../../shared/ui/forms/problem-summary";
+import { LoadingState } from "../../shared/ui/states/ui-state";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../shared/ui/tabs";
+import {
+  fetchProductByBarcode,
+  fetchProducts,
+} from "../catalogue/products/api/products-api";
+import { useLocations } from "../inventory/locations/api/location-queries";
+import { fetchStock } from "../inventory/opening-stock/api/opening-stock-api";
+import { FIRST_SALE_STEP } from "../onboarding/completion";
+import { useMarkOnboardingStep } from "../onboarding/mark-onboarding-step";
+import {
+  fetchRegisters,
+  type ShiftRecord,
+} from "../registers/registers/api/registers-api";
+import { RegisterForm } from "../registers/registers/register-form";
+import { OpenShift } from "../registers/shifts/open-shift";
+import {
+  getOpenShiftHintsSnapshot,
+  listOpenShiftHints,
+  setOpenShiftHint,
+  subscribeOpenShiftHints,
+  type OpenShiftResumeHint,
+} from "../registers/shifts/open-shift-resume-store";
+import { useOnlineStatus } from "../../shared/hooks/use-online-status";
+import { listPendingSales } from "../offline-sync/offline-sale-repository";
+import { setPendingSaleCount } from "../offline-sync/pending-sale-count-store";
+import { CameraScanner } from "./acquisition/camera-scanner";
+import { FavouritesGrid } from "./acquisition/favourites-grid";
+import { HardwareScanner } from "./acquisition/hardware-scanner";
+import { ProductSearch } from "./acquisition/product-search";
+import { UnknownBarcode } from "./acquisition/unknown-barcode";
+import { AfterSalePanel } from "./after-sale/after-sale-panel";
+import {
+  cartErrors,
+  cartReducer,
+  createCart,
+  removeLine,
+  scanProduct,
+  setDiscount,
+  setNote,
+  setQuantity,
+  toSaleLines,
+  type CartProduct,
+  type CartState,
+} from "./cart/cart-store";
+import { PaymentPanel } from "./checkout/payment-panel";
+import {
+  completeEligibleOfflineSale,
+  type OfflineCompletionResult,
+} from "./checkout/offline-checkout";
+import { completeSale, SaleSubmissionGuard } from "./checkout/online-checkout";
+import { holdSale } from "./held-sales/api/held-sales-api";
+import { HeldSalesPanel } from "./held-sales/held-sales-panel";
+import { OfflineProvisionalReceipt } from "./receipts/offline-receipt";
+import { ReceiptView } from "./receipts/receipt-view";
+import { SaleHistory } from "./sales/sale-history";
+import type { SaleRecord } from "./sales/api/sales-api";
+
+type Panel = "sell" | "receipt" | "history" | "provisional";
+
+export function PosWorkspace() {
+  const queryClient = useQueryClient();
+  const { session } = useSession();
+  const isOnline = useOnlineStatus();
+  const locations = useLocations();
+  const locationId = locations.data?.[0]?.id ?? "";
+  const markOnboardingStep = useMarkOnboardingStep();
+
+  const registers = useQuery({
+    queryKey: ["registers", locationId],
+    queryFn: () => fetchRegisters(locationId),
+    enabled: locationId !== "",
+  });
+  const products = useQuery({
+    queryKey: ["pos-products", locationId],
+    queryFn: () => fetchProducts({ pageSize: 200 }),
+    enabled: isOnline,
+  });
+  const stock = useQuery({
+    queryKey: ["stock", locationId],
+    queryFn: () => fetchStock({ locationId }),
+    enabled: locationId !== "" && isOnline,
+  });
+
+  const [shift, setShift] = useState<ShiftRecord | null>(null);
+  const [cart, setCart] = useState<CartState>(() => createCart());
+  const [cashReceived, setCashReceived] = useState("");
+  const [clientErrors, setClientErrors] = useState<string[]>([]);
+  const [sale, setSale] = useState<SaleRecord | null>(null);
+  const [provisional, setProvisional] = useState<OfflineCompletionResult | null>(null);
+  const [panel, setPanel] = useState<Panel>("sell");
+  const [unknownBarcode, setUnknownBarcode] = useState<string | null>(null);
+  const guard = useRef(
+    new SaleSubmissionGuard<
+      | { mode: "offline"; result: OfflineCompletionResult }
+      | { mode: "online"; result: SaleRecord }
+    >(),
+  );
+
+  // Subscribe so a shift opened or closed elsewhere updates the resume list here.
+  const hintsSnapshot = useSyncExternalStore(
+    subscribeOpenShiftHints,
+    getOpenShiftHintsSnapshot,
+    () => "[]",
+  );
+  void hintsSnapshot;
+
+  const resumableHints =
+    session?.tenantId && !shift
+      ? listOpenShiftHints(session.tenantId).filter((hint) =>
+          (registers.data ?? []).some((register) => register.id === hint.registerId),
+        )
+      : [];
+
+  const resumeShift = useCallback((hint: OpenShiftResumeHint) => {
+    setShift({
+      id: hint.shiftId,
+      registerId: hint.registerId,
+      openedBy: "",
+      openedAt: new Date().toISOString(),
+      openingFloat: "0",
+      status: "Open",
+    });
+  }, []);
+
+  const onShiftOpened = useCallback(
+    (opened: ShiftRecord) => {
+      setShift(opened);
+      if (!session?.tenantId) return;
+      const register = registers.data?.find((entry) => entry.id === opened.registerId);
+      setOpenShiftHint({
+        tenantId: session.tenantId,
+        registerId: opened.registerId,
+        registerName: register?.name ?? "Register",
+        shiftId: opened.id,
+      });
+    },
+    [registers.data, session],
+  );
+
+  const onCompleted = useCallback(
+    (completed: SaleRecord) => {
+      setSale(completed);
+      setProvisional(null);
+      setPanel("receipt");
+      void queryClient.invalidateQueries({ queryKey: ["stock"] });
+      void queryClient.invalidateQueries({ queryKey: ["sales"] });
+      void queryClient.invalidateQueries({ queryKey: ["held-sales"] });
+      markOnboardingStep(FIRST_SALE_STEP);
+    },
+    [markOnboardingStep, queryClient],
+  );
+
+  const onProvisionalCompleted = (result: OfflineCompletionResult) => {
+    setProvisional(result);
+    setSale(null);
+    setPanel("provisional");
+    setCart(createCart());
+    setCashReceived("");
+    if (session?.tenantId && shift?.registerId) {
+      void listPendingSales(session.tenantId, shift.registerId).then((sales) => {
+        setPendingSaleCount(sales.length);
+      });
+    }
+  };
+
+  const checkout = useMutation({
+    mutationFn: async (): Promise<
+      | { mode: "offline"; result: OfflineCompletionResult }
+      | { mode: "online"; result: SaleRecord }
+    > =>
+      guard.current.run(async () => {
+        const payments = [{ tender: "Cash" as const, amount: cashReceived }];
+        if (!isOnline) {
+          if (!session?.tenantId) {
+            throw new Error("Sign in is required before completing an offline sale.");
+          }
+          return {
+            mode: "offline" as const,
+            result: await completeEligibleOfflineSale({
+              tenantId: session.tenantId,
+              registerId: shift?.registerId ?? "",
+              shiftId: shift?.id ?? "",
+              cart,
+              payments,
+            }),
+          };
+        }
+        return {
+          mode: "online" as const,
+          result: await completeSale({
+            clientSaleId: cart.clientSaleId,
+            registerId: shift?.registerId ?? "",
+            shiftId: shift?.id ?? "",
+            lines: toSaleLines(cart),
+            payments,
+          }),
+        };
+      }),
+    onSuccess: (outcome) => {
+      if (outcome.mode === "offline") {
+        onProvisionalCompleted(outcome.result);
+        return;
+      }
+      onCompleted(outcome.result);
+    },
+  });
+
+  const hold = useMutation({
+    mutationFn: () =>
+      holdSale({
+        clientSaleId: cart.clientSaleId,
+        registerId: shift?.registerId ?? "",
+        shiftId: shift?.id ?? "",
+        lines: toSaleLines(cart),
+      }),
+    onSuccess: () => {
+      setCart(createCart());
+      setCashReceived("");
+      void queryClient.invalidateQueries({ queryKey: ["held-sales"] });
+    },
+  });
+
+  const stockByProduct = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const level of stock.data?.items ?? []) {
+      map.set(level.productId, level.qtyOnHand);
+    }
+    return map;
+  }, [stock.data]);
+
+  const addProduct = useCallback((product: CartProduct) => {
+    setCart((current) => cartReducer(current, scanProduct(product)));
+    setUnknownBarcode(null);
+  }, []);
+
+  const onBarcode = useCallback(
+    async (barcode: string) => {
+      try {
+        const product = await fetchProductByBarcode(barcode);
+        addProduct({
+          productId: product.id,
+          productName: product.name,
+          ...(product.barcode ? { barcode: product.barcode } : {}),
+          allowFractional: product.allowFractional,
+          catalogUnitPrice: product.sellingPrice,
+          ...(product.taxTreatmentCode
+            ? { taxTreatmentCode: product.taxTreatmentCode }
+            : {}),
+          status: product.status,
+        });
+      } catch (error) {
+        if (isProblemError(error) && error.problem.kind === "notFound") {
+          setUnknownBarcode(barcode);
+          return;
+        }
+        throw error;
+      }
+    },
+    [addProduct],
+  );
+
+  // Use isLoading (pending+fetching), not isPending alone: disabled or idle
+  // queries report isPending without data and would unmount the register/shift
+  // forms mid-typing (Firefox Playwright detach/stability flakes).
+  if (locations.isLoading || (isOnline && products.isLoading)) {
+    return <LoadingState label="Loading the sales workspace" />;
+  }
+  if (locations.isError) return <ProblemSummary problem={toProblem(locations.error)} />;
+  if (locationId === "") {
+    return (
+      <section className="flex flex-col gap-3">
+        <h1 className="text-2xl font-semibold">Sell</h1>
+        <p>
+          Create a location before selling. Stock, registers, and sales all belong to a
+          location.
+        </p>
+        <Link className="underline" to="/locations">
+          Create your first location
+        </Link>
+      </section>
+    );
+  }
+
+  function startNewSale() {
+    setCart(createCart());
+    setCashReceived("");
+    setSale(null);
+    setProvisional(null);
+    setPanel("sell");
+    guard.current.reset();
+    checkout.reset();
+  }
+
+  function takePayment() {
+    const errors = cartErrors(cart);
+    if (cashReceived.trim() === "")
+      errors.push("Enter the cash received from the customer.");
+    if (errors.length > 0) {
+      setClientErrors(errors);
+      return;
+    }
+    setClientErrors([]);
+    checkout.mutate();
+  }
+
+  const problem = toProblem(checkout.error);
+  const registerId = shift?.registerId ?? registers.data?.[0]?.id ?? "";
+  const tenantId = session?.tenantId ?? "";
+
+  return (
+    <div className="flex flex-col gap-6 lg:flex-row">
+      <div className="flex flex-1 flex-col gap-4">
+        <h1 className="text-2xl font-semibold">Sell</h1>
+        <HardwareScanner onScan={(barcode) => void onBarcode(barcode)} />
+
+        {panel === "receipt" && sale ? (
+          <ReceiptView
+            sale={sale}
+            onNewSale={startNewSale}
+            onViewHistory={() => {
+              setPanel("history");
+            }}
+          />
+        ) : null}
+
+        {panel === "provisional" && provisional ? (
+          <section className="flex flex-col gap-3">
+            <OfflineProvisionalReceipt
+              clientSaleId={provisional.clientSaleId}
+              registerId={registerId}
+              occurredAt={provisional.receipt.createdAt}
+              lines={provisional.cart.lines.map((line) => ({
+                name: line.name,
+                qty: line.qty,
+                lineTotal: line.lineTotal,
+              }))}
+              grandTotal={provisional.cart.grandTotal}
+              qrPayload={provisional.receipt.qrPayload}
+            />
+            <Button type="button" onClick={startNewSale}>
+              Start a new sale
+            </Button>
+          </section>
+        ) : null}
+
+        {panel === "history" ? (
+          <section className="flex flex-col gap-3">
+            <SaleHistory locationId={locationId} />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setPanel(sale ? "receipt" : provisional ? "provisional" : "sell");
+              }}
+            >
+              Back to the till
+            </Button>
+          </section>
+        ) : null}
+
+        {panel === "sell" ? (
+          registers.isLoading ? (
+            <LoadingState label="Loading registers" />
+          ) : (registers.data ?? []).length === 0 ? (
+            <RegisterForm
+              locationId={locationId}
+              onCreated={() => {
+                void registers.refetch();
+              }}
+            />
+          ) : !shift ? (
+            <div className="flex flex-col gap-6">
+              {resumableHints.length > 0 ? (
+                <section
+                  className="flex flex-col gap-3 rounded-md border p-4"
+                  aria-label="Resume an open shift"
+                >
+                  <h2 className="text-lg font-semibold">Resume an open shift</h2>
+                  <p className="text-sm text-muted-foreground">
+                    A shift is already open on this device. Resume it to keep selling,
+                    or open a new shift below.
+                  </p>
+                  <ul className="flex flex-col gap-2">
+                    {resumableHints.map((hint) => (
+                      <li key={hint.shiftId}>
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            resumeShift(hint);
+                          }}
+                        >
+                          Resume shift on {hint.registerName}
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+              <OpenShift registers={registers.data ?? []} onOpened={onShiftOpened} />
+            </div>
+          ) : (
+            <Tabs defaultValue="sell">
+              <TabsList>
+                <TabsTrigger value="sell">Sell</TabsTrigger>
+                <TabsTrigger value="returns" disabled={!isOnline}>
+                  Returns
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="sell">
+                <section className="flex flex-col gap-4">
+                  {!isOnline ? (
+                    <p className="text-sm text-muted-foreground" role="status">
+                      Offline mode: live-only actions stay disabled. Eligible cash and
+                      local tenders queue for sync.
+                    </p>
+                  ) : null}
+                  {clientErrors.length > 0 ? (
+                    <ProblemSummary
+                      key={clientErrors.join("|")}
+                      messages={clientErrors}
+                      title="Check the sale"
+                    />
+                  ) : null}
+                  {problem ? <ProblemSummary problem={problem} /> : null}
+                  {toProblem(hold.error) ? (
+                    <ProblemSummary problem={toProblem(hold.error)} />
+                  ) : null}
+
+                  <CameraScanner onScan={(barcode) => void onBarcode(barcode)} />
+                  {isOnline ? (
+                    <ProductSearch onAdd={addProduct} />
+                  ) : (
+                    <p className="text-sm text-muted-foreground" role="status">
+                      Live product search is unavailable offline. Use the prepared
+                      register catalogue or barcode scan.
+                    </p>
+                  )}
+                  <FavouritesGrid
+                    registerId={registerId}
+                    products={products.data?.items ?? []}
+                    onAdd={addProduct}
+                  />
+                  {unknownBarcode ? (
+                    <UnknownBarcode
+                      barcode={unknownBarcode}
+                      onCreated={addProduct}
+                      onDismiss={() => {
+                        setUnknownBarcode(null);
+                      }}
+                    />
+                  ) : null}
+
+                  <ul className="flex min-h-32 flex-col gap-3">
+                    {cart.lines.map((line) => (
+                      <li
+                        key={line.productId}
+                        className="flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-end"
+                      >
+                        <TextField
+                          label={`Quantity for ${line.productName}`}
+                          inputMode="decimal"
+                          value={line.qty}
+                          onChange={(event) => {
+                            const value = event.target.value;
+                            setCart((current) =>
+                              cartReducer(current, setQuantity(line.productId, value)),
+                            );
+                          }}
+                        />
+                        <TextField
+                          label={`Discount for ${line.productName}`}
+                          inputMode="decimal"
+                          value={line.lineDiscount}
+                          onChange={(event) => {
+                            const value = event.target.value;
+                            setCart((current) =>
+                              cartReducer(current, setDiscount(line.productId, value)),
+                            );
+                          }}
+                        />
+                        <TextField
+                          label={`Note for ${line.productName}`}
+                          value={line.note}
+                          onChange={(event) => {
+                            const value = event.target.value;
+                            setCart((current) =>
+                              cartReducer(current, setNote(line.productId, value)),
+                            );
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setCart((current) =>
+                              cartReducer(current, removeLine(line.productId)),
+                            );
+                          }}
+                        >
+                          Remove {line.productName}
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <TextField
+                    label="Cash received"
+                    inputMode="decimal"
+                    hint={
+                      isOnline
+                        ? "InventoryX calculates the total, tax, and change due."
+                        : "Provisional total uses catalog prices until sync confirms."
+                    }
+                    value={cashReceived}
+                    onChange={(event) => {
+                      setCashReceived(event.target.value);
+                    }}
+                  />
+                  <span className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      disabled={checkout.isPending}
+                      aria-busy={checkout.isPending}
+                      onClick={takePayment}
+                    >
+                      {checkout.isPending
+                        ? "Taking payment…"
+                        : isOnline
+                          ? "Take cash payment"
+                          : "Complete offline cash sale"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={!isOnline}
+                      title={
+                        isOnline
+                          ? undefined
+                          : "Holding a sale requires a live connection."
+                      }
+                      onClick={() => {
+                        hold.mutate();
+                      }}
+                    >
+                      Hold this sale
+                    </Button>
+                  </span>
+
+                  <PaymentPanel
+                    cart={cart}
+                    registerId={registerId}
+                    shiftId={shift.id}
+                    tenantId={tenantId}
+                    isOnline={isOnline}
+                    onCartChange={setCart}
+                    onCompleted={onCompleted}
+                    onProvisionalCompleted={onProvisionalCompleted}
+                  />
+                  <HeldSalesPanel
+                    products={products.data?.items ?? []}
+                    stockByProduct={stockByProduct}
+                    onRecall={(heldSale) => {
+                      setCart((current) => ({
+                        ...current,
+                        heldSaleId: heldSale.id,
+                        quote: heldSale,
+                        clientSaleId: heldSale.clientSaleId,
+                        lines: heldSale.lines.map((line) => ({
+                          productId: line.productId,
+                          productName: line.productName,
+                          allowFractional: true,
+                          catalogUnitPrice: line.unitPrice,
+                          status: "Active",
+                          qty: line.qty,
+                          lineDiscount: line.lineDiscount,
+                          note: line.note ?? "",
+                        })),
+                      }));
+                    }}
+                  />
+                </section>
+              </TabsContent>
+              <TabsContent value="returns">
+                {isOnline ? (
+                  <AfterSalePanel
+                    registerId={registerId}
+                    shiftId={shift.id}
+                    products={products.data?.items ?? []}
+                  />
+                ) : (
+                  <p role="status">
+                    Returns, exchanges, voids, and on-account charging are live-only and
+                    unavailable while offline.
+                  </p>
+                )}
+              </TabsContent>
+            </Tabs>
+          )
+        ) : null}
+      </div>
+
+      <aside className="flex w-full flex-col gap-2 lg:w-72" aria-label="Stock on hand">
+        <h2 className="text-lg font-semibold">Stock on hand</h2>
+        <p className="text-sm text-muted-foreground">
+          {isOnline
+            ? "Other-location availability requires a live connection."
+            : "Other-location availability is live-only and hidden while offline."}
+        </p>
+        {!isOnline ? (
+          <p className="text-sm text-muted-foreground" role="status">
+            Live stock levels are unavailable offline. Effective quantities come from
+            the prepared register snapshot after scan.
+          </p>
+        ) : stock.isLoading ? (
+          <LoadingState label="Loading stock" />
+        ) : (
+          <ul className="flex flex-col gap-1">
+            {(products.data?.items ?? []).map((product) => (
+              <li key={product.id}>
+                {product.name}: {stockByProduct.get(product.id) ?? "0"} on hand
+              </li>
+            ))}
+          </ul>
+        )}
+      </aside>
+    </div>
+  );
+}

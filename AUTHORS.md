@@ -10,7 +10,7 @@ This file lists the contributors to the InventoryMS project.
 
 We welcome contributions from the community! If you've contributed to this project, please add your name here in a pull request.
 
-<!-- 
+<!--
 Format:
 - **Your Name** (@github-username) - Brief description of contribution
 -->
@@ -22,6 +22,7 @@ If you'd like to contribute to InventoryMS, please read our [CONTRIBUTING.md](./
 ## Acknowledgments
 
 Special thanks to:
+
 - The React team for the amazing framework
 - The shadcn/ui team for the beautiful component library
 - The TailwindCSS team for the utility-first CSS framework
