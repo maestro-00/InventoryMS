@@ -4,11 +4,29 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>InventoryMS</title>
-    <meta name="description" content="InventoryMS" />
+    <meta
+      name="description"
+      content="Inventory and point of sale for InventoryX Cycle 1."
+    />
     <meta name="author" content="InventoryMS" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
   </head>
 
   <body>
+    <p
+      id="boot-brand"
+      style="
+        margin: 2rem 1.5rem;
+        font:
+          700 2rem/1.2 system-ui,
+          sans-serif;
+        color: #111;
+        min-height: 3rem;
+      "
+    >
+      InventoryMS
+    </p>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

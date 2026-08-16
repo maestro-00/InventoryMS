@@ -1,0 +1,37 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  full-suite:
+    name: Full browsers and flake detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.20.0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps
+      - run: pnpm test:e2e
+      - name: Repeat flake detection
+        run: pnpm exec playwright test --repeat-each 3 tests/e2e
+      - name: 100-sale offline stress
+        run: pnpm exec playwright test tests/e2e/us4-offline-provider.spec.ts
+        continue-on-error: true
+      - name: Provider contracts
+        run: pnpm exec vitest run tests/contract
+        continue-on-error: true
+      - name: Dependency audit
+        run: pnpm audit --prod
+      - name: Manual evidence checklist slots
+        run: |
+          echo "Record real-device camera, hardware scanner, print, PWA, and NVDA/VoiceOver evidence in specs/001-inventory-pos-frontend/validation/"

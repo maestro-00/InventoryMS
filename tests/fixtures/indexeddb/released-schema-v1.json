@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "releasedAt": "2026-08-01T00:00:00.000Z",
+  "notes": "Released Dexie schema fixture for InventoryMS register partition v1. Used by migration and mid-shift update tests.",
+  "tenantId": "11111111-1111-4111-8111-111111111111",
+  "registerId": "22222222-2222-4222-8222-222222222222",
+  "meta": {
+    "id": "11111111-1111-4111-8111-111111111111:22222222-2222-4222-8222-222222222222",
+    "tenantId": "11111111-1111-4111-8111-111111111111",
+    "registerId": "22222222-2222-4222-8222-222222222222",
+    "shiftId": "33333333-3333-4333-8333-333333333333",
+    "locked": false,
+    "readinessDeadline": "2026-08-13T23:59:59.000Z",
+    "watermark": "fixture-v1-AAA=",
+    "bundleVersion": "2026.08.offline-prep.1",
+    "preparedAt": "2026-08-13T12:00:00.000Z"
+  },
+  "products": [
+    {
+      "id": "44444444-4444-4444-8444-444444444444",
+      "name": "Sugar 1kg",
+      "sku": "SUG-001",
+      "barcode": "6001001",
+      "sellingPrice": "10.0000",
+      "taxTreatmentId": null,
+      "allowFractional": false,
+      "trackingMode": "Simple",
+      "allowsDiscount": true,
+      "version": "1"
+    }
+  ],
+  "stock": [
+    {
+      "id": "44444444-4444-4444-8444-444444444444::",
+      "productId": "44444444-4444-4444-8444-444444444444",
+      "variantId": null,
+      "batchId": null,
+      "qtyOnHand": "10.0000",
+      "qtyInTransit": "0.0000",
+      "qtyQuarantine": "0.0000",
+      "version": "1"
+    }
+  ],
+  "taxes": [],
+  "offlineSales": [
+    {
+      "clientSaleId": "55555555-5555-4555-8555-555555555555",
+      "tenantId": "11111111-1111-4111-8111-111111111111",
+      "registerId": "22222222-2222-4222-8222-222222222222",
+      "shiftId": "33333333-3333-4333-8333-333333333333",
+      "status": "pending",
+      "payloadJson": "{\"lines\":[{\"productId\":\"44444444-4444-4444-8444-444444444444\",\"qty\":\"1.0000\"}]}",
+      "payloadHash": "fixture-hash-1",
+      "occurredAt": "2026-08-13T12:05:00.000Z",
+      "leaseExpiresAt": null,
+      "serverSaleId": null,
+      "rejectionReason": null,
+      "createdAt": "2026-08-13T12:05:00.000Z"
+    }
+  ],
+  "overlays": [],
+  "provisionalReceipts": []
+}

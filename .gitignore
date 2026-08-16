@@ -10,7 +10,19 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+build
+coverage
+*.tsbuildinfo
 *.local
+
+# Test and quality artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+blob-report/
+.lighthouseci/
+src/routeTree.gen.ts
+
 
 # Editor directories and files
 .vscode/*
@@ -23,3 +35,8 @@ dist-ssr
 *.sln
 *.sw?
 .env
+.env.*
+!.env.example
+!.env.live.local.example
+*.tmp
+Thumbs.db

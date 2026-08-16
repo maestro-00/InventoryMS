@@ -24,6 +24,7 @@ We pledge to make participation in our project a harassment-free experience for 
 ### Our Standards
 
 **Positive behavior includes:**
+
 - Using welcoming and inclusive language
 - Being respectful of differing viewpoints and experiences
 - Gracefully accepting constructive criticism
@@ -31,6 +32,7 @@ We pledge to make participation in our project a harassment-free experience for 
 - Showing empathy towards other community members
 
 **Unacceptable behavior includes:**
+
 - Trolling, insulting/derogatory comments, and personal or political attacks
 - Public or private harassment
 - Publishing others' private information without explicit permission
@@ -43,12 +45,14 @@ We pledge to make participation in our project a harassment-free experience for 
 Before creating bug reports, please check existing issues to avoid duplicates. When you create a bug report, include as many details as possible:
 
 **Bug Report Template:**
+
 ```markdown
 **Describe the bug**
 A clear and concise description of what the bug is.
 
 **To Reproduce**
 Steps to reproduce the behavior:
+
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
@@ -61,9 +65,10 @@ A clear description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Environment:**
- - OS: [e.g. Windows, macOS, Linux]
- - Browser: [e.g. Chrome, Firefox, Safari]
- - Version: [e.g. 1.0.0]
+
+- OS: [e.g. Windows, macOS, Linux]
+- Browser: [e.g. Chrome, Firefox, Safari]
+- Version: [e.g. 1.0.0]
 
 **Additional context**
 Add any other context about the problem here.
@@ -74,6 +79,7 @@ Add any other context about the problem here.
 Enhancement suggestions are tracked as GitHub issues. When creating an enhancement suggestion, include:
 
 **Enhancement Template:**
+
 ```markdown
 **Is your feature request related to a problem?**
 A clear description of what the problem is.
@@ -91,6 +97,7 @@ Add any other context or screenshots about the feature request.
 ### Your First Code Contribution
 
 Unsure where to begin? Look for issues labeled:
+
 - `good first issue` - Good for newcomers
 - `help wanted` - Extra attention needed
 - `bug` - Something isn't working
@@ -98,143 +105,82 @@ Unsure where to begin? Look for issues labeled:
 
 ## Development Setup
 
-1. **Fork the repository** on GitHub
-2. **Clone your fork** locally:
+1. **Fork** and clone the repository.
+2. **Enable pnpm 11.20.0** via Corepack (npm/yarn/bun are not supported):
+
    ```bash
-   git clone https://github.com/your-username/InventoryMS.git
-   cd InventoryMS
+   corepack enable
+   corepack prepare pnpm@11.20.0 --activate
+   pnpm install --frozen-lockfile
    ```
 
-3. **Add upstream remote:**
+3. **Environment:**
+
    ```bash
-   git remote add upstream https://github.com/original-owner/InventoryMS.git
+   cp .env.example .env.local
    ```
 
-4. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+   Set `VITE_INVENTORYX_ORIGIN` and optionally `VITE_API_MOCKING=true` for MSW journeys.
 
-5. **Create a branch** for your changes:
+4. **Branch and run:**
+
    ```bash
    git checkout -b feature/your-feature-name
-   # or
-   git checkout -b fix/your-bug-fix
+   pnpm dev
    ```
 
-6. **Set up environment:**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-
-7. **Start development server:**
-   ```bash
-   npm run dev
-   ```
+5. **Architecture overview:** see [`docs/architecture.md`](./docs/architecture.md) and
+   [`README.md`](./README.md). Feature work follows
+   `specs/001-inventory-pos-frontend/`.
 
 ## Coding Standards
 
 ### TypeScript
 
-- Use TypeScript for all new files
-- Define proper types and interfaces
-- Avoid using `any` type unless absolutely necessary
-- Use meaningful variable and function names
+- Strict TypeScript for all new files (`noUncheckedIndexedAccess`, no `any`).
+- Prefer generated OpenAPI types over hand-written DTOs.
+- Money and quantities stay decimal strings from InventoryX — do not recompute totals.
 
-### React Components
+### React and file layout
 
-```typescript
-// ✅ Good
-interface ButtonProps {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-}
+- Features live under `src/features/<area>/`.
+- Shared UI primitives live under `src/shared/ui/` (not a prototype `components/ui` tree).
+- Routes are TanStack file routes under `src/routes/`.
+- Session tokens stay in memory (`SessionManager`); never write them to `localStorage`.
+- Navigate between in-app routes with `<Link>`, never a raw `<a href="/…">`. An anchor
+  reloads the document, which discards the in-memory session and lands the user back on
+  the sign-in page. Reserve `<a>` for external URLs and downloads.
+- Component tests that render a `Link` need `renderWithRouter` from
+  `src/shared/test/render-router.tsx`; `renderWithProviders` has no router on purpose.
 
-export const Button: React.FC<ButtonProps> = ({ label, onClick, disabled = false }) => {
-  return (
-    <button onClick={onClick} disabled={disabled}>
-      {label}
-    </button>
-  );
-};
+### API access
 
-// ❌ Bad
-export const Button = (props: any) => {
-  return <button onClick={props.onClick}>{props.label}</button>;
-};
+- Use the generated OpenAPI client in `src/shared/api/` / feature `*-api.ts` modules.
+- Do not add raw `fetch` endpoint maps or revive deleted `src/services/*` layers.
+- When the provider contract changes: update `openapi/inventoryx-v1.json`, then
+  `pnpm api:generate && pnpm api:check`.
+
+### Quality loop before PR
+
+```bash
+pnpm format:check
+pnpm lint --max-warnings=0
+pnpm typecheck
+pnpm test
+pnpm api:check
+pnpm build
 ```
 
-### File Naming
+Story E2E (Chromium): `pnpm test:e2e:critical`. Responsive: `pnpm test:responsive`.
+Performance budgets: `pnpm check:bundle` after build. Validation evidence patterns live
+under `specs/001-inventory-pos-frontend/validation/`.
 
-- Components: `PascalCase.tsx` (e.g., `Dashboard.tsx`)
-- Utilities: `camelCase.ts` (e.g., `formatDate.ts`)
-- Hooks: `use-kebab-case.ts` (e.g., `use-api.ts`)
-- Services: `camelCase.ts` (e.g., `authService.ts`)
+### Offline / browser caveats for contributors
 
-### Code Style
-
-- Use 2 spaces for indentation
-- Use semicolons
-- Use single quotes for strings
-- Maximum line length: 100 characters
-- Add comments for complex logic
-
-### Component Structure
-
-```typescript
-// 1. Imports
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-
-// 2. Types/Interfaces
-interface MyComponentProps {
-  title: string;
-}
-
-// 3. Component
-export const MyComponent: React.FC<MyComponentProps> = ({ title }) => {
-  // 4. Hooks
-  const [state, setState] = useState('');
-
-  // 5. Functions
-  const handleClick = () => {
-    // logic
-  };
-
-  // 6. Render
-  return (
-    <div>
-      <h1>{title}</h1>
-      <Button onClick={handleClick}>Click me</Button>
-    </div>
-  );
-};
-```
-
-### API Services
-
-- Keep API calls in service files (`src/services/`)
-- Use the `useApi` hook or `apiRequest` function
-- Handle errors appropriately
-- Add JSDoc comments for functions
-
-```typescript
-/**
- * Get all inventory items for the current user
- */
-export const getInventoryItems = async (): Promise<{
-  data: InventoryItem[] | null;
-  error: { message: string } | null;
-}> => {
-  const { data, error } = await apiRequest<InventoryItem[]>(
-    API_ENDPOINTS.INVENTORY.LIST,
-    { method: 'GET' }
-  );
-  return { data, error: error || null };
-};
-```
+- Offline production claims require the InventoryX P4 readiness gate; MSW tests alone
+  are insufficient.
+- Prefer Chromium for local Playwright; Firefox/WebKit may be unavailable on some agents.
+- Do not invent usability or screen-reader pass percentages for tools you did not run.
 
 ## Commit Guidelines
 
@@ -264,20 +210,19 @@ We follow the [Conventional Commits](https://www.conventionalcommits.org/) speci
 ### Examples
 
 ```bash
-feat(auth): add password reset functionality
+feat(pos): defer service-worker updates mid-shift
 
-fix(inventory): resolve image upload error on mobile devices
+fix(catalogue): preserve decimal strings on product save
 
-docs(readme): update installation instructions
+docs(readme): document pnpm and validation commands
 
-refactor(api): migrate from Supabase to external API endpoints
-
-style(dashboard): improve responsive layout for tablets
+test(security): assert CSP and Trusted Types headers template
 ```
 
 ## Pull Request Process
 
 1. **Update your fork** with the latest upstream changes:
+
    ```bash
    git fetch upstream
    git rebase upstream/main
@@ -286,6 +231,7 @@ style(dashboard): improve responsive layout for tablets
 2. **Ensure your code follows** the coding standards
 
 3. **Test your changes** thoroughly:
+
    ```bash
    npm run build
    npm run lint
@@ -294,6 +240,7 @@ style(dashboard): improve responsive layout for tablets
 4. **Commit your changes** following commit guidelines
 
 5. **Push to your fork:**
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -308,29 +255,36 @@ style(dashboard): improve responsive layout for tablets
 
 ```markdown
 ## Description
+
 Brief description of what this PR does.
 
 ## Type of Change
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Breaking change
 - [ ] Documentation update
 
 ## Related Issues
+
 Fixes #(issue number)
 
 ## Changes Made
+
 - Change 1
 - Change 2
 - Change 3
 
 ## Screenshots (if applicable)
+
 Add screenshots here
 
 ## Testing
+
 Describe how you tested your changes
 
 ## Checklist
+
 - [ ] My code follows the project's coding standards
 - [ ] I have performed a self-review of my code
 - [ ] I have commented my code where necessary
@@ -348,6 +302,7 @@ Describe how you tested your changes
 ## Questions?
 
 Feel free to:
+
 - Open an issue for discussion
 - Reach out to maintainers
 - Check existing documentation
@@ -355,6 +310,7 @@ Feel free to:
 ## Recognition
 
 Contributors will be recognized in:
+
 - README.md contributors section
 - Release notes
 - Project documentation
