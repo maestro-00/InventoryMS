@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { gotoStable, navigateApp } from "./helpers/navigate";
 
 /**
  * Accessibility gates for the User Story 1 surface, driven against the in-browser mock
@@ -27,24 +28,11 @@ const NAV_DESTINATIONS = [
 ] as const;
 
 async function signIn(page: Page) {
-  await page.goto("/login");
+  await gotoStable(page, "/login");
   await page.getByLabel(/email/i).fill("owner@kwame.gh");
   await page.getByLabel(/password/i).fill("correct-horse-battery");
   await page.getByRole("button", { name: /^sign in$/i }).click();
   await expect(page).toHaveURL(/dashboard/);
-}
-
-async function navigate(page: Page, label: string) {
-  const primary = page.getByRole("navigation", { name: "Primary" });
-  if (await primary.isVisible()) {
-    await primary.getByRole("link", { name: label }).click();
-    return;
-  }
-  await page.getByRole("button", { name: /open navigation/i }).click();
-  await page
-    .getByRole("dialog", { name: /navigation/i })
-    .getByRole("link", { name: label })
-    .click();
 }
 
 async function seriousViolations(page: Page) {
@@ -69,7 +57,7 @@ for (const viewport of VIEWPORTS) {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
 
     for (const route of PUBLIC_ROUTES) {
-      await page.goto(route);
+      await gotoStable(page, route);
       expect(await seriousViolations(page), `${route} at ${viewport.name}`).toEqual([]);
     }
 
@@ -77,7 +65,7 @@ for (const viewport of VIEWPORTS) {
     expect(await seriousViolations(page), `/dashboard at ${viewport.name}`).toEqual([]);
 
     for (const destination of NAV_DESTINATIONS) {
-      await navigate(page, destination);
+      await navigateApp(page, destination);
       expect(
         await seriousViolations(page),
         `${destination} at ${viewport.name}`,
@@ -91,12 +79,12 @@ test("@a11y the till is reachable and operable with the keyboard alone", async (
 }) => {
   await signIn(page);
 
-  await navigate(page, "Locations");
+  await navigateApp(page, "Locations");
   await page.getByLabel(/location name/i).fill("Main Shop");
   await page.getByRole("button", { name: /save location/i }).click();
   await expect(page.getByRole("button", { name: /select main shop/i })).toBeVisible();
 
-  await navigate(page, "Point of sale");
+  await navigateApp(page, "Point of sale");
   await expect(page.getByLabel(/register name/i)).toBeVisible();
 
   const controls = page.locator(
@@ -137,7 +125,7 @@ test("@a11y the till reflows at 200% zoom without horizontal scrolling", async (
   // 1280 CSS pixels at 200% zoom is the 640px-wide reflow requirement of WCAG 1.4.10.
   await page.setViewportSize({ width: 640, height: 800 });
   await signIn(page);
-  await navigate(page, "Point of sale");
+  await navigateApp(page, "Point of sale");
 
   const overflows = await page.evaluate(
     () =>

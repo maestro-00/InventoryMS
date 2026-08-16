@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { gotoStable, navigateApp } from "./helpers/navigate";
 
 test.describe.configure({ timeout: 180_000 });
 
@@ -10,24 +11,11 @@ const VIEWPORTS = [
 ] as const;
 
 async function signIn(page: Page) {
-  await page.goto("/login");
+  await gotoStable(page, "/login");
   await page.getByLabel(/email/i).fill("owner@kwame.gh");
   await page.getByLabel(/password/i).fill("correct-horse-battery");
   await page.getByRole("button", { name: /^sign in$/i }).click();
   await expect(page).toHaveURL(/dashboard/);
-}
-
-async function navigate(page: Page, label: string) {
-  const primary = page.getByRole("navigation", { name: "Primary" });
-  if (await primary.isVisible()) {
-    await primary.getByRole("link", { name: label }).click();
-    return;
-  }
-  await page.getByRole("button", { name: /open navigation/i }).click();
-  await page
-    .getByRole("dialog", { name: /navigation/i })
-    .getByRole("link", { name: label })
-    .click();
 }
 
 for (const viewport of VIEWPORTS) {
@@ -36,7 +24,7 @@ for (const viewport of VIEWPORTS) {
   }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await signIn(page);
-    await navigate(page, "Billing");
+    await navigateApp(page, "Billing");
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
       .analyze();

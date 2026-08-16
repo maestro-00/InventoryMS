@@ -123,7 +123,7 @@ export function AppShell({
           </main>
         </div>
         {open ? (
-          <SheetContent side="left" className="w-72">
+          <SheetContent side="left" className="w-72 overflow-y-auto">
             <SheetTitle>Navigation</SheetTitle>
             <SheetDescription>Primary application destinations</SheetDescription>
             <nav aria-label="Mobile">

@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { navigateApp } from "./helpers/navigate";
 
 test.describe.configure({ timeout: 180_000 });
 
@@ -18,16 +19,7 @@ async function signIn(page: Page) {
 }
 
 async function navigate(page: Page, label: string) {
-  const primary = page.getByRole("navigation", { name: "Primary" });
-  if (await primary.isVisible()) {
-    await primary.getByRole("link", { name: label }).click();
-    return;
-  }
-  await page.getByRole("button", { name: /open navigation/i }).click();
-  await page
-    .getByRole("dialog", { name: /navigation/i })
-    .getByRole("link", { name: label })
-    .click();
+  await navigateApp(page, label);
 }
 
 async function openStockPage(page: Page) {
