@@ -1,39 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { z } from "zod";
-import {
-  apiDecimalSchema,
-  uuidSchema,
-} from "../../../shared/api/client/boundary-schema";
-import { sessionManager } from "../../../shared/auth/session-manager";
-
-const origin = (
-  import.meta.env.VITE_INVENTORYX_ORIGIN || "http://localhost:5088"
-).replace(/\/$/, "");
-
-const zReportSchema = z.object({
-  shiftId: uuidSchema,
-  salesTotal: apiDecimalSchema,
-  refundTotal: apiDecimalSchema.optional(),
-  discountTotal: apiDecimalSchema.optional(),
-  voidTotal: apiDecimalSchema.optional(),
-  expectedCash: apiDecimalSchema,
-  countedCash: apiDecimalSchema,
-  variance: apiDecimalSchema,
-  tenders: z
-    .array(z.object({ tender: z.string(), amount: apiDecimalSchema }))
-    .default([]),
-});
-
-export async function fetchZReport(shiftId: string) {
-  const headers = new Headers({ Accept: "application/json" });
-  const token = sessionManager.getAccessToken();
-  if (token) headers.set("Authorization", `Bearer ${token}`);
-  const response = await fetch(`${origin}/api/v1/shifts/${shiftId}/z-report`, {
-    headers,
-  });
-  if (!response.ok) throw new Error("Z report failed");
-  return zReportSchema.parse(await response.json());
-}
+import { fetchZReport } from "./shifts-api";
 
 export function ZReport({ shiftId }: { shiftId: string }) {
   const report = useQuery({
@@ -42,6 +8,7 @@ export function ZReport({ shiftId }: { shiftId: string }) {
   });
 
   if (report.isLoading) return <p>Loading Z report…</p>;
+  if (report.isError) return <p role="alert">Z report unavailable.</p>;
   if (!report.data) return <p>Z report unavailable.</p>;
 
   return (

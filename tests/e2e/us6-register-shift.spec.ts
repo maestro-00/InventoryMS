@@ -26,9 +26,9 @@ test("@critical register shift open, cash movement, close, and Z-report", async 
 }) => {
   test.setTimeout(180_000);
   await signIn(page);
-  await navigate(page, "Registers");
+  await navigate(page, "Tills");
   await expect(
-    page.getByRole("heading", { name: /registers and shifts/i }),
+    page.getByRole("heading", { name: /tills and shifts/i }),
   ).toBeVisible();
   // Open shift UI is register-driven; assert the workspace mounts under MSW.
   await expect(

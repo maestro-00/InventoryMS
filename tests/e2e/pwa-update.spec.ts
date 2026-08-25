@@ -42,7 +42,7 @@ test("@critical mid-shift update stays deferred while the register has an active
   await page.getByRole("button", { name: /save location/i }).click();
   await expect(page.getByRole("button", { name: /select main shop/i })).toBeVisible();
 
-  await navigate(page, "Point of sale");
+  await navigate(page, "Sell");
   await expect(page.getByRole("heading", { name: /^sell$/i })).toBeVisible();
 
   const registerName = page.getByLabel(/register name/i);

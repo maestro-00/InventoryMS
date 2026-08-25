@@ -18,8 +18,8 @@ const PUBLIC_ROUTES = ["/login", "/register"] as const;
 /** Authenticated destinations, reached through the in-app navigation. */
 const NAV_DESTINATIONS = [
   "Set up",
-  "Point of sale",
-  "Catalogue",
+  "Sell",
+  "Products",
   "Categories",
   "Locations",
   "Opening stock",
@@ -84,7 +84,7 @@ test("@a11y the till is reachable and operable with the keyboard alone", async (
   await page.getByRole("button", { name: /save location/i }).click();
   await expect(page.getByRole("button", { name: /select main shop/i })).toBeVisible();
 
-  await navigateApp(page, "Point of sale");
+  await navigateApp(page, "Sell");
   await expect(page.getByLabel(/register name/i)).toBeVisible();
 
   const controls = page.locator(
@@ -125,7 +125,7 @@ test("@a11y the till reflows at 200% zoom without horizontal scrolling", async (
   // 1280 CSS pixels at 200% zoom is the 640px-wide reflow requirement of WCAG 1.4.10.
   await page.setViewportSize({ width: 640, height: 800 });
   await signIn(page);
-  await navigateApp(page, "Point of sale");
+  await navigateApp(page, "Sell");
 
   const overflows = await page.evaluate(
     () =>

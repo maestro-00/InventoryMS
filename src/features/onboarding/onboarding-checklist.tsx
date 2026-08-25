@@ -1,28 +1,19 @@
 import { Link } from "@tanstack/react-router";
-import { useSyncExternalStore } from "react";
 import { useSession } from "../../shared/auth/session-context";
 import { Button } from "../../shared/ui/button";
 import { LoadingState } from "../../shared/ui/states/ui-state";
 import { ProblemSummary, toProblem } from "../../shared/ui/forms/problem-summary";
 import { useTenant } from "../tenant/api/tenant-queries";
-import {
-  getOpenShiftHintsSnapshot,
-  listOpenShiftHints,
-  subscribeOpenShiftHints,
-} from "../registers/shifts/open-shift-resume-store";
+import { useOpenShifts } from "../registers/shifts/use-open-shifts";
 import { FIRST_SALE_STEP } from "./completion";
 import { ONBOARDING_STEPS, completedCount } from "./onboarding-steps";
 
 export function OnboardingChecklist() {
   const tenantQuery = useTenant();
   const { session } = useSession();
-  const hintsSnapshot = useSyncExternalStore(
-    subscribeOpenShiftHints,
-    getOpenShiftHintsSnapshot,
-    () => "[]",
-  );
-  const openShifts = session?.tenantId ? listOpenShiftHints(session.tenantId) : [];
-  void hintsSnapshot;
+  const canSell = session?.permissions.includes("Sell") === true;
+
+  const { entries: openShiftEntries } = useOpenShifts({ enabled: canSell });
 
   if (tenantQuery.isPending) {
     return <LoadingState label="Loading your onboarding checklist" />;
@@ -96,12 +87,12 @@ export function OnboardingChecklist() {
                 <Link className="text-sm underline" to={step.to}>
                   Open {step.label.toLowerCase()}
                 </Link>
-                {step.key === FIRST_SALE_STEP && openShifts.length > 0 ? (
+                {step.key === FIRST_SALE_STEP && openShiftEntries.length > 0 ? (
                   <ul className="mt-1 flex flex-col gap-1" aria-label="Open shifts">
-                    {openShifts.map((hint) => (
-                      <li key={hint.shiftId}>
+                    {openShiftEntries.map((entry) => (
+                      <li key={entry.shift.id}>
                         <Link className="text-sm underline" to="/pos">
-                          Resume shift on {hint.registerName}
+                          Resume shift on {entry.registerName}
                         </Link>
                       </li>
                     ))}

@@ -354,6 +354,23 @@ export const us1ScenarioHandlers = [
       refreshToken: "refresh-token",
     }),
   ),
+  http.post("*/api/v1/auth/pin/exchange", async ({ request }) => {
+    const body = (await request.json()) as {
+      userId?: string;
+      pin?: string;
+      registerId?: string;
+    };
+    if (!body.userId || !body.pin || !body.registerId) {
+      return HttpResponse.json(
+        { title: "Invalid request", status: 400 },
+        { status: 400 },
+      );
+    }
+    return HttpResponse.json({
+      accessToken: accessToken(),
+      tokenType: "Bearer",
+    });
+  }),
 
   http.get("*/api/v1/tenant", () => HttpResponse.json(tenant())),
   http.patch("*/api/v1/tenant", async ({ request }) => {
@@ -543,7 +560,13 @@ export const us1ScenarioHandlers = [
     });
   }),
 
-  http.get("*/api/v1/registers", () => HttpResponse.json(state.registers)),
+  http.get("*/api/v1/registers", () =>
+    HttpResponse.json(state.registers, {
+      headers: { ETag: '"registers-list"' },
+    }),
+  ),
+  http.get("*/api/v1/shifts", () => HttpResponse.json([])),
+  http.get("*/api/v1/registers/:registerId/shifts", () => HttpResponse.json([])),
   http.post("*/api/v1/registers", async ({ request }) => {
     const body = (await request.json()) as { name: string; locationId: string };
     const record = {
@@ -554,6 +577,63 @@ export const us1ScenarioHandlers = [
     };
     state.registers = [...state.registers, record];
     return HttpResponse.json(record, { status: 201 });
+  }),
+  http.patch("*/api/v1/registers/:id", async ({ params, request }) => {
+    const body = (await request.json()) as { name?: string | null; isActive?: boolean | null };
+    const ifMatch = request.headers.get("If-Match");
+    if (ifMatch && ifMatch !== '"registers-list"' && ifMatch !== '"register-updated"') {
+      return HttpResponse.json(
+        { title: "Conflict", status: 409, detail: "Register was updated elsewhere." },
+        { status: 409 },
+      );
+    }
+    const index = state.registers.findIndex((register) => register.id === params.id);
+    if (index === -1) {
+      return HttpResponse.json({ title: "Not found", status: 404 }, { status: 404 });
+    }
+    const current = state.registers[index]!;
+    const updated = {
+      ...current,
+      ...(body.name != null ? { name: body.name } : {}),
+      ...(body.isActive != null ? { isActive: body.isActive } : {}),
+    };
+    state.registers = state.registers.map((register) =>
+      register.id === params.id ? updated : register,
+    );
+    return HttpResponse.json(updated, { headers: { ETag: '"register-updated"' } });
+  }),
+  http.get("*/api/v1/sync/snapshot", ({ request }) => {
+    const registerId =
+      new URL(request.url).searchParams.get("registerId") ?? REGISTER_ID;
+    return HttpResponse.json({
+      watermark: "live-smoke=",
+      registerId,
+      locationId: LOCATION_ID,
+      bundleVersion: "2026.08.gap.1",
+      products: [
+        {
+          id: PRODUCT_ID,
+          name: "Sugar 1kg",
+          sellingPrice: 12.5,
+          allowFractional: false,
+          trackingMode: "Simple",
+          version: "1",
+        },
+      ],
+      taxTreatments: [],
+      stock: [
+        {
+          productId: PRODUCT_ID,
+          qtyOnHand: 10,
+          qtyInTransit: 0,
+          qtyQuarantine: 0,
+          version: "1",
+        },
+      ],
+      favourites: null,
+      receiptTemplate: null,
+      deleted: [],
+    });
   }),
   http.post("*/api/v1/registers/:registerId/shifts", async ({ request }) => {
     const body = (await request.json()) as { openingFloat: string };

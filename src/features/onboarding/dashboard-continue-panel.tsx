@@ -1,14 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useSyncExternalStore } from "react";
 import { useSession } from "../../shared/auth/session-context";
 import { formatGhanaMoney } from "../../shared/money/decimal";
 import { fetchHeldSales } from "../pos/held-sales/api/held-sales-api";
-import {
-  getOpenShiftHintsSnapshot,
-  listOpenShiftHints,
-  subscribeOpenShiftHints,
-} from "../registers/shifts/open-shift-resume-store";
+import { useOpenShifts } from "../registers/shifts/use-open-shifts";
 import { useTenant } from "../tenant/api/tenant-queries";
 import {
   completedCount,
@@ -24,13 +19,9 @@ export function DashboardContinuePanel() {
   const canSetup = session ? SETUP_ROLES.has(session.role) : false;
   const canSell = session?.permissions.includes("Sell") === true;
 
-  const hintsSnapshot = useSyncExternalStore(
-    subscribeOpenShiftHints,
-    getOpenShiftHintsSnapshot,
-    () => "[]",
-  );
-  void hintsSnapshot;
-  const openShifts = session?.tenantId ? listOpenShiftHints(session.tenantId) : [];
+  const { entries: openShiftEntries, isPending: openShiftsPending } = useOpenShifts({
+    enabled: canSell,
+  });
 
   const held = useQuery({
     queryKey: ["held-sales", "dashboard"],
@@ -45,9 +36,9 @@ export function DashboardContinuePanel() {
 
   const hasSetupCta = canSetup && !setupComplete && !tenant.isPending;
   const hasHeld = canSell && (held.data?.length ?? 0) > 0;
-  const hasShifts = canSell && openShifts.length > 0;
+  const hasShifts = canSell && openShiftEntries.length > 0;
 
-  if (!hasSetupCta && !hasHeld && !hasShifts) return null;
+  if (!hasSetupCta && !hasHeld && !hasShifts && !openShiftsPending) return null;
 
   return (
     <section className="flex flex-col gap-3" aria-label="Continue where you left off">
@@ -64,10 +55,13 @@ export function DashboardContinuePanel() {
             </span>
           </li>
         ) : null}
-        {openShifts.map((hint) => (
-          <li key={hint.shiftId}>
+        {openShiftsPending ? (
+          <li className="text-sm text-muted-foreground">Loading open shifts…</li>
+        ) : null}
+        {openShiftEntries.map((entry) => (
+          <li key={entry.shift.id}>
             <Link className="underline" to="/pos">
-              Resume shift on {hint.registerName}
+              Resume shift on {entry.registerName}
             </Link>
           </li>
         ))}

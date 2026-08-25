@@ -2,18 +2,21 @@ import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it } from "vitest";
 import { screen } from "@testing-library/react";
 import { heldSale } from "../../../tests/fixtures/provider/us2";
-import { tenantProfile } from "../../../tests/fixtures/provider/us1";
+import {
+  registerRecord,
+  shiftRecord,
+  tenantProfile,
+} from "../../../tests/fixtures/provider/us1";
 import { server } from "../../shared/test/msw/server";
 import { renderWithRouter } from "../../shared/test/render-router";
-import {
-  resetOpenShiftHintsForTests,
-  setOpenShiftHint,
-} from "../registers/shifts/open-shift-resume-store";
 import { DashboardContinuePanel } from "./dashboard-continue-panel";
 
 describe("DashboardContinuePanel", () => {
   beforeEach(() => {
-    resetOpenShiftHintsForTests();
+    server.use(
+      http.get("*/api/v1/shifts", () => HttpResponse.json([])),
+      http.get("*/api/v1/registers", () => HttpResponse.json([registerRecord])),
+    );
   });
 
   it("shows Get started when no checklist steps are done", async () => {
@@ -53,13 +56,7 @@ describe("DashboardContinuePanel", () => {
     ).toBeInTheDocument();
   });
 
-  it("lists held sales and open-shift resume links", async () => {
-    setOpenShiftHint({
-      tenantId: "22222222-2222-4222-8222-222222222222",
-      registerId: "88888888-8888-4888-8888-888888888888",
-      registerName: "Front till",
-      shiftId: "99999999-9999-4999-8999-999999999999",
-    });
+  it("lists held sales and open-shift resume links from InventoryX", async () => {
     server.use(
       http.get("*/api/v1/tenant", () =>
         HttpResponse.json({
@@ -75,12 +72,18 @@ describe("DashboardContinuePanel", () => {
         }),
       ),
       http.get("*/api/v1/sales/held", () => HttpResponse.json([heldSale])),
+      http.get("*/api/v1/shifts", ({ request }) => {
+        const status = new URL(request.url).searchParams.get("status");
+        expect(status).toBe("Open");
+        return HttpResponse.json([shiftRecord]);
+      }),
+      http.get("*/api/v1/registers", () => HttpResponse.json([registerRecord])),
     );
 
     renderWithRouter(<DashboardContinuePanel />);
 
     expect(
-      await screen.findByRole("link", { name: /resume shift on front till/i }),
+      await screen.findByRole("link", { name: /resume shift on counter 1/i }),
     ).toHaveAttribute("href", "/pos");
     expect(
       await screen.findByRole("link", { name: /resume held sale/i }),

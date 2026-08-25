@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../shared/ui/tabs";
 import { SupplierMaintenance } from "../../../features/purchasing/suppliers/supplier-list";
 import { CreateOrdersFromReorder } from "../../../features/purchasing/reorder/create-orders";
 import { PurchaseOrderWorkspace } from "../../../features/purchasing/orders/purchase-order-list";
 import { GoodsReceiptForm } from "../../../features/purchasing/receipts/goods-receipt";
+import { CloseShortForm } from "../../../features/purchasing/orders/close-short";
 import { SupplierInvoiceForm } from "../../../features/purchasing/invoices/supplier-invoice-form";
 import { LandedCostForm } from "../../../features/purchasing/landed-costs/landed-cost-form";
 import {
@@ -21,7 +23,6 @@ export const Route = createFileRoute("/_authenticated/purchasing/")({
       !permissions.includes("ManagePurchasing") &&
       context.session?.role !== "Owner"
     ) {
-      // Owners always manage purchasing in Cycle 1 demos; cashiers are blocked.
       if (context.session?.role === "Cashier") {
         throw new Error("Purchasing requires ManagePurchasing");
       }
@@ -54,44 +55,77 @@ function PurchasingPage() {
   const [order, setOrder] = useState<PurchaseOrderRecord | null>(null);
   const [receiptId, setReceiptId] = useState<string | null>(null);
 
+  const locationOptions = (locations.data ?? []).map((location) => ({
+    id: location.id,
+    name: location.name,
+  }));
+
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 p-4">
-      <h1>Purchasing</h1>
-      <SupplierMaintenance />
-      <CreateOrdersFromReorder
-        locations={(locations.data ?? []).map((location) => ({
-          id: location.id,
-          name: location.name,
-        }))}
-      />
-      <PurchaseOrderWorkspace
-        suppliers={(suppliers.data ?? []).map((supplier) => ({
-          id: supplier.id,
-          name: supplier.name,
-        }))}
-        locations={(locations.data ?? []).map((location) => ({
-          id: location.id,
-          name: location.name,
-        }))}
-        products={products.data ?? []}
-        onSelectOrder={setOrder}
-      />
-      {order ? (
-        <>
-          <GoodsReceiptForm
-            order={order}
-            locationId={order.deliverToLocationId}
-            onReceived={setReceiptId}
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4">
+      <h1 className="text-2xl font-semibold">Purchasing</h1>
+      <Tabs defaultValue="suppliers">
+        <TabsList>
+          <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
+          <TabsTrigger value="orders">Orders</TabsTrigger>
+          <TabsTrigger value="receive">Receive</TabsTrigger>
+          <TabsTrigger value="costs">Costs</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="suppliers">
+          <SupplierMaintenance />
+        </TabsContent>
+
+        <TabsContent value="orders" className="flex flex-col gap-6">
+          <CreateOrdersFromReorder locations={locationOptions} />
+          <PurchaseOrderWorkspace
+            suppliers={(suppliers.data ?? []).map((supplier) => ({
+              id: supplier.id,
+              name: supplier.name,
+            }))}
+            locations={locationOptions}
+            products={products.data ?? []}
+            onSelectOrder={setOrder}
           />
-          <SupplierInvoiceForm
-            supplierId={order.supplierId}
-            purchaseOrderId={order.id}
-            productId={order.lines[0]?.productId ?? ""}
-            orderedUnitCost={order.lines[0]?.unitCost ?? "0"}
-          />
-        </>
-      ) : null}
-      {receiptId ? <LandedCostForm goodsReceiptId={receiptId} /> : null}
+        </TabsContent>
+
+        <TabsContent value="receive" className="flex flex-col gap-6">
+          {order ? (
+            <>
+              <GoodsReceiptForm
+                order={order}
+                locationId={order.deliverToLocationId}
+                onReceived={(receiptId) => {
+                  setReceiptId(receiptId);
+                  setOrder({ ...order, status: "PartiallyReceived" });
+                }}
+              />
+              <CloseShortForm
+                order={order}
+                onClosed={(closed) => {
+                  setOrder(closed);
+                }}
+              />
+            </>
+          ) : (
+            <p>Select a purchase order from the Orders tab to receive goods.</p>
+          )}
+        </TabsContent>
+
+        <TabsContent value="costs" className="flex flex-col gap-6">
+          {order ? (
+            <SupplierInvoiceForm
+              supplierId={order.supplierId}
+              purchaseOrderId={order.id}
+              productId={order.lines[0]?.productId ?? ""}
+              orderedUnitCost={order.lines[0]?.unitCost ?? "0"}
+            />
+          ) : null}
+          {receiptId ? <LandedCostForm goodsReceiptId={receiptId} /> : null}
+          {!order && !receiptId ? (
+            <p>Receive goods first, then record supplier invoices and landed costs.</p>
+          ) : null}
+        </TabsContent>
+      </Tabs>
     </main>
   );
 }

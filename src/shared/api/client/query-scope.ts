@@ -52,6 +52,17 @@ export async function clearScopedQueries(
   });
 }
 
+/** Clears caches that include a location id (scoped keys and ad-hoc `["resource", locationId]`). */
+export async function clearLocationCaches(
+  client: QueryClient,
+  locationId: string,
+): Promise<void> {
+  const matches = (key: QueryKey) =>
+    key.some((part) => part === locationId);
+  await client.cancelQueries({ predicate: (query) => matches(query.queryKey) });
+  client.removeQueries({ predicate: (query) => matches(query.queryKey) });
+}
+
 function matchesScope(
   key: QueryKey,
   scope: Pick<QueryScope, "tenantId" | "locationId" | "registerId">,

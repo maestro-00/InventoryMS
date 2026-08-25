@@ -3,6 +3,7 @@ import {
   apiEnvelopeSchema,
   broadcastMessageSchema,
   parseBoundary,
+  utcInstantSchema,
   uuidSchema,
   workerMessageSchema,
 } from "./boundary-schema";
@@ -31,5 +32,15 @@ describe("boundary schemas", () => {
     expect(() => parseBoundary(uuidSchema, "nope", "id")).toThrow(
       /id failed boundary validation/,
     );
+  });
+
+  it("normalizes ASP.NET DateTime without timezone as UTC", () => {
+    expect(utcInstantSchema.parse("2026-08-16T09:59:51.0545099")).toBe(
+      "2026-08-16T09:59:51.0545099Z",
+    );
+    expect(utcInstantSchema.parse("2026-08-16T09:59:51.000Z")).toBe(
+      "2026-08-16T09:59:51.000Z",
+    );
+    expect(() => utcInstantSchema.parse("not-a-date")).toThrow();
   });
 });

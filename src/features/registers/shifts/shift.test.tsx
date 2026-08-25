@@ -41,19 +41,19 @@ describe("shift reconciliation", () => {
         cashBody = await request.json();
         return HttpResponse.json({
           id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-          shiftId,
-          direction: "CashOut",
+          type: "CashOut",
           reason: "Banking",
-          amount: "20.00",
+          amount: 20,
         });
       }),
       http.post(`*/api/v1/shifts/${shiftId}/close`, async ({ request }) => {
         closeBody = await request.json();
         return HttpResponse.json({
           id: shiftId,
-          expectedCash: "80.00",
-          countedCash: "80.00",
-          variance: "0.00",
+          registerId: "22222222-2222-4222-8222-222222222222",
+          openedBy: "owner@kwame.gh",
+          openedAt: "2026-08-13T08:00:00.000Z",
+          openingFloat: 100,
           status: "Closed",
         });
       }),
@@ -78,13 +78,48 @@ describe("shift reconciliation", () => {
     await user.click(screen.getByRole("button", { name: /close with count/i }));
     await vi.waitFor(() => {
       expect(cashBody).toMatchObject({
-        direction: "CashOut",
+        type: "CashOut",
         reason: "Banking",
-        amount: "20.00",
+        amount: 20,
       });
-      expect(closeBody).toEqual({ closingCounted: "80.00" });
+      expect(closeBody).toEqual({ closingCounted: 80 });
       expect(onClosed).toHaveBeenCalled();
     });
+    expect(await screen.findByRole("status")).toHaveTextContent(/shift closed/i);
+    confirm.mockRestore();
+  });
+
+  it("shows an actionable error when InventoryX rejects the close", async () => {
+    const user = userEvent.setup();
+    sessionManager.setSession({
+      ...ownerSession,
+      locationScope: [...ownerSession.locationScope],
+      accessToken: "access",
+      refreshToken: "refresh",
+    });
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    server.use(
+      http.post(`*/api/v1/shifts/${shiftId}/close`, () =>
+        HttpResponse.json(
+          {
+            type: "https://inventoryx.app/problems/not-found",
+            title: "Resource not found.",
+            status: 404,
+            detail: "Open shift not found.",
+            traceId: "trace-close-404",
+          },
+          { status: 404, headers: { "Content-Type": "application/problem+json" } },
+        ),
+      ),
+    );
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <CloseShiftForm shiftId={shiftId} />
+      </QueryClientProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: /close with count/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/open shift not found/i);
     confirm.mockRestore();
   });
 

@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../../../shared/ui/button";
 import { SelectField, TextField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
@@ -18,18 +18,26 @@ export function AfterSalePanel({
   registerId,
   shiftId,
   products,
+  initialSale,
+  compact = false,
 }: {
   registerId: string;
   shiftId: string;
   products: ProductRecord[];
+  initialSale?: SaleRecord | null;
+  compact?: boolean;
 }) {
   const [receiptNumber, setReceiptNumber] = useState("");
-  const [sale, setSale] = useState<SaleRecord | null>(null);
+  const [sale, setSale] = useState<SaleRecord | null>(initialSale ?? null);
   const [qty, setQty] = useState("1");
   const [disposition, setDisposition] = useState<"ToStock" | "Quarantine">("ToStock");
   const [reason, setReason] = useState("");
   const [replacementId, setReplacementId] = useState<string | null>(null);
   const [lookupError, setLookupError] = useState<unknown>(null);
+
+  useEffect(() => {
+    if (initialSale) setSale(initialSale);
+  }, [initialSale]);
 
   const lookup = useMutation({
     mutationFn: () => lookupSales({ receiptNumber }),
@@ -81,21 +89,29 @@ export function AfterSalePanel({
 
   return (
     <section className="flex flex-col gap-4" aria-label="Returns and exchanges">
-      <TextField
-        label="Receipt number"
-        value={receiptNumber}
-        onChange={(event) => {
-          setReceiptNumber(event.target.value);
-        }}
-      />
-      <Button
-        type="button"
-        onClick={() => {
-          lookup.mutate();
-        }}
-      >
-        Find sale
-      </Button>
+      {!compact ? (
+        <>
+          <TextField
+            label="Receipt number"
+            value={receiptNumber}
+            onChange={(event) => {
+              setReceiptNumber(event.target.value);
+            }}
+          />
+          <Button
+            type="button"
+            onClick={() => {
+              lookup.mutate();
+            }}
+          >
+            Find sale
+          </Button>
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Return or void this sale without leaving the receipt.
+        </p>
+      )}
       {toProblem(lookupError) ? (
         <ProblemSummary problem={toProblem(lookupError)} />
       ) : null}
@@ -136,31 +152,35 @@ export function AfterSalePanel({
             <p role="status">Refund {formatGhanaMoney(returning.data.refundTotal)}</p>
           ) : null}
 
-          <ul className="flex flex-wrap gap-2">
-            {products.map((product) => (
-              <li key={product.id}>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setReplacementId(product.id);
-                  }}
-                >
-                  Add {product.name}
-                </Button>
-              </li>
-            ))}
-          </ul>
-          <Button
-            type="button"
-            onClick={() => {
-              exchanging.mutate();
-            }}
-          >
-            Confirm exchange
-          </Button>
-          {exchanging.data ? (
-            <p role="status">Net amount {exchanging.data.refundTotal}</p>
+          {!compact ? (
+            <>
+              <ul className="flex flex-wrap gap-2">
+                {products.map((product) => (
+                  <li key={product.id}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setReplacementId(product.id);
+                      }}
+                    >
+                      Add {product.name}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+              <Button
+                type="button"
+                onClick={() => {
+                  exchanging.mutate();
+                }}
+              >
+                Confirm exchange
+              </Button>
+              {exchanging.data ? (
+                <p role="status">Net amount {exchanging.data.refundTotal}</p>
+              ) : null}
+            </>
           ) : null}
 
           <TextField

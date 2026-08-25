@@ -33,5 +33,10 @@ If live export is unavailable, fall back to reconstructing from:
 - `../InventoryX/tests/InventoryX.Presentation.Tests/Swagger/ContractSurfaceTests.cs`
 - `../InventoryX/InventoryX.Presentation/Swagger/LiveOnlyOperationFilter.cs`
 
+When live export is unavailable, run `node scripts/openapi-patch-provider-gaps.mjs`
+after the base snapshot to add provider routes missing from stale exports (currently
+`PATCH /api/v1/registers/{id}`). Retired ad-hoc US extend scripts are superseded by
+live export or this patch script.
+
 Regenerate types with `pnpm api:generate`. Drift is a merge blocker via
 `pnpm api:check`.

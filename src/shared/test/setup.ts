@@ -2,7 +2,6 @@ import { afterAll, afterEach, beforeAll } from "vitest";
 import { cleanup, configure } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { indexedDB, IDBKeyRange } from "fake-indexeddb";
-import { resetOpenShiftHintsForTests } from "../../features/registers/shifts/open-shift-resume-store";
 import { server } from "./msw/server";
 
 Object.defineProperty(globalThis, "indexedDB", {
@@ -24,7 +23,6 @@ beforeAll(() => {
 afterEach(() => {
   cleanup();
   server.resetHandlers();
-  resetOpenShiftHintsForTests();
 });
 afterAll(() => {
   server.close();

@@ -13,10 +13,10 @@ describe("app shell", () => {
     const user = userEvent.setup();
     render(
       <AppShell
-        locationName="Accra Shop"
+        locationControl={<span className="text-sm text-muted-foreground">Accra Shop</span>}
         navigation={[
           { to: "/dashboard", label: "Dashboard" },
-          { to: "/pos", label: "Point of sale" },
+          { to: "/pos", label: "Sell" },
         ]}
       >
         <button type="button">Primary action</button>
@@ -35,7 +35,7 @@ describe("app shell", () => {
     const user = userEvent.setup();
     render(
       <AppShell
-        locationName="Accra Shop"
+        locationControl={<span className="text-sm text-muted-foreground">Accra Shop</span>}
         navigation={[{ to: "/dashboard", label: "Dashboard" }]}
       >
         <p>Content</p>
@@ -59,7 +59,7 @@ describe("app shell", () => {
   it("does not overflow at 320px and respects reduced motion", () => {
     render(
       <AppShell
-        locationName="Accra Shop"
+        locationControl={<span className="text-sm text-muted-foreground">Accra Shop</span>}
         navigation={[{ to: "/dashboard", label: "Dashboard" }]}
       >
         <p>Narrow content</p>

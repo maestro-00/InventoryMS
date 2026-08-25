@@ -34,7 +34,7 @@ async function createLocation(page: Page) {
 }
 
 async function createProduct(page: Page) {
-  await navigate(page, "Catalogue");
+  await navigate(page, "Products");
   await page.getByRole("button", { name: /add a product/i }).click();
   await page.getByLabel(/product name/i).fill("Sugar 1kg");
   await page.getByLabel(/^sku/i).fill("SUG-001");
@@ -71,7 +71,7 @@ async function recordOpeningStock(page: Page) {
 }
 
 async function createRegisterAndOpenShift(page: Page) {
-  await navigate(page, "Point of sale");
+  await navigate(page, "Sell");
   const registerName = page.getByLabel(/register name/i);
   await expect(registerName).toBeVisible({ timeout: 15_000 });
   await registerName.fill("Counter 1");

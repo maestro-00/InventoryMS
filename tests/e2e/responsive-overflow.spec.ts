@@ -8,8 +8,8 @@ const viewports = [
 
 /** Nav labels that keep the memory-only session (no document reload). */
 const criticalNav = [
-  { label: /catalogue/i, path: /catalogue/ },
-  { label: /point of sale/i, path: /pos/ },
+  { label: /products/i, path: /catalogue/ },
+  { label: /sell/i, path: /pos/ },
   { label: /^inventory$/i, path: /inventory/ },
   { label: /reports/i, path: /reports/ },
   { label: /dashboard/i, path: /dashboard/ },

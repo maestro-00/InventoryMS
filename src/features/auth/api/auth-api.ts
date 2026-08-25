@@ -98,6 +98,46 @@ export async function verifyTwoFactor(code: string): Promise<void> {
   expectSuccess(outcome);
 }
 
+const pinExchangeResultSchema = z.object({
+  accessToken: z.string().min(1),
+  tokenType: z.string().nullish(),
+});
+
+function expiresAtFromAccessToken(accessToken: string): string {
+  const payload = accessToken.split(".")[1];
+  if (!payload) return new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
+  try {
+    const padded = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const json = atob(padded.padEnd(Math.ceil(padded.length / 4) * 4, "="));
+    const claims = JSON.parse(json) as { exp?: number };
+    if (typeof claims.exp === "number") {
+      return new Date(claims.exp * 1000).toISOString();
+    }
+  } catch {
+    /* fall through */
+  }
+  return new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
+}
+
+export async function exchangeRegisterPin(input: {
+  userId: string;
+  pin: string;
+  registerId: string;
+}): Promise<{ accessToken: string; expiresAt: string }> {
+  const outcome = await inventoryxClient.POST("/api/v1/auth/pin/exchange", {
+    body: {
+      userId: input.userId,
+      pin: input.pin,
+      registerId: input.registerId,
+    },
+  });
+  const result = parseValue(outcome, pinExchangeResultSchema, "Register PIN exchange");
+  return {
+    accessToken: result.accessToken,
+    expiresAt: expiresAtFromAccessToken(result.accessToken),
+  };
+}
+
 /** InventoryX drives the Google challenge; the browser leaves the SPA to start it. */
 export function googleSignInUrl(returnUrl: string): string {
   const url = new URL("/api/v1/auth/google", origin);

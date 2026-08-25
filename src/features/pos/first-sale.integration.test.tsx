@@ -19,14 +19,18 @@ import {
   SALE_ID,
 } from "../../../tests/fixtures/provider/us1";
 import * as us2 from "../../../tests/fixtures/provider/us2";
-import { setOpenShiftHint } from "../registers/shifts/open-shift-resume-store";
 
-function posHandlers(options: { registers?: unknown[] } = {}) {
+function posHandlers(options: { registers?: unknown[]; openShifts?: unknown[] } = {}) {
   return [
     http.get("*/api/v1/locations", () => HttpResponse.json([locationRecord])),
     http.get("*/api/v1/registers", () =>
       HttpResponse.json(options.registers ?? [registerRecord]),
     ),
+    http.get("*/api/v1/shifts", ({ request }) => {
+      const status = new URL(request.url).searchParams.get("status");
+      if (status && status !== "Open") return HttpResponse.json([]);
+      return HttpResponse.json(options.openShifts ?? []);
+    }),
     http.get("*/api/v1/products", () => HttpResponse.json(pagedProducts)),
     http.post("*/api/v1/registers/:registerId/shifts", () =>
       HttpResponse.json(shiftRecord, { status: 201 }),
@@ -243,20 +247,13 @@ describe("counter-sale workspace extensions", () => {
     server.use(http.get("*/api/v1/locations", () => HttpResponse.json([])));
     renderWithRouter(<PosWorkspace />);
     expect(
-      await screen.findByText(/create a location before selling/i),
+      await screen.findByText(/before you can sell/i),
     ).toBeInTheDocument();
   });
 
-  it("resumes an open shift from a stored hint instead of forcing a new shift", async () => {
-    const user = userEvent.setup();
-    setOpenShiftHint({
-      tenantId: "22222222-2222-4222-8222-222222222222",
-      registerId: registerRecord.id,
-      registerName: registerRecord.name,
-      shiftId: shiftRecord.id,
-    });
+  it("hydrates the till from InventoryX open shifts after refresh", async () => {
     server.use(
-      ...posHandlers(),
+      ...posHandlers({ openShifts: [shiftRecord] }),
       http.get("*/api/v1/stock", () =>
         HttpResponse.json({
           items: [stockLevel],
@@ -269,8 +266,84 @@ describe("counter-sale workspace extensions", () => {
 
     renderWithRouter(<PosWorkspace />);
 
-    await user.click(
+    expect(
+      await screen.findByRole("button", { name: /take cash payment/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /open shift/i })).toBeNull();
+  });
+
+  it("lets the cashier pick among multiple open shifts", async () => {
+    const user = userEvent.setup();
+    const secondRegister = {
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      locationId: LOCATION_ID,
+      name: "Counter 2",
+      isActive: true,
+    };
+    const secondShift = {
+      ...shiftRecord,
+      id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      registerId: secondRegister.id,
+      openedBy: "cashier@kwame.gh",
+      openingFloat: 50,
+    };
+    server.use(
+      ...posHandlers({
+        registers: [registerRecord, secondRegister],
+        openShifts: [shiftRecord, secondShift],
+      }),
+      http.get("*/api/v1/stock", () =>
+        HttpResponse.json({
+          items: [stockLevel],
+          page: 1,
+          pageSize: 50,
+          totalCount: 1,
+        }),
+      ),
+    );
+
+    renderWithRouter(<PosWorkspace />);
+
+    expect(
       await screen.findByRole("button", { name: /resume shift on counter 1/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /resume shift on counter 2/i }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /resume shift on counter 2/i }));
+
+    expect(
+      await screen.findByRole("button", { name: /take cash payment/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("offers resume when opening a shift conflicts with an existing open shift", async () => {
+    const user = userEvent.setup();
+    server.use(...posHandlers());
+    // Registered after so these win over posHandlers' open-shift POST.
+    server.use(
+      http.post("*/api/v1/registers/:registerId/shifts", () =>
+        HttpResponse.json(
+          {
+            title: "Register already has an open shift.",
+            status: 409,
+            type: "https://httpstatuses.com/409",
+          },
+          { status: 409, headers: { "Content-Type": "application/problem+json" } },
+        ),
+      ),
+      http.get("*/api/v1/registers/:registerId/shifts", ({ request }) => {
+        expect(new URL(request.url).searchParams.get("status")).toBe("Open");
+        return HttpResponse.json([shiftRecord]);
+      }),
+    );
+
+    renderWithRouter(<PosWorkspace />);
+    await openTheShift(user);
+
+    await user.click(
+      await screen.findByRole("button", { name: /resume existing shift/i }),
     );
 
     expect(

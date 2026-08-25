@@ -54,7 +54,7 @@ describe("app router", () => {
     ).toBeInTheDocument();
     await waitFor(() => {
       expect(
-        screen.queryByRole("link", { name: /point of sale/i }),
+        screen.queryByRole("link", { name: /^sell$/i }),
       ).not.toBeInTheDocument();
     });
   });
@@ -70,7 +70,7 @@ describe("app router", () => {
     window.history.replaceState({}, "", "/dashboard");
     render(<AppProviders />);
     expect(
-      await screen.findByRole("link", { name: /point of sale/i }),
+      await screen.findByRole("link", { name: /^sell$/i }),
     ).toBeInTheDocument();
   });
 
@@ -234,7 +234,7 @@ describe("app router", () => {
     window.history.replaceState({}, "", "/registers");
     const registers = render(<AppProviders />);
     expect(
-      await screen.findByRole("heading", { name: /registers and shifts/i }),
+      await screen.findByRole("heading", { name: /tills and shifts/i }),
     ).toBeInTheDocument();
     registers.unmount();
 

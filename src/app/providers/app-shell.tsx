@@ -11,6 +11,7 @@ import {
   SheetTrigger,
 } from "../../shared/ui/sheet";
 import { cn } from "../../shared/utils/cn";
+import type { NavGroup } from "../navigation/nav-config";
 
 export interface AppShellNavItem {
   to: string;
@@ -19,8 +20,11 @@ export interface AppShellNavItem {
 
 export interface AppShellProps {
   children: ReactNode;
-  navigation: AppShellNavItem[];
-  locationName: string;
+  /** Flat nav for legacy callers; ignored when navigationGroups is set. */
+  navigation?: AppShellNavItem[];
+  navigationGroups?: NavGroup[];
+  locationControl?: ReactNode;
+  shiftControl?: ReactNode;
   /** Live connectivity; defaults to online when omitted (tests / public shells). */
   isOnline?: boolean;
   /** Pending offline sales for the active register, when known. */
@@ -32,14 +36,57 @@ export interface AppShellProps {
   renderLink?: (item: AppShellNavItem, className: string) => ReactNode;
 }
 
+function NavList({
+  groups,
+  link,
+  onNavigate,
+}: {
+  groups: NavGroup[];
+  link: (item: AppShellNavItem, className: string) => ReactNode;
+  onNavigate?: () => void;
+}) {
+  return (
+    <>
+      {groups.map((group) => (
+        <div key={group.id} className="mb-4 last:mb-0">
+          <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {group.label}
+          </p>
+          <ul className="flex flex-col gap-1">
+            {group.items.map((item) => (
+              <li key={item.to} onClick={onNavigate}>
+                {link(
+                  item,
+                  cn(
+                    "flex min-h-touch items-center rounded-md px-3 text-sm font-medium",
+                    "hover:bg-accent hover:text-accent-foreground",
+                  ),
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </>
+  );
+}
+
 export function AppShell({
   children,
-  navigation,
-  locationName,
+  navigation = [],
+  navigationGroups,
+  locationControl,
+  shiftControl,
   isOnline = true,
   pendingSaleCount = 0,
   renderLink,
 }: AppShellProps) {
+  const groups =
+    navigationGroups ??
+    (navigation.length > 0
+      ? [{ id: "primary", label: "Menu", items: navigation }]
+      : []);
+
   const link = (item: AppShellNavItem, className: string): ReactNode =>
     renderLink ? (
       renderLink(item, className)
@@ -74,7 +121,7 @@ export function AppShell({
         >
           Skip to content
         </a>
-        <header className="flex items-center gap-3 border-b px-3 py-2">
+        <header className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
           <SheetTrigger asChild>
             <Button
               ref={menuButtonRef}
@@ -88,7 +135,10 @@ export function AppShell({
             </Button>
           </SheetTrigger>
           <p className="font-semibold">InventoryMS</p>
-          <p className="text-sm text-muted-foreground">{locationName}</p>
+          <div className="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-3">
+            {locationControl}
+            {shiftControl}
+          </div>
           <p
             className="ml-auto min-w-28 text-right text-sm text-muted-foreground"
             data-testid="shell-connectivity"
@@ -101,22 +151,10 @@ export function AppShell({
         </header>
         <div className="flex min-w-0 flex-1">
           <nav
-            className="hidden w-56 shrink-0 border-r p-3 md:block"
+            className="hidden w-56 shrink-0 overflow-y-auto border-r p-3 md:block"
             aria-label="Primary"
           >
-            <ul className="flex flex-col gap-1">
-              {navigation.map((item) => (
-                <li key={item.to}>
-                  {link(
-                    item,
-                    cn(
-                      "flex min-h-touch items-center rounded-md px-3 text-sm font-medium",
-                      "hover:bg-accent hover:text-accent-foreground",
-                    ),
-                  )}
-                </li>
-              ))}
-            </ul>
+            <NavList groups={groups} link={link} />
           </nav>
           <main id="main-content" className="min-w-0 flex-1 overflow-x-hidden p-4">
             {children}
@@ -126,16 +164,16 @@ export function AppShell({
           <SheetContent side="left" className="w-72 overflow-y-auto">
             <SheetTitle>Navigation</SheetTitle>
             <SheetDescription>Primary application destinations</SheetDescription>
-            <nav aria-label="Mobile">
-              <ul className="mt-4 flex flex-col gap-1">
-                {navigation.map((item) => (
-                  <li key={item.to}>
-                    <SheetClose asChild>
-                      {link(item, "flex min-h-touch items-center rounded-md px-3")}
-                    </SheetClose>
-                  </li>
-                ))}
-              </ul>
+            <nav aria-label="Mobile" className="mt-4">
+              <NavList
+                groups={groups}
+                link={(item, className) => (
+                  <SheetClose asChild>{link(item, className)}</SheetClose>
+                )}
+                onNavigate={() => {
+                  setOpen(false);
+                }}
+              />
             </nav>
             <SheetClose asChild>
               <Button

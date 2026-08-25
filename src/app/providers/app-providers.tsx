@@ -3,6 +3,9 @@ import { RouterProvider } from "@tanstack/react-router";
 import { useEffect, useMemo, type ReactNode } from "react";
 import { SessionProvider, useSession } from "../../shared/auth/session-context";
 import type { SessionManager } from "../../shared/auth/session-manager";
+import { lockRegisterAuth } from "../../shared/auth/register-auth-store";
+import { resetActiveLocation } from "../../shared/location/active-location-store";
+import { clearPosLocationGuard } from "../../features/pos/pos-location-guard-store";
 import { TooltipProvider } from "../../shared/ui/tooltip";
 import { PwaProvider } from "./pwa-provider";
 import { AppQueryProvider } from "./query-provider";
@@ -22,9 +25,15 @@ function QueryScopeTeardown() {
   const { manager } = useSession();
   useEffect(() => {
     return manager.subscribe((event) => {
-      if (!event.clearCache) return;
-      void client.cancelQueries();
-      client.removeQueries();
+      if (event.lockRegister) {
+        lockRegisterAuth();
+        clearPosLocationGuard();
+      }
+      if (event.clearCache) {
+        resetActiveLocation();
+        void client.cancelQueries();
+        client.removeQueries();
+      }
     });
   }, [client, manager]);
   return null;

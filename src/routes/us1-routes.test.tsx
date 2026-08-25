@@ -83,7 +83,7 @@ describe("US1 routes", () => {
     open("/pos");
 
     expect(
-      await screen.findByText(/create a location before selling/i),
+      await screen.findByText(/before you can sell/i),
     ).toBeInTheDocument();
   });
 
