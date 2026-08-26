@@ -8,8 +8,9 @@ import { setPendingSaleCount } from "../../../features/offline-sync/pending-sale
 import { useOnlineStatus } from "../../../shared/hooks/use-online-status";
 import { usePwa } from "../../../app/providers/pwa-provider";
 import { useSession } from "../../../shared/auth/session-context";
+import { getRegisterAuthState } from "../../../shared/auth/register-auth-store";
 import { fetchRegisters } from "../../../features/registers/registers/api/registers-api";
-import { useLocations } from "../../../features/inventory/locations/api/location-queries";
+import { useActiveLocationId } from "../../../shared/location/use-active-location";
 
 export const Route = createFileRoute("/_authenticated/offline/review")({
   component: OfflineReviewPage,
@@ -19,14 +20,18 @@ function OfflineReviewPage() {
   const session = useSession();
   const pwa = usePwa();
   const isOnline = useOnlineStatus();
-  const locations = useLocations();
-  const locationId = locations.data?.[0]?.id ?? "";
+  const locationId = useActiveLocationId();
   const registers = useQuery({
     queryKey: ["registers", locationId],
     queryFn: () => fetchRegisters(locationId),
     enabled: locationId !== "",
   });
-  const registerId = registers.data?.[0]?.id ?? null;
+  const auth = getRegisterAuthState();
+  const unlockedRegisterId =
+    auth.unlocked && auth.registerId
+      ? registers.data?.find((register) => register.id === auth.registerId)?.id
+      : undefined;
+  const registerId = unlockedRegisterId ?? registers.data?.[0]?.id ?? null;
   const canManage =
     session.session?.role === "Owner" ||
     session.session?.role === "Administrator" ||

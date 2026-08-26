@@ -82,9 +82,7 @@ describe("US1 routes", () => {
 
     open("/pos");
 
-    expect(
-      await screen.findByText(/before you can sell/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/before you can sell/i)).toBeInTheDocument();
   });
 
   it("signs in from the login route and lands on the dashboard", async () => {

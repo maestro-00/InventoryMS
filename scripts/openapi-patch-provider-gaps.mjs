@@ -34,7 +34,7 @@ if (!doc.paths[patchRegistersPath]) {
         },
       },
       responses: {
-        "200": {
+        200: {
           description: "Success",
           content: {
             "application/json": { schema: { $ref: registerDtoRef } },
@@ -42,10 +42,10 @@ if (!doc.paths[patchRegistersPath]) {
             "text/json": { schema: { $ref: registerDtoRef } },
           },
         },
-        "401": { description: "Unauthorized" },
-        "403": { description: "Forbidden" },
-        "404": { description: "Not Found" },
-        "409": { description: "Conflict" },
+        401: { description: "Unauthorized" },
+        403: { description: "Forbidden" },
+        404: { description: "Not Found" },
+        409: { description: "Conflict" },
       },
       security: [{ oauth2: [] }],
       operationId: "patch_api_v1_registers__id",

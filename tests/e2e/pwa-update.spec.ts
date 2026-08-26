@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { navigateApp } from "./helpers/navigate";
 
 /**
  * Mid-shift PWA update behaviour is enforced in the app shell via
@@ -18,17 +19,13 @@ async function signIn(page: Page) {
   await expect(page).toHaveURL(/dashboard/);
 }
 
-async function navigate(page: Page, label: string | RegExp) {
-  const primary = page.getByRole("navigation", { name: "Primary" });
-  if (await primary.isVisible()) {
-    await primary.getByRole("link", { name: label }).click();
-    return;
-  }
-  await page.getByRole("button", { name: /open navigation/i }).click();
-  await page
-    .getByRole("dialog", { name: /navigation/i })
-    .getByRole("link", { name: label })
-    .click();
+async function submitNamedButton(page: Page, name: RegExp) {
+  const button = page.getByRole("button", { name });
+  await expect(button).toBeVisible({ timeout: 15_000 });
+  // Firefox + React remounts race Playwright's actionability "stable" click.
+  await button.evaluate((el: HTMLButtonElement) => {
+    el.click();
+  });
 }
 
 test("@critical mid-shift update stays deferred while the register has an active shift", async ({
@@ -36,28 +33,31 @@ test("@critical mid-shift update stays deferred while the register has an active
 }) => {
   await signIn(page);
 
-  await navigate(page, "Locations");
+  await navigateApp(page, "Locations");
   await page.getByLabel(/location name/i).fill("Main Shop");
   await page.getByLabel(/address/i).fill("12 Oxford Street, Accra");
   await page.getByRole("button", { name: /save location/i }).click();
   await expect(page.getByRole("button", { name: /select main shop/i })).toBeVisible();
 
-  await navigate(page, "Sell");
-  await expect(page.getByRole("heading", { name: /^sell$/i })).toBeVisible();
-
+  await navigateApp(page, "Sell");
+  // POS may sit on "Loading the sales workspace" while locations/products resolve;
+  // wait for the register form rather than the heading's default 5s timeout.
   const registerName = page.getByLabel(/register name/i);
   await expect(registerName).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("heading", { name: /^sell$/i })).toBeVisible();
   await registerName.fill("Counter PWA");
-  await page.getByRole("button", { name: /create register/i }).click();
+  await submitNamedButton(page, /create register/i);
 
   const openingFloat = page.getByLabel(/opening float/i);
   await expect(openingFloat).toBeVisible({ timeout: 15_000 });
   await openingFloat.fill("50.00");
-  await page.getByRole("button", { name: /open shift/i }).click();
+  await submitNamedButton(page, /open shift/i);
 
   // Dev builds do not mount a waiting worker; assert the till remains usable (no forced
   // reload banner that blocks checkout) while a shift is open.
-  await expect(page.getByRole("heading", { name: /^sell$/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /^sell$/i })).toBeVisible({
+    timeout: 15_000,
+  });
   await expect(
     page.getByRole("button", { name: /reload now|force update/i }),
   ).toHaveCount(0);

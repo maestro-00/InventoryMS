@@ -4,6 +4,7 @@ import { useEffect, useMemo, type ReactNode } from "react";
 import { SessionProvider, useSession } from "../../shared/auth/session-context";
 import type { SessionManager } from "../../shared/auth/session-manager";
 import { lockRegisterAuth } from "../../shared/auth/register-auth-store";
+import { lockRememberedRegisterPartition } from "../../shared/db/register-partition-lock";
 import { resetActiveLocation } from "../../shared/location/active-location-store";
 import { clearPosLocationGuard } from "../../features/pos/pos-location-guard-store";
 import { TooltipProvider } from "../../shared/ui/tooltip";
@@ -26,7 +27,12 @@ function QueryScopeTeardown() {
   useEffect(() => {
     return manager.subscribe((event) => {
       if (event.lockRegister) {
-        lockRegisterAuth();
+        void lockRegisterAuth({ persistPartition: true });
+        clearPosLocationGuard();
+      }
+      if (event.type === "restore") {
+        // Reload drops in-memory register credentials; fail closed for upload until PIN.
+        void lockRememberedRegisterPartition();
         clearPosLocationGuard();
       }
       if (event.clearCache) {

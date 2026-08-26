@@ -1,6 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { isProblemError } from "../../../shared/api/errors/problem-error";
+import {
+  isRegisterUnlocked,
+  isRegisterUnlockedForShift,
+} from "../../../shared/auth/register-auth-store";
 import { Button } from "../../../shared/ui/button";
 import {
   Dialog,
@@ -93,6 +97,14 @@ export function PaymentPanel({
           if (payments.some((payment) => LIVE_ONLY_TENDERS.has(payment.tender))) {
             throw new Error(
               "Card authorization is live-only and unavailable while offline.",
+            );
+          }
+          const unlocked = shiftId
+            ? isRegisterUnlockedForShift(tenantId, registerId, shiftId)
+            : isRegisterUnlocked(tenantId, registerId);
+          if (!unlocked) {
+            throw new Error(
+              "Unlock the till with your register PIN before completing offline sales.",
             );
           }
           return {

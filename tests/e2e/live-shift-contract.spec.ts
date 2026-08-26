@@ -13,6 +13,7 @@ const hasLiveCredentials = Boolean(liveEmail && livePassword);
 const inventoryxOrigin =
   process.env.VITE_INVENTORYX_ORIGIN?.trim() || "http://localhost:5291";
 
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- body typed at call sites
 async function apiJson<T>(
   request: APIRequestContext,
   method: "GET" | "POST",
@@ -48,8 +49,10 @@ async function loginApi(request: APIRequestContext): Promise<string> {
   });
   expect(response.status(), await response.text()).toBe(200);
   const body = (await response.json()) as { accessToken?: string };
-  expect(body.accessToken).toBeTruthy();
-  return body.accessToken!;
+  const accessToken = body.accessToken;
+  expect(accessToken).toBeTruthy();
+  if (!accessToken) throw new Error("missing access token");
+  return accessToken;
 }
 
 test.describe("@critical live shift contract", () => {
@@ -103,9 +106,10 @@ test.describe("@critical live shift contract", () => {
       { type: "CashIn", amount: 10, reason: "PettyCash" },
     );
     expect(cashIn.status, JSON.stringify(cashIn.body)).toBeLessThan(500);
-    expect(cashIn.status, "cash movement must not be rejected as validation").toBeLessThan(
-      400,
-    );
+    expect(
+      cashIn.status,
+      "cash movement must not be rejected as validation",
+    ).toBeLessThan(400);
     if (cashIn.body.type) {
       expect(cashIn.body.type).toBe("CashIn");
     }

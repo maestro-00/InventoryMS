@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSession } from "../../../shared/auth/session-context";
 import { hasPermission } from "../../../shared/auth/access-policy";
+import { useActiveLocationId } from "../../../shared/location/use-active-location";
 import { Button } from "../../../shared/ui/button";
 import { SelectField, TextField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
@@ -23,12 +24,14 @@ export function CountWorkflow() {
   const canApprove = hasPermission(session, "ApproveAdjustments");
   const queryClient = useQueryClient();
   const locations = useLocations();
+  const activeLocationId = useActiveLocationId();
   const products = useQuery({
     queryKey: ["products-for-count"],
     queryFn: () => fetchProducts({ pageSize: 100 }),
   });
 
-  const [locationId, setLocationId] = useState("");
+  const [locationOverride, setLocationOverride] = useState<string | null>(null);
+  const locationId = locationOverride ?? activeLocationId;
   const [scope, setScope] = useState<"Full" | "Cycle" | "Spot">("Spot");
   const [productId, setProductId] = useState("");
   const [count, setCount] = useState<StockCountRecord | null>(null);
@@ -103,7 +106,7 @@ export function CountWorkflow() {
           label: location.name,
         }))}
         onChange={(event) => {
-          setLocationId(event.target.value);
+          setLocationOverride(event.target.value);
         }}
       />
       <SelectField

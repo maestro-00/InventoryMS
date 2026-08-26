@@ -3,10 +3,7 @@ import { useState, type FormEvent } from "react";
 import { Button } from "../../../shared/ui/button";
 import { TextField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
-import {
-  updateRegister,
-  type RegisterRecord,
-} from "./api/registers-api";
+import { updateRegister, type RegisterRecord } from "./api/registers-api";
 
 export function RegisterEditForm({
   register,
@@ -35,7 +32,7 @@ export function RegisterEditForm({
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    if (isActive === false && register.isActive) {
+    if (!isActive && register.isActive) {
       if (!window.confirm(`Deactivate till "${register.name}"?`)) return;
     }
     mutation.mutate();

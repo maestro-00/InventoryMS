@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "../../shared/auth/session-context";
+import { useActiveLocationId } from "../../shared/location/use-active-location";
 import { formatGhanaMoney } from "../../shared/money/decimal";
 import { fetchHeldSales } from "../pos/held-sales/api/held-sales-api";
 import { useOpenShifts } from "../registers/shifts/use-open-shifts";
@@ -18,9 +19,11 @@ export function DashboardContinuePanel() {
   const tenant = useTenant();
   const canSetup = session ? SETUP_ROLES.has(session.role) : false;
   const canSell = session?.permissions.includes("Sell") === true;
+  const locationId = useActiveLocationId();
 
   const { entries: openShiftEntries, isPending: openShiftsPending } = useOpenShifts({
-    enabled: canSell,
+    enabled: canSell && locationId !== "",
+    locationId,
   });
 
   const held = useQuery({

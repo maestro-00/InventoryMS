@@ -1,19 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
 import { useSession } from "../../shared/auth/session-context";
 import { useActiveLocationId } from "../../shared/location/use-active-location";
 import { AfterSalePanel } from "../../features/pos/after-sale/after-sale-panel";
 import { fetchProducts } from "../../features/catalogue/products/api/products-api";
-import {
-  fetchOpenShifts,
-  fetchRegisters,
-} from "../../features/registers/registers/api/registers-api";
+import { useLocations } from "../../features/inventory/locations/api/location-queries";
+import { useOpenShifts } from "../../features/registers/shifts/use-open-shifts";
 
 export const Route = createFileRoute("/_authenticated/returns")({
   beforeLoad: ({ context }) => {
     if (!context.session?.permissions.includes("Sell")) {
-      throw new Error("Returns require Sell permission");
+      // eslint-disable-next-line @typescript-eslint/only-throw-error -- router redirect
+      throw redirect({ to: "/dashboard" });
     }
   },
   component: ReturnsPage,
@@ -21,29 +19,23 @@ export const Route = createFileRoute("/_authenticated/returns")({
 
 function ReturnsPage() {
   const { session } = useSession();
+  const locations = useLocations();
   const locationId = useActiveLocationId();
-  const registers = useQuery({
-    queryKey: ["registers", locationId],
-    queryFn: () => fetchRegisters(locationId),
+  const { entries: openShiftEntries, isPending: openShiftsPending } = useOpenShifts({
     enabled: locationId !== "",
-  });
-  const openShifts = useQuery({
-    queryKey: ["shifts", "open"],
-    queryFn: () => fetchOpenShifts(),
+    locationId,
   });
   const products = useQuery({
     queryKey: ["products", "returns"],
     queryFn: () => fetchProducts({ pageSize: 200 }),
   });
 
-  const locationRegisterIds = useMemo(
-    () => new Set((registers.data ?? []).map((register) => register.id)),
-    [registers.data],
-  );
-  const shift =
-    openShifts.data?.find((entry) => locationRegisterIds.has(entry.registerId)) ??
-    null;
+  const entry = openShiftEntries[0];
+  const shift = entry?.shift ?? null;
   const registerId = shift?.registerId ?? "";
+  // Disabled useOpenShifts is not pending — wait for locations (and shifts once enabled).
+  const loadingContext =
+    locations.isPending || (locationId !== "" && openShiftsPending);
 
   if (!session) return null;
 
@@ -53,7 +45,9 @@ function ReturnsPage() {
       <p className="text-sm text-muted-foreground">
         Look up a receipt to return, exchange, or void a sale. Live connection required.
       </p>
-      {shift && registerId ? (
+      {loadingContext ? (
+        <p>Loading open shifts…</p>
+      ) : shift && registerId ? (
         <AfterSalePanel
           registerId={registerId}
           shiftId={shift.id}

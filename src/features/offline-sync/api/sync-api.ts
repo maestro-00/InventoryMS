@@ -48,6 +48,15 @@ const conflictedSaleSchema = z.object({
   id: uuidSchema,
   clientSaleId: uuidSchema,
   stockConflictFlag: z.boolean().default(false),
+  lines: z
+    .array(
+      z.object({
+        productId: uuidSchema,
+        qty: z.number().optional(),
+      }),
+    )
+    .nullish()
+    .transform((value) => value ?? []),
 });
 
 export type ConflictedSale = z.infer<typeof conflictedSaleSchema>;

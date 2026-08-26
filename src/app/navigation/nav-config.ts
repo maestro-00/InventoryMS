@@ -59,7 +59,14 @@ export function buildNavigationGroups(
   const groups: NavGroup[] = [];
 
   const today: NavItem[] = [{ to: "/dashboard", label: "Dashboard" }];
-  if (canSell(session)) today.push({ to: "/pos", label: "Sell" });
+  if (canSell(session)) {
+    today.push(
+      { to: "/pos", label: "Sell" },
+      { to: "/registers", label: "Tills" },
+      { to: "/sales", label: "Sales history" },
+      { to: "/returns", label: "Returns" },
+    );
+  }
   today.push({ to: "/notifications", label: "Notifications" });
   groups.push({ id: "today", label: "Today", items: today });
 
@@ -105,18 +112,6 @@ export function buildNavigationGroups(
       id: "team",
       label: "Team",
       items: [{ to: "/staff", label: "Staff" }],
-    });
-  }
-
-  if (canSell(session)) {
-    groups.push({
-      id: "till",
-      label: "Till",
-      items: [
-        { to: "/registers", label: "Tills" },
-        { to: "/sales", label: "Sales history" },
-        { to: "/returns", label: "Returns" },
-      ],
     });
   }
 

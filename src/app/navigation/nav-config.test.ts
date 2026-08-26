@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { buildNavigationGroups } from "./nav-config";
 import { authSessionFixture } from "../../../tests/fixtures/domain";
 
+const MAX_NAV_GROUPS = 8;
+
 describe("nav-config", () => {
   it("shows Sell and hides Setup for a cashier with completed onboarding", () => {
     const groups = buildNavigationGroups(
@@ -26,6 +28,8 @@ describe("nav-config", () => {
     expect(labels).toContain("Tills");
     expect(labels).not.toContain("Get started");
     expect(groups.some((group) => group.id === "setup")).toBe(false);
+    expect(groups.some((group) => group.id === "till")).toBe(false);
+    expect(groups.length).toBeLessThanOrEqual(MAX_NAV_GROUPS);
   });
 
   it("includes Locations and Products for stock managers", () => {
@@ -56,12 +60,23 @@ describe("nav-config", () => {
       {
         ...authSessionFixture,
         role: "Owner",
-        permissions: ["Sell", "ManageStock", "ViewReports", "ManageUsers"],
+        permissions: [
+          "Sell",
+          "ManageStock",
+          "ViewReports",
+          "ManageUsers",
+          "ManagePurchasing",
+        ],
         locationScope: [...authSessionFixture.locationScope],
       },
       { businessProfile: false },
     );
 
     expect(groups.some((group) => group.id === "setup")).toBe(true);
+    expect(groups.some((group) => group.id === "till")).toBe(false);
+    expect(groups.flatMap((group) => group.items.map((item) => item.to))).toContain(
+      "/registers",
+    );
+    expect(groups.length).toBeLessThanOrEqual(MAX_NAV_GROUPS);
   });
 });

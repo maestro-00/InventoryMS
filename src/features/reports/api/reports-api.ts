@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { authorizedFetch } from "../../../shared/api/client/authorized-fetch";
+import { inventoryxClient } from "../../../shared/api/client/inventoryx-client";
+import { parseValue } from "../../../shared/api/client/api-result";
 import {
   apiDecimalSchema,
   clampPageSize,
@@ -69,10 +71,11 @@ export const dashboardSchema = z.object({
 export type DashboardRecord = z.infer<typeof dashboardSchema>;
 
 export async function fetchDashboard(asOf?: string): Promise<DashboardRecord> {
-  const params = asOf ? `?asOf=${encodeURIComponent(asOf)}` : "";
-  const response = await authedFetch(`/api/v1/dashboard${params}`);
-  if (!response.ok) throw new Error("Failed to load dashboard");
-  return dashboardSchema.parse(await response.json());
+  // Deferred: other report endpoints still use authedFetch; migrate with full reports rewrite.
+  const outcome = await inventoryxClient.GET("/api/v1/dashboard", {
+    params: { query: asOf ? { asOf } : {} },
+  });
+  return parseValue(outcome, dashboardSchema, "Dashboard");
 }
 
 const salesReportSchema = z.object({

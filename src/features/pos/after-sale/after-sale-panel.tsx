@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "../../../shared/ui/button";
 import { SelectField, TextField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
@@ -28,21 +28,18 @@ export function AfterSalePanel({
   compact?: boolean;
 }) {
   const [receiptNumber, setReceiptNumber] = useState("");
-  const [sale, setSale] = useState<SaleRecord | null>(initialSale ?? null);
+  const [lookedUpSale, setLookedUpSale] = useState<SaleRecord | null>(null);
+  const sale = lookedUpSale ?? initialSale ?? null;
   const [qty, setQty] = useState("1");
   const [disposition, setDisposition] = useState<"ToStock" | "Quarantine">("ToStock");
   const [reason, setReason] = useState("");
   const [replacementId, setReplacementId] = useState<string | null>(null);
   const [lookupError, setLookupError] = useState<unknown>(null);
 
-  useEffect(() => {
-    if (initialSale) setSale(initialSale);
-  }, [initialSale]);
-
   const lookup = useMutation({
     mutationFn: () => lookupSales({ receiptNumber }),
     onSuccess: (matches) => {
-      setSale(matches[0] ?? null);
+      setLookedUpSale(matches[0] ?? null);
       setLookupError(null);
     },
     onError: (error) => {

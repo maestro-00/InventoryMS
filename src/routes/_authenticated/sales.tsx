@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useActiveLocationId } from "../../shared/location/use-active-location";
 import { SaleHistory } from "../../features/pos/sales/sale-history";
 
@@ -12,7 +12,8 @@ export const Route = createFileRoute("/_authenticated/sales")({
       context.session?.role !== "Administrator" &&
       context.session?.role !== "Manager"
     ) {
-      throw new Error("Sales history requires Sell or ViewReports");
+      // eslint-disable-next-line @typescript-eslint/only-throw-error -- router redirect
+      throw redirect({ to: "/dashboard" });
     }
   },
   component: SalesPage,

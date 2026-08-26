@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/purchasing/")({
   component: PurchasingPage,
 });
 
-function PurchasingPage() {
+export function PurchasingPage() {
   const suppliers = useQuery({
     queryKey: ["purchasing", "suppliers"],
     queryFn: fetchSuppliers,

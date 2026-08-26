@@ -64,12 +64,10 @@ export async function fetchRegisters(locationId?: string): Promise<RegisterRecor
   const outcome = await inventoryxClient.GET("/api/v1/registers", {
     params: { query: locationId ? { locationId } : {} },
   });
-  const { value, etag } = parseResource(
-    outcome,
-    z.array(registerSchema),
-    "Registers",
-  );
-  return etag ? value.map((register) => ({ ...register, etag })) : value;
+  // Collection list ETags are not per-register. Do not stamp them onto rows —
+  // that would send the wrong If-Match on PATCH. Omit etag unless a future
+  // per-item ETag is available; updateRegister skips If-Match when undefined.
+  return parseValue(outcome, z.array(registerSchema), "Registers");
 }
 
 export async function createRegister(input: RegisterInput): Promise<RegisterRecord> {

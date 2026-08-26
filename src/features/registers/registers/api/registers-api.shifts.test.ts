@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 import { server } from "../../../../shared/test/msw/server";
 import { sessionManager } from "../../../../shared/auth/session-manager";
 import { ownerSession } from "../../../../../tests/fixtures/provider/session";
-import { registerRecord, shiftRecord } from "../../../../../tests/fixtures/provider/us1";
 import {
-  fetchOpenShifts,
-  fetchRegisterShifts,
-} from "./registers-api";
+  registerRecord,
+  shiftRecord,
+} from "../../../../../tests/fixtures/provider/us1";
+import { fetchOpenShifts, fetchRegisterShifts } from "./registers-api";
 
 describe("shift list API", () => {
   it("requests open shifts with status=Open and parses decimal floats", async () => {

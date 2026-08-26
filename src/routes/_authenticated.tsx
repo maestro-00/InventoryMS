@@ -55,8 +55,14 @@ function AuthenticatedLayout() {
       navigationGroups={navigationGroups}
       locationControl={<LocationSwitcher />}
       shiftControl={<ShiftStatusChip />}
-      renderLink={(item, className) => (
-        <Link to={item.to} className={className}>
+      renderLink={(item, className, onNavigate) => (
+        <Link
+          to={item.to}
+          className={className}
+          onClick={() => {
+            onNavigate?.();
+          }}
+        >
           {item.label}
         </Link>
       )}

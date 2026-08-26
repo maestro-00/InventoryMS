@@ -2,6 +2,10 @@ import createClient, { type Middleware } from "openapi-fetch";
 import type { paths } from "../generated/inventoryx";
 import { parseAppProblem } from "../errors/app-problem";
 import { sessionManager } from "../../auth/session-manager";
+import {
+  getRegisterAccessToken,
+  lockRegisterAuth,
+} from "../../auth/register-auth-store";
 import { RETRY_AFTER_REFRESH_HEADER, shouldRefreshAndRetry } from "./authorized-fetch";
 
 const origin = import.meta.env.VITE_INVENTORYX_ORIGIN || "http://localhost:5088";
@@ -15,10 +19,42 @@ function runtimeFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Res
   return globalThis.fetch(input, { ...init, credentials: "include" });
 }
 
+/**
+ * Sync ingest + snapshot require the register-scoped token (api-integration.md).
+ * Never fall back to the user JWT on these paths.
+ */
+function prefersRegisterToken(url: string): boolean {
+  try {
+    const path = new URL(url, origin).pathname;
+    return (
+      path === "/api/v1/sync/sales" ||
+      path.startsWith("/api/v1/sync/sales/") ||
+      path === "/api/v1/sync/snapshot"
+    );
+  } catch {
+    return /\/api\/v1\/sync\/(sales|snapshot)/.test(url);
+  }
+}
+
+async function resolveAccessToken(url: string): Promise<string | null> {
+  if (prefersRegisterToken(url)) {
+    // Fail closed: missing register unlock must not escalate to user JWT.
+    // When the URL names a till (snapshot), refuse a token unlocked for another register.
+    let registerId: string | undefined;
+    try {
+      registerId = new URL(url, origin).searchParams.get("registerId") ?? undefined;
+    } catch {
+      registerId = undefined;
+    }
+    return getRegisterAccessToken(registerId ? { registerId } : undefined);
+  }
+  return sessionManager.getAccessToken();
+}
+
 const authMiddleware: Middleware = {
-  onRequest({ request }) {
+  async onRequest({ request }) {
     const headers = new Headers(request.headers);
-    const token = sessionManager.getAccessToken();
+    const token = await resolveAccessToken(request.url);
     if (token) {
       headers.set("Authorization", `Bearer ${token}`);
     }
@@ -26,6 +62,15 @@ const authMiddleware: Middleware = {
     return new Request(request, { headers });
   },
   async onResponse({ response, request }) {
+    if (
+      prefersRegisterToken(request.url) &&
+      (response.status === 401 || response.status === 403)
+    ) {
+      // Any auth failure on sync routes locks the till for upload until PIN re-entry,
+      // regardless of whether a register token or (legacy) other credential was sent.
+      void lockRegisterAuth({ persistPartition: true });
+      return response;
+    }
     if (!shouldRefreshAndRetry(response.status, request.headers)) return response;
     try {
       await sessionManager.refresh();

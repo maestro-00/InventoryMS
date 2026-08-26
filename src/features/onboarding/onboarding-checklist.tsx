@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useSession } from "../../shared/auth/session-context";
+import { useActiveLocationId } from "../../shared/location/use-active-location";
 import { Button } from "../../shared/ui/button";
 import { LoadingState } from "../../shared/ui/states/ui-state";
 import { ProblemSummary, toProblem } from "../../shared/ui/forms/problem-summary";
@@ -12,8 +13,12 @@ export function OnboardingChecklist() {
   const tenantQuery = useTenant();
   const { session } = useSession();
   const canSell = session?.permissions.includes("Sell") === true;
+  const locationId = useActiveLocationId();
 
-  const { entries: openShiftEntries } = useOpenShifts({ enabled: canSell });
+  const { entries: openShiftEntries } = useOpenShifts({
+    enabled: canSell && locationId !== "",
+    locationId,
+  });
 
   if (tenantQuery.isPending) {
     return <LoadingState label="Loading your onboarding checklist" />;

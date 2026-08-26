@@ -1,12 +1,11 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
+import { setPosPreparedShiftActive } from "../../pos/pos-location-guard-store";
+import { lockRegisterAuth } from "../../../shared/auth/register-auth-store";
 import { Button } from "../../../shared/ui/button";
 import { TextField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
-import {
-  closeShift,
-  type CloseShiftResult,
-} from "./shifts-api";
+import { closeShift, type CloseShiftResult } from "./shifts-api";
 
 export type { CloseShiftResult };
 
@@ -20,7 +19,11 @@ export function CloseShiftForm({
   const [closingCounted, setClosingCounted] = useState("0.00");
   const mutation = useMutation({
     mutationFn: closeShift,
-    onSuccess: (result) => onClosed?.(result),
+    onSuccess: async (result) => {
+      await lockRegisterAuth({ persistPartition: true });
+      setPosPreparedShiftActive(false);
+      onClosed?.(result);
+    },
   });
   const problem = toProblem(mutation.error);
 

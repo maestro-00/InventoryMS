@@ -44,8 +44,14 @@ export type CashMovementInput = z.infer<typeof cashMovementInputSchema>;
 
 const cashMovementSchema = z.object({
   id: uuidSchema,
-  type: z.string().nullish().transform((value) => value ?? ""),
-  reason: z.string().nullish().transform((value) => value ?? ""),
+  type: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  reason: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
   amount: apiDecimalSchema,
 });
 

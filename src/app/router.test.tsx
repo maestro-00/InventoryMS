@@ -53,9 +53,7 @@ describe("app router", () => {
       await screen.findByRole("heading", { name: /dashboard/i }),
     ).toBeInTheDocument();
     await waitFor(() => {
-      expect(
-        screen.queryByRole("link", { name: /^sell$/i }),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: /^sell$/i })).not.toBeInTheDocument();
     });
   });
 
@@ -69,9 +67,7 @@ describe("app router", () => {
     });
     window.history.replaceState({}, "", "/dashboard");
     render(<AppProviders />);
-    expect(
-      await screen.findByRole("link", { name: /^sell$/i }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: /^sell$/i })).toBeInTheDocument();
   });
 
   it("renders remaining public placeholders and a not-found page", async () => {

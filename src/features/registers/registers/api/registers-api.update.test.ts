@@ -7,7 +7,7 @@ import { registerRecord } from "../../../../../tests/fixtures/provider/us1";
 import { updateRegister } from "./registers-api";
 
 describe("updateRegister", () => {
-  it("patches register name and active flag with If-Match", async () => {
+  it("patches register name and active flag with If-Match when provided", async () => {
     sessionManager.setSession({
       ...ownerSession,
       locationScope: [...ownerSession.locationScope],
@@ -50,6 +50,28 @@ describe("updateRegister", () => {
     });
   });
 
+  it("omits If-Match when no per-register etag is passed", async () => {
+    sessionManager.setSession({
+      ...ownerSession,
+      locationScope: [...ownerSession.locationScope],
+      accessToken: "access",
+      refreshToken: "refresh",
+    });
+    let seenIfMatch: string | null | undefined = undefined;
+    server.use(
+      http.patch(`*/api/v1/registers/${registerRecord.id}`, ({ request }) => {
+        seenIfMatch = request.headers.get("If-Match");
+        return HttpResponse.json({
+          ...registerRecord,
+          name: "Untagged",
+        });
+      }),
+    );
+
+    await updateRegister(registerRecord.id, { name: "Untagged" });
+    expect(seenIfMatch).toBeNull();
+  });
+
   it("maps 409 conflicts to ProblemError", async () => {
     sessionManager.setSession({
       ...ownerSession,
@@ -70,7 +92,9 @@ describe("updateRegister", () => {
       ),
     );
 
-    await expect(updateRegister(registerRecord.id, { name: "Stale" })).rejects.toMatchObject({
+    await expect(
+      updateRegister(registerRecord.id, { name: "Stale" }),
+    ).rejects.toMatchObject({
       problem: { status: 409 },
     });
   });

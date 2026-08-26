@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { screen } from "@testing-library/react";
 import { heldSale } from "../../../tests/fixtures/provider/us2";
 import {
+  locationRecord,
   registerRecord,
   shiftRecord,
   tenantProfile,
@@ -14,6 +15,7 @@ import { DashboardContinuePanel } from "./dashboard-continue-panel";
 describe("DashboardContinuePanel", () => {
   beforeEach(() => {
     server.use(
+      http.get("*/api/v1/locations", () => HttpResponse.json([locationRecord])),
       http.get("*/api/v1/shifts", () => HttpResponse.json([])),
       http.get("*/api/v1/registers", () => HttpResponse.json([registerRecord])),
     );

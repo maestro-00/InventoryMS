@@ -56,12 +56,21 @@ export function StockConflictReview() {
               </Button>
               <Button
                 type="button"
+                disabled={sale.lines.length === 0 || reason.trim() === ""}
+                title={
+                  sale.lines.length === 0
+                    ? "Adjustment lines are not available for this conflict"
+                    : undefined
+                }
                 onClick={() => {
                   resolve.mutate({
                     saleId: sale.id,
                     resolution: "adjustWithReason",
-                    reasonCode: reason || "Recount",
-                    adjustments: [{ productId: crypto.randomUUID(), qtyDelta: 0 }],
+                    reasonCode: reason.trim(),
+                    adjustments: sale.lines.map((line) => ({
+                      productId: line.productId,
+                      qtyDelta: 0,
+                    })),
                   });
                 }}
               >

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useActiveLocationId } from "../../../shared/location/use-active-location";
 import { Button } from "../../../shared/ui/button";
 import { SelectField, TextField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
@@ -14,6 +15,7 @@ import {
 export function ConsumptionForm() {
   const queryClient = useQueryClient();
   const locations = useLocations();
+  const activeLocationId = useActiveLocationId();
   const products = useQuery({
     queryKey: ["products-for-consumption"],
     queryFn: () => fetchProducts({ pageSize: 100 }),
@@ -22,7 +24,8 @@ export function ConsumptionForm() {
     queryKey: ["adjustment-reasons"],
     queryFn: fetchAdjustmentReasons,
   });
-  const [locationId, setLocationId] = useState("");
+  const [locationOverride, setLocationOverride] = useState<string | null>(null);
+  const locationId = locationOverride ?? activeLocationId;
   const [productId, setProductId] = useState("");
   const [qtyDelta, setQtyDelta] = useState("");
   const [reasonCode, setReasonCode] = useState("PersonalUse");
@@ -57,7 +60,7 @@ export function ConsumptionForm() {
           label: location.name,
         }))}
         onChange={(event) => {
-          setLocationId(event.target.value);
+          setLocationOverride(event.target.value);
         }}
       />
       <SelectField

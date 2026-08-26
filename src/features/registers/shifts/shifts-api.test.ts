@@ -5,11 +5,7 @@ import { server } from "../../../shared/test/msw/server";
 import { sessionManager } from "../../../shared/auth/session-manager";
 import { ownerSession } from "../../../../tests/fixtures/provider/session";
 import { shiftRecord } from "../../../../tests/fixtures/provider/us1";
-import {
-  closeShift,
-  fetchZReport,
-  recordCashMovement,
-} from "./shifts-api";
+import { closeShift, fetchZReport, recordCashMovement } from "./shifts-api";
 
 describe("shifts-api", () => {
   it("closes a shift with counted cash", async () => {

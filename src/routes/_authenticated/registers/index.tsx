@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../shared/ui/tabs";
 import { useSession } from "../../../shared/auth/session-context";
 import { useActiveLocationId } from "../../../shared/location/use-active-location";
@@ -43,9 +43,18 @@ function RegistersPage() {
     isPending: openShiftsPending,
     isError: openShiftsError,
     error: openShiftsLoadError,
-  } = useOpenShifts({ enabled: canSell && locationId !== "" });
+  } = useOpenShifts({ enabled: canSell && locationId !== "", locationId });
   const [shift, setShift] = useState<ShiftRecord | null>(null);
   const [closedNotice, setClosedNotice] = useState<string | null>(null);
+  const previousLocationId = useRef(locationId);
+
+  useEffect(() => {
+    if (previousLocationId.current && previousLocationId.current !== locationId) {
+      setShift(null);
+      setClosedNotice(null);
+    }
+    previousLocationId.current = locationId;
+  }, [locationId]);
 
   const registerList = registers.data ?? [];
   const activeShift =
@@ -91,7 +100,9 @@ function RegistersPage() {
         </p>
       ) : null}
 
-      {openShiftsError ? <ProblemSummary problem={toProblem(openShiftsLoadError)} /> : null}
+      {openShiftsError ? (
+        <ProblemSummary problem={toProblem(openShiftsLoadError)} />
+      ) : null}
 
       <Tabs defaultValue="overview">
         <TabsList>

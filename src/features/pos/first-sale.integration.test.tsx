@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { server } from "../../shared/test/msw/server";
-import { renderWithProviders } from "../../shared/test/render";
 import { renderWithRouter } from "../../shared/test/render-router";
 import { PosWorkspace } from "./pos-workspace";
 import {
@@ -86,9 +85,9 @@ describe("online first sale", () => {
       }),
     );
 
-    renderWithProviders(<PosWorkspace />);
+    renderWithRouter(<PosWorkspace />);
 
-    expect(await screen.findByText(/open a shift before selling/i)).toBeInTheDocument();
+    expect(await screen.findByText(/before you can sell/i)).toBeInTheDocument();
 
     await openTheShift(user);
     await ringUpTwoUnits(user);
@@ -128,7 +127,7 @@ describe("online first sale", () => {
       }),
     );
 
-    renderWithProviders(<PosWorkspace />);
+    renderWithRouter(<PosWorkspace />);
 
     await openTheShift(user);
     await ringUpTwoUnits(user);
@@ -165,7 +164,7 @@ describe("online first sale", () => {
       }),
     );
 
-    renderWithProviders(<PosWorkspace />);
+    renderWithRouter(<PosWorkspace />);
 
     await openTheShift(user);
     await ringUpTwoUnits(user);
@@ -199,7 +198,7 @@ describe("online first sale", () => {
       }),
     );
 
-    renderWithProviders(<PosWorkspace />);
+    renderWithRouter(<PosWorkspace />);
 
     await user.type(await screen.findByLabelText(/register name/i), "Counter 1");
     await user.click(screen.getByRole("button", { name: /create register/i }));
@@ -226,7 +225,7 @@ describe("online first sale", () => {
       ),
     );
 
-    renderWithProviders(<PosWorkspace />);
+    renderWithRouter(<PosWorkspace />);
 
     await openTheShift(user);
     await ringUpTwoUnits(user);
@@ -246,9 +245,7 @@ describe("counter-sale workspace extensions", () => {
   it("asks the cashier to create a location before selling", async () => {
     server.use(http.get("*/api/v1/locations", () => HttpResponse.json([])));
     renderWithRouter(<PosWorkspace />);
-    expect(
-      await screen.findByText(/before you can sell/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/before you can sell/i)).toBeInTheDocument();
   });
 
   it("hydrates the till from InventoryX open shifts after refresh", async () => {
@@ -311,7 +308,9 @@ describe("counter-sale workspace extensions", () => {
       screen.getByRole("button", { name: /resume shift on counter 2/i }),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /resume shift on counter 2/i }));
+    await user.click(
+      screen.getByRole("button", { name: /resume shift on counter 2/i }),
+    );
 
     expect(
       await screen.findByRole("button", { name: /take cash payment/i }),
@@ -393,7 +392,7 @@ describe("counter-sale workspace extensions", () => {
       ),
     );
 
-    renderWithProviders(<PosWorkspace />);
+    renderWithRouter(<PosWorkspace />);
     await openTheShift(user);
 
     for (const key of "6001234567890") {
@@ -443,7 +442,7 @@ describe("counter-sale workspace extensions", () => {
       ),
     );
 
-    renderWithProviders(<PosWorkspace />);
+    renderWithRouter(<PosWorkspace />);
     await openTheShift(user);
 
     for (const key of "0000000000000") {
@@ -477,7 +476,7 @@ describe("counter-sale workspace extensions", () => {
       ),
     );
 
-    renderWithProviders(<PosWorkspace />);
+    renderWithRouter(<PosWorkspace />);
     await openTheShift(user);
     await user.click(await screen.findByRole("button", { name: /add sugar 1kg/i }));
     await user.click(screen.getByRole("button", { name: /remove sugar 1kg/i }));

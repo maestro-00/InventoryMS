@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSession } from "../../../shared/auth/session-context";
 import { hasPermission } from "../../../shared/auth/access-policy";
+import { useActiveLocationId } from "../../../shared/location/use-active-location";
 import { Button } from "../../../shared/ui/button";
 import { SelectField, TextField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
@@ -20,6 +21,7 @@ export function AdjustmentForm() {
   const canApprove = hasPermission(session, "ApproveAdjustments");
   const queryClient = useQueryClient();
   const locations = useLocations();
+  const activeLocationId = useActiveLocationId();
   const products = useQuery({
     queryKey: ["products-for-adjustment"],
     queryFn: () => fetchProducts({ pageSize: 100 }),
@@ -29,7 +31,8 @@ export function AdjustmentForm() {
     queryFn: fetchAdjustmentReasons,
   });
 
-  const [locationId, setLocationId] = useState("");
+  const [locationOverride, setLocationOverride] = useState<string | null>(null);
+  const locationId = locationOverride ?? activeLocationId;
   const [productId, setProductId] = useState("");
   const [qtyDelta, setQtyDelta] = useState("");
   const [reasonCode, setReasonCode] = useState("Correction");
@@ -84,7 +87,7 @@ export function AdjustmentForm() {
           label: location.name,
         }))}
         onChange={(event) => {
-          setLocationId(event.target.value);
+          setLocationOverride(event.target.value);
         }}
       />
       <SelectField

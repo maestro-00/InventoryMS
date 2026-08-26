@@ -19,11 +19,17 @@ function normalizeId(id: string): string {
 }
 
 /**
- * Tenant open shifts from InventoryX plus all registers for display names.
- * Does not filter by active location — the API already scopes by permission.
+ * Tenant open shifts from InventoryX, optionally filtered to registers at `locationId`.
+ * Prefer passing the active location so POS / tills never bind a till from another shop.
  */
-export function useOpenShifts(options: { enabled?: boolean } = {}) {
+export function useOpenShifts(
+  options: {
+    enabled?: boolean;
+    locationId?: string;
+  } = {},
+) {
   const enabled = options.enabled ?? true;
+  const locationId = options.locationId ?? "";
   const openShifts = useQuery({
     queryKey: openShiftsQueryKey,
     queryFn: () => fetchOpenShifts(),
@@ -39,21 +45,26 @@ export function useOpenShifts(options: { enabled?: boolean } = {}) {
     const registerById = new Map(
       (registers.data ?? []).map((register) => [normalizeId(register.id), register]),
     );
-    return (openShifts.data ?? []).map((shift) => {
-      const register = registerById.get(normalizeId(shift.registerId));
-      return {
-        shift,
-        register,
-        registerName: register?.name ?? "Register",
-      };
-    });
-  }, [openShifts.data, registers.data]);
+    return (openShifts.data ?? [])
+      .map((shift) => {
+        const register = registerById.get(normalizeId(shift.registerId));
+        return {
+          shift,
+          register,
+          registerName: register?.name ?? "Register",
+        };
+      })
+      .filter((entry) => {
+        if (!locationId) return true;
+        return entry.register?.locationId === locationId;
+      });
+  }, [openShifts.data, registers.data, locationId]);
 
   return {
     openShifts,
     registers,
     entries,
-    isPending: openShifts.isPending || registers.isPending,
+    isPending: enabled && (openShifts.isPending || registers.isPending),
     isError: openShifts.isError,
     error: openShifts.error,
   };

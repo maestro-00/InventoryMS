@@ -1,4 +1,9 @@
 import { inventoryxClient } from "../../shared/api/client/inventoryx-client";
+import { getRegisterAccessToken } from "../../shared/auth/register-auth-store";
+import {
+  isRegisterPartitionLocked,
+  lockRegisterPartitionMeta,
+} from "../../shared/db/register-partition-lock";
 import { listPendingSales, updateSaleStatus } from "./offline-sale-repository";
 import { publishSyncStatus, withSyncLeadership } from "./sync-leader";
 import { applySyncResult } from "./apply-sync-result";
@@ -132,6 +137,19 @@ export async function runSyncBatch(input: {
         pending: pending.length,
       });
       if (batch.length === 0) return { processed: 0, stoppedForAuth: false };
+      // Locked partition or missing register token: keep queue visible, require PIN/prepare.
+      if (await isRegisterPartitionLocked(input.tenantId, input.registerId)) {
+        return { processed: 0, stoppedForAuth: true };
+      }
+      if (!input.upload) {
+        const registerToken = await getRegisterAccessToken({
+          registerId: input.registerId,
+        });
+        if (!registerToken) {
+          await lockRegisterPartitionMeta(input.tenantId, input.registerId);
+          return { processed: 0, stoppedForAuth: true };
+        }
+      }
 
       const leaseExpiresAt = new Date(Date.now() + 60_000).toISOString();
       for (const sale of batch) {

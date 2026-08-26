@@ -2,7 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isProblemError } from "../../shared/api/errors/problem-error";
 import { useSession } from "../../shared/auth/session-context";
-import { isRegisterUnlocked } from "../../shared/auth/register-auth-store";
+import {
+  isRegisterUnlocked,
+  isRegisterUnlockedForShift,
+} from "../../shared/auth/register-auth-store";
 import { Button } from "../../shared/ui/button";
 import { TextField } from "../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../shared/ui/forms/problem-summary";
@@ -65,7 +68,11 @@ import { PosPrerequisiteWizard } from "./pos-prerequisite-wizard";
 
 type Panel = "sell" | "receipt" | "history" | "provisional";
 
-export function PosWorkspace() {
+export function PosWorkspace({
+  preferredShiftId,
+}: {
+  preferredShiftId?: string;
+} = {}) {
   const queryClient = useQueryClient();
   const { session } = useSession();
   const isOnline = useOnlineStatus();
@@ -84,7 +91,10 @@ export function PosWorkspace() {
     isPending: openShiftsPending,
     isError: openShiftsError,
     error: openShiftsLoadError,
-  } = useOpenShifts({ enabled: canSell && isOnline });
+  } = useOpenShifts({
+    enabled: canSell && isOnline && locationId !== "",
+    locationId,
+  });
   const products = useQuery({
     queryKey: ["pos-products", locationId],
     queryFn: () => fetchProducts({ pageSize: 200 }),
@@ -120,20 +130,28 @@ export function PosWorkspace() {
   }, [cart.lines.length]);
 
   useEffect(() => {
-    if (
-      previousLocationId.current &&
-      previousLocationId.current !== locationId
-    ) {
+    if (previousLocationId.current && previousLocationId.current !== locationId) {
       setCart(createCart());
       setCashReceived("");
       setClientErrors([]);
+      setShift(null);
+      setSale(null);
+      setProvisional(null);
+      setPanel("sell");
+      setUnknownBarcode(null);
     }
     previousLocationId.current = locationId;
   }, [locationId]);
 
-  // Prefer an explicit selection; otherwise hydrate the sole server open shift.
+  // Prefer an explicit selection; then ?shiftId= when it matches an open shift;
+  // otherwise hydrate the sole server open shift.
+  const preferredOpenShift = preferredShiftId
+    ? (openShiftEntries.find((entry) => entry.shift.id === preferredShiftId)?.shift ??
+      null)
+    : null;
   const activeShift =
     shift ??
+    preferredOpenShift ??
     (openShiftEntries.length === 1 ? (openShiftEntries[0]?.shift ?? null) : null);
 
   const resumableEntries = activeShift ? [] : openShiftEntries;
@@ -184,7 +202,11 @@ export function PosWorkspace() {
             throw new Error("Sign in is required before completing an offline sale.");
           }
           const registerId = activeShift?.registerId ?? "";
-          if (!isRegisterUnlocked(session.tenantId, registerId)) {
+          const shiftId = activeShift?.id ?? "";
+          const unlocked = shiftId
+            ? isRegisterUnlockedForShift(session.tenantId, registerId, shiftId)
+            : isRegisterUnlocked(session.tenantId, registerId);
+          if (!unlocked) {
             throw new Error(
               "Unlock the till with your register PIN before completing offline sales.",
             );
@@ -194,7 +216,7 @@ export function PosWorkspace() {
             result: await completeEligibleOfflineSale({
               tenantId: session.tenantId,
               registerId,
-              shiftId: activeShift?.id ?? "",
+              shiftId,
               cart,
               payments,
             }),
@@ -401,11 +423,7 @@ export function PosWorkspace() {
             </>
           ) : !activeShift ? (
             <div className="flex flex-col gap-6">
-              <PosPrerequisiteWizard
-                hasLocation
-                hasRegister
-                hasOpenShift={false}
-              />
+              <PosPrerequisiteWizard hasLocation hasRegister hasOpenShift={false} />
               {openShiftsError ? (
                 <ProblemSummary problem={toProblem(openShiftsLoadError)} />
               ) : null}

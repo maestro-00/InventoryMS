@@ -3,10 +3,11 @@ import { useEffect, useSyncExternalStore } from "react";
 import { useSession } from "../auth/session-context";
 import { useLocations } from "../../features/inventory/locations/api/location-queries";
 import {
+  clearPosLocationGuard,
   isPosLocationSwitchBlocked,
   subscribePosLocationGuard,
-  setPosCartActive,
 } from "../../features/pos/pos-location-guard-store";
+import { lockRegisterAuth } from "../auth/register-auth-store";
 import { clearLocationCaches } from "../api/client/query-scope";
 import {
   getActiveLocationId,
@@ -39,18 +40,20 @@ export function useActiveLocationId(): string {
 
   const ids = (locations.data ?? []).map((location) => location.id);
   const tenantId = session?.tenantId ?? "";
-  const locationScope = session?.locationScope ?? [];
+  const locationScope = session?.locationScope;
+  const locationIdsKey = ids.join(",");
+  const locationScopeKey = locationScope?.join(",") ?? "";
 
   useEffect(() => {
-    if (!tenantId || ids.length === 0) return;
+    if (!tenantId || ids.length === 0 || !locationScope) return;
     initializeActiveLocation({
       tenantId,
       locationScope,
       locationIds: ids,
     });
-  }, [tenantId, ids.join(","), locationScope.join(",")]);
+  }, [tenantId, locationIdsKey, locationScopeKey, ids, locationScope]);
 
-  if (!tenantId || ids.length === 0) return "";
+  if (!tenantId || ids.length === 0 || !locationScope) return "";
 
   return resolveActiveLocationId({
     tenantId,
@@ -86,7 +89,9 @@ export function LocationSwitcher({
 
   if (options.length === 1) {
     return (
-      <span className="text-sm text-muted-foreground">{active?.name ?? "Location"}</span>
+      <span className="text-sm text-muted-foreground">
+        {active?.name ?? "Location"}
+      </span>
     );
   }
 
@@ -98,14 +103,15 @@ export function LocationSwitcher({
         if (!locationInScope(next, locationScope)) return;
         if (blocked) {
           const confirmed = window.confirm(
-            "You have an active cart or a prepared till for offline sales. Switch location anyway? The current cart will be cleared.",
+            "You have an active cart or a prepared till for offline sales. Switch location anyway? The current cart will be cleared and the till will lock.",
           );
           if (!confirmed) {
             onBlockedSwitch?.();
             return;
           }
-          setPosCartActive(false);
         }
+        void lockRegisterAuth({ persistPartition: true });
+        clearPosLocationGuard();
         const previous = activeLocationId;
         setActiveLocationId(session.tenantId, next);
         if (previous && previous !== next) {

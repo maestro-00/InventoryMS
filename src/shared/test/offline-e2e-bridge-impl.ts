@@ -17,6 +17,8 @@ import {
   canUnlockPartition,
   earliestDeadline,
 } from "../auth/register-authorization";
+import { unlockRegister } from "../auth/register-auth-store";
+import { exchangeRegisterPin } from "../../features/auth/api/auth-api";
 import {
   shouldDeferServiceWorkerUpdate,
   STORAGE_CLEANUP_ORDER,
@@ -35,6 +37,8 @@ export interface OfflineE2eBridge {
   lockRegisterPartition: typeof lockRegisterPartition;
   canUnlockPartition: typeof canUnlockPartition;
   earliestDeadline: typeof earliestDeadline;
+  unlockRegister: typeof unlockRegister;
+  exchangeRegisterPin: typeof exchangeRegisterPin;
   shouldDeferServiceWorkerUpdate: typeof shouldDeferServiceWorkerUpdate;
   STORAGE_CLEANUP_ORDER: typeof STORAGE_CLEANUP_ORDER;
 }
@@ -60,6 +64,8 @@ export function installOfflineE2eBridge(): void {
     lockRegisterPartition,
     canUnlockPartition,
     earliestDeadline,
+    unlockRegister,
+    exchangeRegisterPin,
     shouldDeferServiceWorkerUpdate,
     STORAGE_CLEANUP_ORDER,
   };

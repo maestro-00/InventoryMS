@@ -8,6 +8,7 @@ import { OnboardingChecklist } from "./onboarding-checklist";
 import { TrialSummary } from "./trial-summary";
 import { SampleDataActions } from "./sample-data-actions";
 import {
+  locationRecord,
   registerRecord,
   shiftRecord,
   tenantProfile,
@@ -39,6 +40,7 @@ function tenantHandler(overrides: Record<string, unknown> = {}) {
 describe("onboarding checklist", () => {
   beforeEach(() => {
     server.use(
+      http.get("*/api/v1/locations", () => HttpResponse.json([locationRecord])),
       http.get("*/api/v1/shifts", () => HttpResponse.json([])),
       http.get("*/api/v1/registers", () => HttpResponse.json([registerRecord])),
     );

@@ -4,6 +4,7 @@ import {
   earliestDeadline,
   isPastDeadline,
   lockRegisterPartition,
+  unwrapRegisterCredential,
   wrapRegisterCredential,
   type RegisterAuthorizationState,
 } from "./register-authorization";
@@ -27,6 +28,7 @@ describe("register authorization", () => {
       unlocked: true,
       tenantId: "t1",
       registerId: "r1",
+      shiftId: "s1",
       deadline: "2026-08-13T12:00:00.000Z",
       credential: null,
     };
@@ -35,6 +37,7 @@ describe("register authorization", () => {
     expect(lockRegisterPartition(state)).toMatchObject({
       unlocked: false,
       credential: null,
+      shiftId: "",
       deadline: state.deadline,
     });
   });
@@ -45,7 +48,7 @@ describe("register authorization", () => {
     expect(isPastDeadline("2000-01-01T00:00:00.000Z")).toBe(true);
   });
 
-  it("wraps register credentials with web crypto", async () => {
+  it("wraps and unwraps register credentials with web crypto", async () => {
     const wrapped = await wrapRegisterCredential({
       tenantId: "11111111-1111-4111-8111-111111111111",
       registerId: "22222222-2222-4222-8222-222222222222",
@@ -56,5 +59,6 @@ describe("register authorization", () => {
     expect(wrapped.ciphertext.byteLength).toBeGreaterThan(0);
     expect(wrapped.iv).toHaveLength(12);
     expect(wrapped.wrappedKey.byteLength).toBeGreaterThan(0);
+    await expect(unwrapRegisterCredential(wrapped)).resolves.toBe("register-token");
   });
 });

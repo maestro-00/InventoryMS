@@ -52,6 +52,8 @@ function sessionRecord(
     accessToken: string;
     refreshToken: string;
     registerId: string;
+    userId: string;
+    tenantId: string;
   }> = {},
 ) {
   return {
@@ -148,6 +150,93 @@ describe("SessionManager", () => {
     expect(lockEvent.lockRegister).toBe(true);
   });
 
+  it("locks register auth when setSession switches user or tenant without sign-out", () => {
+    const manager = createManager();
+    const onEvent = vi.fn();
+    manager.subscribe(onEvent);
+    manager.setSession(sessionRecord());
+    onEvent.mockClear();
+
+    manager.setSession(
+      sessionRecord({
+        userId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        accessToken: "user-b-access",
+      }),
+    );
+
+    const event = onEvent.mock.calls.at(-1)?.[0] as {
+      type: string;
+      clearCache: boolean;
+      lockRegister: boolean;
+    };
+    expect(event).toMatchObject({
+      type: "set",
+      clearCache: true,
+      lockRegister: true,
+    });
+    expect(manager.getAccessToken()).toBe("user-b-access");
+  });
+
+  it("does not lock register auth when setSession refreshes the same identity", () => {
+    const manager = createManager();
+    const onEvent = vi.fn();
+    manager.subscribe(onEvent);
+    manager.setSession(sessionRecord());
+    onEvent.mockClear();
+
+    manager.setSession(sessionRecord({ accessToken: "rotated-access" }));
+
+    const event = onEvent.mock.calls.at(-1)?.[0] as {
+      type: string;
+      clearCache: boolean;
+      lockRegister: boolean;
+    };
+    expect(event).toMatchObject({
+      type: "set",
+      clearCache: false,
+      lockRegister: false,
+    });
+  });
+
+  it("binds active register without locking or clearing caches", () => {
+    const manager = createManager();
+    const onScope = vi.fn();
+    manager.subscribe(onScope);
+    manager.setSession(sessionRecord());
+
+    manager.bindActiveRegister("reg-bound");
+
+    expect(manager.getSnapshot()?.registerId).toBe("reg-bound");
+    const event = onScope.mock.calls.at(-1)?.[0] as {
+      type: string;
+      clearCache: boolean;
+      lockRegister: boolean;
+    };
+    expect(event).toMatchObject({
+      type: "scope",
+      clearCache: false,
+      lockRegister: false,
+    });
+  });
+
+  it("locks register only when transitionScope changes the till", () => {
+    const manager = createManager();
+    const onScope = vi.fn();
+    manager.subscribe(onScope);
+    manager.setSession(sessionRecord({ registerId: "reg-1" }));
+    onScope.mockClear();
+
+    manager.transitionScope({ registerId: "reg-1" });
+    expect(
+      (onScope.mock.calls.at(-1)?.[0] as { lockRegister: boolean }).lockRegister,
+    ).toBe(false);
+
+    manager.transitionScope({ registerId: "reg-2" });
+    expect(
+      (onScope.mock.calls.at(-1)?.[0] as { lockRegister: boolean }).lockRegister,
+    ).toBe(true);
+  });
+
   it("signs out when refresh has no token or the provider rejects it", async () => {
     const missing = createManager();
     await expect(missing.refresh()).rejects.toThrow("No refresh token");
@@ -221,6 +310,39 @@ describe("SessionManager", () => {
 
     expect(manager.getStatus()).toBe("anonymous");
     await expect(manager.whenRestored()).resolves.toBeUndefined();
+  });
+
+  it("emits restore after setSession already settled restored during cookie refresh", async () => {
+    const events: string[] = [];
+    document.cookie = `${SESSION_MARKER_COOKIE}=1; path=/`;
+    const claims = {
+      sub: authSessionFixture.userId,
+      tenantId: authSessionFixture.tenantId,
+      role: "Owner",
+      permissions: ["Sell"],
+      locationScope: [...authSessionFixture.locationScope],
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    };
+    const accessToken = `header.${btoa(JSON.stringify(claims)).replace(/=+$/, "")}.signature`;
+    const fetchImpl = vi.fn(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ accessToken, refreshToken: "rotated" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    ) as unknown as typeof fetch;
+    const manager = createManager(fetchImpl);
+    manager.subscribe((event) => {
+      events.push(event.type);
+    });
+
+    await manager.restore();
+
+    expect(manager.getStatus()).toBe("authenticated");
+    expect(events).toContain("set");
+    expect(events).toContain("restore");
+    document.cookie = `${SESSION_MARKER_COOKIE}=; Max-Age=0; path=/`;
   });
 
   it("adopts a cookie-backed session without a stored refresh token", async () => {

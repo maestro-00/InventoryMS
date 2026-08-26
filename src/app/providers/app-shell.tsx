@@ -33,7 +33,11 @@ export interface AppShellProps {
    * Renders a navigation destination. The router supplies a client-side link so a move
    * between pages never reloads the document and drops the in-memory session.
    */
-  renderLink?: (item: AppShellNavItem, className: string) => ReactNode;
+  renderLink?: (
+    item: AppShellNavItem,
+    className: string,
+    onNavigate?: () => void,
+  ) => ReactNode;
 }
 
 function NavList({
@@ -42,7 +46,11 @@ function NavList({
   onNavigate,
 }: {
   groups: NavGroup[];
-  link: (item: AppShellNavItem, className: string) => ReactNode;
+  link: (
+    item: AppShellNavItem,
+    className: string,
+    onNavigate?: () => void,
+  ) => ReactNode;
   onNavigate?: () => void;
 }) {
   return (
@@ -54,13 +62,14 @@ function NavList({
           </p>
           <ul className="flex flex-col gap-1">
             {group.items.map((item) => (
-              <li key={item.to} onClick={onNavigate}>
+              <li key={item.to}>
                 {link(
                   item,
                   cn(
                     "flex min-h-touch items-center rounded-md px-3 text-sm font-medium",
                     "hover:bg-accent hover:text-accent-foreground",
                   ),
+                  onNavigate,
                 )}
               </li>
             ))}
@@ -87,11 +96,21 @@ export function AppShell({
       ? [{ id: "primary", label: "Menu", items: navigation }]
       : []);
 
-  const link = (item: AppShellNavItem, className: string): ReactNode =>
+  const link = (
+    item: AppShellNavItem,
+    className: string,
+    onNavigate?: () => void,
+  ): ReactNode =>
     renderLink ? (
-      renderLink(item, className)
+      renderLink(item, className, onNavigate)
     ) : (
-      <a href={item.to} className={className}>
+      <a
+        href={item.to}
+        className={className}
+        onClick={() => {
+          onNavigate?.();
+        }}
+      >
         {item.label}
       </a>
     );

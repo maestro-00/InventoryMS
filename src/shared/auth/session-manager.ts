@@ -111,13 +111,21 @@ export class SessionManager {
     return this.getStatus();
   }
 
-  /** Settles the restore for sessions established by other means, such as registration. */
+  /**
+   * Settles the restore for sessions established by other means, such as registration.
+   * Always emits `restore` so reload teardown (partition lock) runs even when
+   * `setSession` already settled `restored` during a cookie refresh.
+   */
   markRestored(): void {
-    if (!this.settleRestore()) return;
+    this.settleRestore();
     this.emit({ type: "restore", clearCache: false, lockRegister: false });
   }
 
   setSession(record: SessionRecord): void {
+    const previous = this.session;
+    const identityChanged =
+      previous !== null &&
+      (previous.userId !== record.userId || previous.tenantId !== record.tenantId);
     this.session = sessionSnapshotSchema.parse({
       ...record,
       accessToken: record.accessToken,
@@ -127,23 +135,47 @@ export class SessionManager {
     this.session.refreshToken = record.refreshToken;
     this.syncSnapshot();
     this.settleRestore();
-    this.emit({ type: "set", clearCache: false, lockRegister: false });
+    // In-app user/tenant switch without sign-out must drop the prior register token.
+    this.emit({
+      type: "set",
+      clearCache: identityChanged,
+      lockRegister: identityChanged,
+    });
   }
 
   transitionScope(
     next: Partial<Pick<SessionSnapshot, "tenantId" | "locationScope" | "registerId">>,
   ): void {
     if (!this.session) return;
+    const previousRegisterId = this.session.registerId;
     this.session = {
       ...this.session,
       ...next,
     };
     this.syncSnapshot();
+    const registerChanged =
+      next.registerId !== undefined && next.registerId !== previousRegisterId;
     this.emit({
       type: "scope",
       clearCache: true,
-      lockRegister: Boolean(next.registerId),
+      // Lock only when the active till actually changes, not on first bind after PIN unlock.
+      lockRegister: registerChanged,
     });
+  }
+
+  /**
+   * Records the unlocked till on the session snapshot without tearing down caches or
+   * locking the register partition (PIN unlock already holds the wrapping key).
+   */
+  bindActiveRegister(registerId: string): void {
+    if (!this.session) return;
+    if (this.session.registerId === registerId) return;
+    this.session = {
+      ...this.session,
+      registerId,
+    };
+    this.syncSnapshot();
+    this.emit({ type: "scope", clearCache: false, lockRegister: false });
   }
 
   async refresh(): Promise<SessionTokens> {

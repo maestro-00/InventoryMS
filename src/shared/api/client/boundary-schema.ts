@@ -13,19 +13,15 @@ export const uuidSchema = z
  * ISO local form without Z/offset (e.g. `2026-08-16T09:59:51.0545099`). Treat that
  * as UTC by appending Z before validating a proper instant.
  */
-const UNSPECIFIED_UTC_INSTANT =
-  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/;
+const UNSPECIFIED_UTC_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/;
 
 const UTC_INSTANT_WITH_OFFSET =
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
 
 export const utcInstantSchema = z
   .string()
-  .transform((value) =>
-    UNSPECIFIED_UTC_INSTANT.test(value) ? `${value}Z` : value,
-  )
+  .transform((value) => (UNSPECIFIED_UTC_INSTANT.test(value) ? `${value}Z` : value))
   .pipe(z.string().regex(UTC_INSTANT_WITH_OFFSET, "Expected a UTC instant"));
-
 
 const MAX_PAGE_SIZE = 200;
 

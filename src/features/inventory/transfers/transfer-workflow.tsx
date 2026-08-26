@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useActiveLocationId } from "../../../shared/location/use-active-location";
 import { Button } from "../../../shared/ui/button";
 import { SelectField, TextField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
@@ -17,6 +18,7 @@ import {
 export function TransferWorkflow() {
   const queryClient = useQueryClient();
   const locations = useLocations();
+  const activeLocationId = useActiveLocationId();
   const products = useQuery({
     queryKey: ["products-for-transfer"],
     queryFn: () => fetchProducts({ pageSize: 100 }),
@@ -26,7 +28,8 @@ export function TransferWorkflow() {
     queryFn: () => fetchTransfers({ status: "Dispatched" }),
   });
 
-  const [fromLocationId, setFrom] = useState("");
+  const [fromOverride, setFromOverride] = useState<string | null>(null);
+  const fromLocationId = fromOverride ?? activeLocationId;
   const [toLocationId, setTo] = useState("");
   const [productId, setProductId] = useState("");
   const [quantity, setQuantity] = useState("10");
@@ -87,7 +90,7 @@ export function TransferWorkflow() {
             label: location.name,
           }))}
           onChange={(event) => {
-            setFrom(event.target.value);
+            setFromOverride(event.target.value);
           }}
         />
         <SelectField

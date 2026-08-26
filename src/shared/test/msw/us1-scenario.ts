@@ -579,7 +579,10 @@ export const us1ScenarioHandlers = [
     return HttpResponse.json(record, { status: 201 });
   }),
   http.patch("*/api/v1/registers/:id", async ({ params, request }) => {
-    const body = (await request.json()) as { name?: string | null; isActive?: boolean | null };
+    const body = (await request.json()) as {
+      name?: string | null;
+      isActive?: boolean | null;
+    };
     const ifMatch = request.headers.get("If-Match");
     if (ifMatch && ifMatch !== '"registers-list"' && ifMatch !== '"register-updated"') {
       return HttpResponse.json(
@@ -591,7 +594,10 @@ export const us1ScenarioHandlers = [
     if (index === -1) {
       return HttpResponse.json({ title: "Not found", status: 404 }, { status: 404 });
     }
-    const current = state.registers[index]!;
+    const current = state.registers[index];
+    if (!current) {
+      return HttpResponse.json({ title: "Not found", status: 404 }, { status: 404 });
+    }
     const updated = {
       ...current,
       ...(body.name != null ? { name: body.name } : {}),
