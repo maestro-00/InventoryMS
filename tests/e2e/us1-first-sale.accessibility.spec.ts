@@ -17,14 +17,14 @@ const PUBLIC_ROUTES = ["/login", "/register"] as const;
 
 /** Authenticated destinations, reached through the in-app navigation. */
 const NAV_DESTINATIONS = [
-  "Set up",
+  "Get started",
   "Sell",
   "Products",
   "Categories",
   "Locations",
   "Opening stock",
-  "Business settings",
-  "Receipt template",
+  "Business",
+  "Receipts",
 ] as const;
 
 async function signIn(page: Page) {
