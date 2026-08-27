@@ -40,7 +40,7 @@ async function seedTill(page: Page) {
   await page.getByRole("button", { name: /save location/i }).click();
   await expect(page.getByRole("button", { name: /select main shop/i })).toBeVisible();
 
-  await navigate(page, "Catalogue");
+  await navigate(page, "Products");
   for (const product of [
     { name: "Sugar 1kg", sku: "SUG-001", barcode: "6001234567890", price: "10.00" },
     { name: "Rice 5kg", sku: "RIC-005", barcode: "6001234567891", price: "45.00" },
@@ -62,7 +62,7 @@ async function seedTill(page: Page) {
     await expect(page.getByRole("cell", { name: product.name })).toBeVisible();
   }
 
-  await navigate(page, "Point of sale");
+  await navigate(page, "Sell");
   const registerName = page.getByLabel(/register name/i);
   await expect(registerName).toBeVisible({ timeout: 15_000 });
   await registerName.fill("Counter 1");

@@ -29,7 +29,7 @@ async function seedLocationsAndProduct(page: Page) {
   await page.getByLabel(/location kind/i).selectOption("Warehouse");
   await page.getByRole("button", { name: /save location/i }).click();
 
-  await navigate(page, "Catalogue");
+  await navigate(page, "Products");
   await page.getByRole("button", { name: /add a product/i }).click();
   await page.getByLabel(/product name/i).fill("Sugar 1kg");
   await page.getByLabel(/^sku/i).fill("SUG-001");

@@ -12,6 +12,7 @@ import { expect, test, type APIRequestContext, type Page } from "@playwright/tes
 
 const liveEmail = process.env.LIVE_E2E_EMAIL?.trim();
 const livePassword = process.env.LIVE_E2E_PASSWORD?.trim();
+const liveRegisterPin = process.env.LIVE_E2E_PIN?.trim() || "424242";
 const hasLiveCredentials = Boolean(liveEmail && livePassword);
 const inventoryxOrigin =
   process.env.VITE_INVENTORYX_ORIGIN?.trim() || "http://localhost:5291";
@@ -30,6 +31,7 @@ function decodeJwtPayload(token: string): Record<string, unknown> {
 async function loginApi(request: APIRequestContext): Promise<{
   accessToken: string;
   tenantId: string;
+  userId: string;
 }> {
   if (!liveEmail || !livePassword) {
     throw new Error("LIVE_E2E_EMAIL and LIVE_E2E_PASSWORD are required");
@@ -49,7 +51,10 @@ async function loginApi(request: APIRequestContext): Promise<{
   const tenantRaw = claims.tenant_id ?? claims.tenantId;
   const tenantId = typeof tenantRaw === "string" ? tenantRaw : "";
   expect(tenantId).toBeTruthy();
-  return { accessToken, tenantId };
+  const userRaw = claims.sub ?? claims.user_id ?? claims.userId;
+  const userId = typeof userRaw === "string" ? userRaw : "";
+  expect(userId).toBeTruthy();
+  return { accessToken, tenantId, userId };
 }
 
 async function signInLive(page: Page) {
@@ -71,10 +76,40 @@ async function waitForBridge(page: Page) {
     .toBe(true);
 }
 
+/** Set a known PIN then unlock the till so sync/snapshot use the register token. */
+async function unlockTillInPage(
+  page: Page,
+  input: {
+    tenantId: string;
+    registerId: string;
+    shiftId: string;
+    userId: string;
+    pin: string;
+  },
+): Promise<string> {
+  return page.evaluate(async (args) => {
+    const bridge = window.__inventorymsOffline;
+    if (!bridge) throw new Error("offline bridge missing");
+    const exchanged = await bridge.exchangeRegisterPin({
+      userId: args.userId,
+      pin: args.pin,
+      registerId: args.registerId,
+    });
+    await bridge.unlockRegister({
+      tenantId: args.tenantId,
+      registerId: args.registerId,
+      shiftId: args.shiftId,
+      accessToken: exchanged.accessToken,
+      expiresAt: exchanged.expiresAt,
+    });
+    return exchanged.accessToken;
+  }, input);
+}
+
 // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- body typed at call sites
 async function apiJson<T>(
   request: APIRequestContext,
-  method: "GET" | "POST",
+  method: "GET" | "POST" | "PUT",
   path: string,
   accessToken: string,
   body?: unknown,
@@ -217,10 +252,28 @@ test.describe("@live @us4 Scenario D offline provider", () => {
       description: "LIVE_E2E_* present (values not logged)",
     });
 
-    const { accessToken, tenantId } = await loginApi(request);
+    const { accessToken, tenantId, userId } = await loginApi(request);
     await signInLive(page);
     await waitForBridge(page);
     const seeded = await seedLiveRegister(request, accessToken);
+
+    const pinSet = await apiJson(
+      request,
+      "PUT",
+      `/api/v1/users/${userId}/pin`,
+      accessToken,
+      { pin: liveRegisterPin },
+    );
+    expect(pinSet.status, JSON.stringify(pinSet.body)).toBeLessThan(300);
+
+    const registerToken = await unlockTillInPage(page, {
+      tenantId,
+      registerId: seeded.registerId,
+      shiftId: seeded.shiftId,
+      userId,
+      pin: liveRegisterPin,
+    });
+    expect(registerToken).toBeTruthy();
 
     const prepared = await page.evaluate(
       async ({ tenantId: tid, registerId, shiftId }) => {
@@ -373,8 +426,12 @@ test.describe("@live @us4 Scenario D offline provider", () => {
     await page.context().setOffline(false);
 
     const syncUrls: string[] = [];
+    const syncAuthHeaders: string[] = [];
     page.on("request", (req) => {
-      if (req.url().includes("/api/v1/sync/")) syncUrls.push(req.url());
+      if (req.url().includes("/api/v1/sync/")) {
+        syncUrls.push(req.url());
+        syncAuthHeaders.push(req.headers()["authorization"] ?? "");
+      }
     });
 
     const syncResult = await page.evaluate(
@@ -391,6 +448,10 @@ test.describe("@live @us4 Scenario D offline provider", () => {
     );
     expect(syncResult.processed).toBeGreaterThanOrEqual(1);
     expect(syncResult.stoppedForAuth).toBe(false);
+    expect(syncAuthHeaders.some((header) => header === `Bearer ${registerToken}`)).toBe(
+      true,
+    );
+    expect(syncAuthHeaders.every((header) => !header.includes(accessToken))).toBe(true);
 
     const statuses = await page.evaluate(
       async ({ tenantId: tid, registerId, appliedId, conflictId, rejectedId }) => {
@@ -457,7 +518,7 @@ test.describe("@live @us4 Scenario D offline provider", () => {
     );
     const replay = await apiJson<
       Array<{ clientSaleId: string; saleId?: string; status?: string }>
-    >(request, "POST", "/api/v1/sync/sales", accessToken, {
+    >(request, "POST", "/api/v1/sync/sales", registerToken, {
       sales: [replayPayload],
     });
     expect(replay.status).toBe(200);
@@ -488,10 +549,27 @@ test.describe("@live @us4 Scenario D offline provider", () => {
       description: "LIVE_E2E_* present (values not logged)",
     });
 
-    const { accessToken, tenantId } = await loginApi(request);
+    const { accessToken, tenantId, userId } = await loginApi(request);
     await signInLive(page);
     await waitForBridge(page);
     const seeded = await seedLiveRegister(request, accessToken);
+
+    const pinSet = await apiJson(
+      request,
+      "PUT",
+      `/api/v1/users/${userId}/pin`,
+      accessToken,
+      { pin: liveRegisterPin },
+    );
+    expect(pinSet.status, JSON.stringify(pinSet.body)).toBeLessThan(300);
+
+    await unlockTillInPage(page, {
+      tenantId,
+      registerId: seeded.registerId,
+      shiftId: seeded.shiftId,
+      userId,
+      pin: liveRegisterPin,
+    });
 
     await page.evaluate(
       async ({ tenantId: tid, registerId, shiftId }) => {

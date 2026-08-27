@@ -1,9 +1,11 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
+import { isProblemError } from "../../../shared/api/errors/problem-error";
 import { Button } from "../../../shared/ui/button";
 import { SelectField, TextField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
 import {
+  fetchRegisterShifts,
   openShift,
   openShiftInputSchema,
   type RegisterRecord,
@@ -20,11 +22,25 @@ export function OpenShift({
   const [registerId, setRegisterId] = useState(registers[0]?.id ?? "");
   const [openingFloat, setOpeningFloat] = useState("0.00");
   const [clientErrors, setClientErrors] = useState<string[]>([]);
+  const [conflictShift, setConflictShift] = useState<ShiftRecord | null>(null);
 
   const mutation = useMutation({
     mutationFn: openShift,
     onSuccess: (shift) => {
+      setConflictShift(null);
       onOpened(shift);
+    },
+    onError: async (error, variables) => {
+      if (!isProblemError(error) || error.problem.status !== 409) {
+        setConflictShift(null);
+        return;
+      }
+      try {
+        const open = await fetchRegisterShifts(variables.registerId, "Open");
+        setConflictShift(open[0] ?? null);
+      } catch {
+        setConflictShift(null);
+      }
     },
   });
 
@@ -37,6 +53,7 @@ export function OpenShift({
       return;
     }
     setClientErrors([]);
+    setConflictShift(null);
     mutation.mutate(parsed.data);
   }
 
@@ -52,7 +69,23 @@ export function OpenShift({
           title="Check the shift details"
         />
       ) : null}
-      {problem ? <ProblemSummary problem={problem} /> : null}
+      {problem && !conflictShift ? <ProblemSummary problem={problem} /> : null}
+      {conflictShift ? (
+        <div
+          className="flex flex-col gap-3 rounded-md border border-destructive/40 p-3"
+          role="alert"
+        >
+          <p>A shift is already open on this register.</p>
+          <Button
+            type="button"
+            onClick={() => {
+              onOpened(conflictShift);
+            }}
+          >
+            Resume existing shift
+          </Button>
+        </div>
+      ) : null}
 
       <SelectField
         label="Register"
@@ -64,6 +97,7 @@ export function OpenShift({
         value={registerId}
         onChange={(event) => {
           setRegisterId(event.target.value);
+          setConflictShift(null);
         }}
       />
       <TextField

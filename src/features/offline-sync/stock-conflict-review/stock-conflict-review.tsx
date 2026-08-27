@@ -1,51 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { inventoryxClient } from "../../../shared/api/client/inventoryx-client";
+import { useState } from "react";
 import { Button } from "../../../shared/ui/button";
 import { TextField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
-import { useState } from "react";
+import {
+  fetchSyncConflicts,
+  resolveSyncConflict,
+  type ConflictedSale,
+} from "../api/sync-api";
 
-export interface ConflictedSale {
-  id: string;
-  clientSaleId: string;
-  stockConflictFlag: boolean;
-}
-
-async function fetchConflicts(): Promise<ConflictedSale[]> {
-  const { data, response } = await inventoryxClient.GET("/api/v1/sync/conflicts");
-  if (!response.ok) throw new Error("Failed to load conflicts");
-  return Array.isArray(data) ? (data as ConflictedSale[]) : [];
-}
+export type { ConflictedSale };
 
 export function StockConflictReview() {
   const queryClient = useQueryClient();
   const [reason, setReason] = useState("");
   const query = useQuery({
     queryKey: ["offline", "conflicts"],
-    queryFn: fetchConflicts,
+    queryFn: fetchSyncConflicts,
   });
   const resolve = useMutation({
-    mutationFn: async (input: {
-      saleId: string;
-      resolution: "acceptAsIs" | "adjustWithReason";
-      reasonCode?: string;
-    }) => {
-      const { response } = await inventoryxClient.POST(
-        "/api/v1/sync/conflicts/{saleId}/resolve",
-        {
-          params: { path: { saleId: input.saleId } },
-          body: {
-            resolution: input.resolution,
-            reasonCode: input.reasonCode,
-            adjustments:
-              input.resolution === "adjustWithReason"
-                ? [{ productId: crypto.randomUUID(), qtyDelta: 0 }]
-                : [],
-          } as never,
-        },
-      );
-      if (!response.ok) throw new Error("Conflict resolve failed");
-    },
+    mutationFn: resolveSyncConflict,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["offline", "conflicts"] });
     },
@@ -82,11 +56,21 @@ export function StockConflictReview() {
               </Button>
               <Button
                 type="button"
+                disabled={sale.lines.length === 0 || reason.trim() === ""}
+                title={
+                  sale.lines.length === 0
+                    ? "Adjustment lines are not available for this conflict"
+                    : undefined
+                }
                 onClick={() => {
                   resolve.mutate({
                     saleId: sale.id,
                     resolution: "adjustWithReason",
-                    reasonCode: reason || "Recount",
+                    reasonCode: reason.trim(),
+                    adjustments: sale.lines.map((line) => ({
+                      productId: line.productId,
+                      qtyDelta: 0,
+                    })),
                   });
                 }}
               >

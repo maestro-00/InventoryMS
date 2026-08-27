@@ -78,7 +78,7 @@ test("close-short confirmation dialog gates destructive close", async ({ page })
   await signIn(page);
   await openPurchasing(page);
 
-  await navigate(page, "Catalogue");
+  await navigate(page, "Products");
   await page.getByRole("button", { name: /add a product/i }).click();
   await page.getByLabel(/product name/i).fill("Sugar 1kg");
   await page.getByLabel(/^sku/i).fill("SUG-001");

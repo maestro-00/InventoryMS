@@ -26,7 +26,7 @@ async function seedLocationAndProduct(page: Page) {
   await page.getByLabel(/location name/i).fill("Main Shop");
   await page.getByRole("button", { name: /save location/i }).click();
 
-  await navigate(page, "Catalogue");
+  await navigate(page, "Products");
   await page.getByRole("button", { name: /add a product/i }).click();
   await page.getByLabel(/product name/i).fill("Sugar 1kg");
   await page.getByLabel(/^sku/i).fill("SUG-001");
@@ -47,10 +47,12 @@ test("@critical replenishment through receipt, close-short, invoice variance, an
   await navigate(page, "Purchasing");
   await expect(page.getByRole("heading", { name: /^purchasing$/i })).toBeVisible();
 
+  await page.getByRole("tab", { name: /^suppliers$/i }).click();
   await page.getByLabel(/supplier name/i).fill("Accra Foods");
   await page.getByRole("button", { name: /save supplier/i }).click();
   await expect(page.getByRole("button", { name: /accra foods/i })).toBeVisible();
 
+  await page.getByRole("tab", { name: /^orders$/i }).click();
   const orders = page.getByRole("region", { name: /purchase orders/i });
   await expect(orders.getByRole("combobox", { name: /^supplier$/i })).toContainText(
     /tema wholesale/i,
@@ -66,6 +68,7 @@ test("@critical replenishment through receipt, close-short, invoice variance, an
   await page.getByRole("button", { name: /^submit$/i }).click();
   await expect(page.getByText(/current status: sent/i)).toBeVisible();
 
+  await page.getByRole("tab", { name: /^receive$/i }).click();
   const receipt = page.getByRole("form", { name: /goods receipt/i });
   await receipt.getByLabel(/quantity received/i).fill("10");
   await receipt.getByLabel(/quantity damaged/i).fill("1");
@@ -79,8 +82,11 @@ test("@critical replenishment through receipt, close-short, invoice variance, an
     .getByLabel(/close-short reason/i)
     .fill("Supplier short-shipped remaining bags");
   await page.getByRole("button", { name: /close short/i }).click();
-  await expect(page.getByText(/current status: closed/i)).toBeVisible();
+  await expect(page.getByRole("form", { name: /close short/i })).toBeHidden({
+    timeout: 15_000,
+  });
 
+  await page.getByRole("tab", { name: /^costs$/i }).click();
   const invoice = page.getByRole("form", { name: /supplier invoice/i });
   await invoice.getByLabel(/invoice number/i).fill("INV-77");
   await invoice.getByLabel(/invoice unit price/i).fill("6.50");

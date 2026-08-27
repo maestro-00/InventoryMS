@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
+import { useActiveLocationId } from "../../../shared/location/use-active-location";
 import { Button } from "../../../shared/ui/button";
 import { SelectField, TextField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
@@ -17,13 +18,15 @@ import {
 export function OpeningStockForm({ onRecorded }: { onRecorded?: () => void } = {}) {
   const queryClient = useQueryClient();
   const locations = useLocations();
+  const activeLocationId = useActiveLocationId();
   const markOnboardingStep = useMarkOnboardingStep();
   const products = useQuery({
     queryKey: ["opening-stock", "products"],
     queryFn: () => fetchProducts({ pageSize: 200 }),
   });
 
-  const [locationId, setLocationId] = useState("");
+  const [locationOverride, setLocationOverride] = useState<string | null>(null);
+  const locationId = locationOverride ?? activeLocationId;
   const [productId, setProductId] = useState("");
   const [quantity, setQuantity] = useState("0");
   const [clientErrors, setClientErrors] = useState<string[]>([]);
@@ -118,7 +121,7 @@ export function OpeningStockForm({ onRecorded }: { onRecorded?: () => void } = {
         options={locationOptions}
         value={locationId}
         onChange={(event) => {
-          setLocationId(event.target.value);
+          setLocationOverride(event.target.value);
         }}
       />
       <SelectField

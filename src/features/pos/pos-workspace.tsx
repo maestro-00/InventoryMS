@@ -1,8 +1,11 @@
-import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isProblemError } from "../../shared/api/errors/problem-error";
 import { useSession } from "../../shared/auth/session-context";
+import {
+  isRegisterUnlocked,
+  isRegisterUnlockedForShift,
+} from "../../shared/auth/register-auth-store";
 import { Button } from "../../shared/ui/button";
 import { TextField } from "../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../shared/ui/forms/problem-summary";
@@ -13,25 +16,22 @@ import {
   fetchProducts,
 } from "../catalogue/products/api/products-api";
 import { useLocations } from "../inventory/locations/api/location-queries";
+import { useActiveLocationId } from "../../shared/location/use-active-location";
 import { fetchStock } from "../inventory/opening-stock/api/opening-stock-api";
 import { FIRST_SALE_STEP } from "../onboarding/completion";
 import { useMarkOnboardingStep } from "../onboarding/mark-onboarding-step";
 import {
   fetchRegisters,
+  openShiftsQueryKey,
   type ShiftRecord,
 } from "../registers/registers/api/registers-api";
 import { RegisterForm } from "../registers/registers/register-form";
 import { OpenShift } from "../registers/shifts/open-shift";
-import {
-  getOpenShiftHintsSnapshot,
-  listOpenShiftHints,
-  setOpenShiftHint,
-  subscribeOpenShiftHints,
-  type OpenShiftResumeHint,
-} from "../registers/shifts/open-shift-resume-store";
+import { useOpenShifts } from "../registers/shifts/use-open-shifts";
 import { useOnlineStatus } from "../../shared/hooks/use-online-status";
 import { listPendingSales } from "../offline-sync/offline-sale-repository";
 import { setPendingSaleCount } from "../offline-sync/pending-sale-count-store";
+import { setPosCartActive } from "./pos-location-guard-store";
 import { CameraScanner } from "./acquisition/camera-scanner";
 import { FavouritesGrid } from "./acquisition/favourites-grid";
 import { HardwareScanner } from "./acquisition/hardware-scanner";
@@ -63,21 +63,37 @@ import { OfflineProvisionalReceipt } from "./receipts/offline-receipt";
 import { ReceiptView } from "./receipts/receipt-view";
 import { SaleHistory } from "./sales/sale-history";
 import type { SaleRecord } from "./sales/api/sales-api";
+import { RegisterPinUnlock } from "../registers/pin-unlock/register-pin-unlock";
+import { PosPrerequisiteWizard } from "./pos-prerequisite-wizard";
 
 type Panel = "sell" | "receipt" | "history" | "provisional";
 
-export function PosWorkspace() {
+export function PosWorkspace({
+  preferredShiftId,
+}: {
+  preferredShiftId?: string;
+} = {}) {
   const queryClient = useQueryClient();
   const { session } = useSession();
   const isOnline = useOnlineStatus();
   const locations = useLocations();
-  const locationId = locations.data?.[0]?.id ?? "";
+  const locationId = useActiveLocationId();
   const markOnboardingStep = useMarkOnboardingStep();
+  const canSell = session?.permissions.includes("Sell") === true;
 
   const registers = useQuery({
     queryKey: ["registers", locationId],
     queryFn: () => fetchRegisters(locationId),
     enabled: locationId !== "",
+  });
+  const {
+    entries: openShiftEntries,
+    isPending: openShiftsPending,
+    isError: openShiftsError,
+    error: openShiftsLoadError,
+  } = useOpenShifts({
+    enabled: canSell && isOnline && locationId !== "",
+    locationId,
   });
   const products = useQuery({
     queryKey: ["pos-products", locationId],
@@ -98,6 +114,7 @@ export function PosWorkspace() {
   const [provisional, setProvisional] = useState<OfflineCompletionResult | null>(null);
   const [panel, setPanel] = useState<Panel>("sell");
   const [unknownBarcode, setUnknownBarcode] = useState<string | null>(null);
+  const previousLocationId = useRef(locationId);
   const guard = useRef(
     new SaleSubmissionGuard<
       | { mode: "offline"; result: OfflineCompletionResult }
@@ -105,45 +122,46 @@ export function PosWorkspace() {
     >(),
   );
 
-  // Subscribe so a shift opened or closed elsewhere updates the resume list here.
-  const hintsSnapshot = useSyncExternalStore(
-    subscribeOpenShiftHints,
-    getOpenShiftHintsSnapshot,
-    () => "[]",
-  );
-  void hintsSnapshot;
+  useEffect(() => {
+    setPosCartActive(cart.lines.length > 0);
+    return () => {
+      setPosCartActive(false);
+    };
+  }, [cart.lines.length]);
 
-  const resumableHints =
-    session?.tenantId && !shift
-      ? listOpenShiftHints(session.tenantId).filter((hint) =>
-          (registers.data ?? []).some((register) => register.id === hint.registerId),
-        )
-      : [];
+  useEffect(() => {
+    if (previousLocationId.current && previousLocationId.current !== locationId) {
+      setCart(createCart());
+      setCashReceived("");
+      setClientErrors([]);
+      setShift(null);
+      setSale(null);
+      setProvisional(null);
+      setPanel("sell");
+      setUnknownBarcode(null);
+    }
+    previousLocationId.current = locationId;
+  }, [locationId]);
 
-  const resumeShift = useCallback((hint: OpenShiftResumeHint) => {
-    setShift({
-      id: hint.shiftId,
-      registerId: hint.registerId,
-      openedBy: "",
-      openedAt: new Date().toISOString(),
-      openingFloat: "0",
-      status: "Open",
-    });
-  }, []);
+  // Prefer an explicit selection; then ?shiftId= when it matches an open shift;
+  // otherwise hydrate the sole server open shift.
+  const preferredOpenShift = preferredShiftId
+    ? (openShiftEntries.find((entry) => entry.shift.id === preferredShiftId)?.shift ??
+      null)
+    : null;
+  const activeShift =
+    shift ??
+    preferredOpenShift ??
+    (openShiftEntries.length === 1 ? (openShiftEntries[0]?.shift ?? null) : null);
+
+  const resumableEntries = activeShift ? [] : openShiftEntries;
 
   const onShiftOpened = useCallback(
     (opened: ShiftRecord) => {
       setShift(opened);
-      if (!session?.tenantId) return;
-      const register = registers.data?.find((entry) => entry.id === opened.registerId);
-      setOpenShiftHint({
-        tenantId: session.tenantId,
-        registerId: opened.registerId,
-        registerName: register?.name ?? "Register",
-        shiftId: opened.id,
-      });
+      void queryClient.invalidateQueries({ queryKey: openShiftsQueryKey });
     },
-    [registers.data, session],
+    [queryClient],
   );
 
   const onCompleted = useCallback(
@@ -165,8 +183,8 @@ export function PosWorkspace() {
     setPanel("provisional");
     setCart(createCart());
     setCashReceived("");
-    if (session?.tenantId && shift?.registerId) {
-      void listPendingSales(session.tenantId, shift.registerId).then((sales) => {
+    if (session?.tenantId && activeShift?.registerId) {
+      void listPendingSales(session.tenantId, activeShift.registerId).then((sales) => {
         setPendingSaleCount(sales.length);
       });
     }
@@ -183,12 +201,22 @@ export function PosWorkspace() {
           if (!session?.tenantId) {
             throw new Error("Sign in is required before completing an offline sale.");
           }
+          const registerId = activeShift?.registerId ?? "";
+          const shiftId = activeShift?.id ?? "";
+          const unlocked = shiftId
+            ? isRegisterUnlockedForShift(session.tenantId, registerId, shiftId)
+            : isRegisterUnlocked(session.tenantId, registerId);
+          if (!unlocked) {
+            throw new Error(
+              "Unlock the till with your register PIN before completing offline sales.",
+            );
+          }
           return {
             mode: "offline" as const,
             result: await completeEligibleOfflineSale({
               tenantId: session.tenantId,
-              registerId: shift?.registerId ?? "",
-              shiftId: shift?.id ?? "",
+              registerId,
+              shiftId,
               cart,
               payments,
             }),
@@ -198,8 +226,8 @@ export function PosWorkspace() {
           mode: "online" as const,
           result: await completeSale({
             clientSaleId: cart.clientSaleId,
-            registerId: shift?.registerId ?? "",
-            shiftId: shift?.id ?? "",
+            registerId: activeShift?.registerId ?? "",
+            shiftId: activeShift?.id ?? "",
             lines: toSaleLines(cart),
             payments,
           }),
@@ -218,8 +246,8 @@ export function PosWorkspace() {
     mutationFn: () =>
       holdSale({
         clientSaleId: cart.clientSaleId,
-        registerId: shift?.registerId ?? "",
-        shiftId: shift?.id ?? "",
+        registerId: activeShift?.registerId ?? "",
+        shiftId: activeShift?.id ?? "",
         lines: toSaleLines(cart),
       }),
     onSuccess: () => {
@@ -279,13 +307,11 @@ export function PosWorkspace() {
     return (
       <section className="flex flex-col gap-3">
         <h1 className="text-2xl font-semibold">Sell</h1>
-        <p>
-          Create a location before selling. Stock, registers, and sales all belong to a
-          location.
-        </p>
-        <Link className="underline" to="/locations">
-          Create your first location
-        </Link>
+        <PosPrerequisiteWizard
+          hasLocation={false}
+          hasRegister={false}
+          hasOpenShift={false}
+        />
       </section>
     );
   }
@@ -313,7 +339,7 @@ export function PosWorkspace() {
   }
 
   const problem = toProblem(checkout.error);
-  const registerId = shift?.registerId ?? registers.data?.[0]?.id ?? "";
+  const registerId = activeShift?.registerId ?? registers.data?.[0]?.id ?? "";
   const tenantId = session?.tenantId ?? "";
 
   return (
@@ -323,13 +349,24 @@ export function PosWorkspace() {
         <HardwareScanner onScan={(barcode) => void onBarcode(barcode)} />
 
         {panel === "receipt" && sale ? (
-          <ReceiptView
-            sale={sale}
-            onNewSale={startNewSale}
-            onViewHistory={() => {
-              setPanel("history");
-            }}
-          />
+          <>
+            <ReceiptView
+              sale={sale}
+              onNewSale={startNewSale}
+              onViewHistory={() => {
+                setPanel("history");
+              }}
+            />
+            {isOnline && activeShift ? (
+              <AfterSalePanel
+                compact
+                initialSale={sale}
+                registerId={registerId}
+                shiftId={activeShift.id}
+                products={products.data?.items ?? []}
+              />
+            ) : null}
+          </>
         ) : null}
 
         {panel === "provisional" && provisional ? (
@@ -368,37 +405,48 @@ export function PosWorkspace() {
         ) : null}
 
         {panel === "sell" ? (
-          registers.isLoading ? (
-            <LoadingState label="Loading registers" />
+          registers.isLoading || (canSell && isOnline && openShiftsPending) ? (
+            <LoadingState label="Loading registers and open shifts" />
           ) : (registers.data ?? []).length === 0 ? (
-            <RegisterForm
-              locationId={locationId}
-              onCreated={() => {
-                void registers.refetch();
-              }}
-            />
-          ) : !shift ? (
+            <>
+              <PosPrerequisiteWizard
+                hasLocation
+                hasRegister={false}
+                hasOpenShift={false}
+              />
+              <RegisterForm
+                locationId={locationId}
+                onCreated={() => {
+                  void registers.refetch();
+                }}
+              />
+            </>
+          ) : !activeShift ? (
             <div className="flex flex-col gap-6">
-              {resumableHints.length > 0 ? (
+              <PosPrerequisiteWizard hasLocation hasRegister hasOpenShift={false} />
+              {openShiftsError ? (
+                <ProblemSummary problem={toProblem(openShiftsLoadError)} />
+              ) : null}
+              {resumableEntries.length > 0 ? (
                 <section
                   className="flex flex-col gap-3 rounded-md border p-4"
                   aria-label="Resume an open shift"
                 >
                   <h2 className="text-lg font-semibold">Resume an open shift</h2>
                   <p className="text-sm text-muted-foreground">
-                    A shift is already open on this device. Resume it to keep selling,
-                    or open a new shift below.
+                    A shift is already open. Resume it to keep selling, or open a new
+                    shift below if you have another register.
                   </p>
                   <ul className="flex flex-col gap-2">
-                    {resumableHints.map((hint) => (
-                      <li key={hint.shiftId}>
+                    {resumableEntries.map((entry) => (
+                      <li key={entry.shift.id}>
                         <Button
                           type="button"
                           onClick={() => {
-                            resumeShift(hint);
+                            setShift(entry.shift);
                           }}
                         >
-                          Resume shift on {hint.registerName}
+                          Resume shift on {entry.registerName}
                         </Button>
                       </li>
                     ))}
@@ -417,6 +465,7 @@ export function PosWorkspace() {
               </TabsList>
               <TabsContent value="sell">
                 <section className="flex flex-col gap-4">
+                  <RegisterPinUnlock registerId={registerId} shiftId={activeShift.id} />
                   {!isOnline ? (
                     <p className="text-sm text-muted-foreground" role="status">
                       Offline mode: live-only actions stay disabled. Eligible cash and
@@ -558,7 +607,7 @@ export function PosWorkspace() {
                   <PaymentPanel
                     cart={cart}
                     registerId={registerId}
-                    shiftId={shift.id}
+                    shiftId={activeShift.id}
                     tenantId={tenantId}
                     isOnline={isOnline}
                     onCartChange={setCart}
@@ -593,7 +642,7 @@ export function PosWorkspace() {
                 {isOnline ? (
                   <AfterSalePanel
                     registerId={registerId}
-                    shiftId={shift.id}
+                    shiftId={activeShift.id}
                     products={products.data?.items ?? []}
                   />
                 ) : (

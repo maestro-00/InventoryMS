@@ -28,7 +28,7 @@ for (const viewport of VIEWPORTS) {
   }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await signIn(page);
-    await navigate(page, "Registers");
+    await navigate(page, "Tills");
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
       .analyze();

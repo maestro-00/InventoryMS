@@ -1,11 +1,16 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
-import { completeOfflineSale, effectiveStockQuantity } from "./offline-sale-repository";
+import {
+  completeOfflineSale,
+  effectiveStockQuantity,
+  listPendingSales,
+} from "./offline-sale-repository";
 import {
   openRegisterDatabase,
   partitionKey,
   replaceSnapshotAtomically,
 } from "../../shared/db/register-database";
+import { lockRegisterPartitionMeta } from "../../shared/db/register-partition-lock";
 
 const tenantId = "11111111-1111-4111-8111-111111111111";
 const registerId = "22222222-2222-4222-8222-222222222222";
@@ -105,5 +110,62 @@ describe("offline sale repository", () => {
     expect(await db.offlineSales.count()).toBe(1);
     expect(await db.overlays.count()).toBe(1);
     db.close();
+  });
+
+  it("still lists pending sales after the partition is locked", async () => {
+    const result = await completeOfflineSale({
+      tenantId,
+      registerId,
+      shiftId,
+      cart: {
+        lines: [
+          {
+            productId,
+            qty: "1",
+            unitPrice: "10.00",
+            taxComponentsJson: "[]",
+            taxAmount: "0",
+            lineTotal: "10.00",
+            name: "Sugar",
+          },
+        ],
+        payments: [{ tender: "Cash", amount: "10.00" }],
+        subtotal: "10.00",
+        discountTotal: "0",
+        taxTotal: "0",
+        grandTotal: "10.00",
+      },
+    });
+
+    await lockRegisterPartitionMeta(tenantId, registerId);
+
+    const pending = await listPendingSales(tenantId, registerId);
+    expect(pending.map((sale) => sale.clientSaleId)).toContain(result.clientSaleId);
+
+    await expect(
+      completeOfflineSale({
+        tenantId,
+        registerId,
+        shiftId,
+        cart: {
+          lines: [
+            {
+              productId,
+              qty: "1",
+              unitPrice: "10.00",
+              taxComponentsJson: "[]",
+              taxAmount: "0",
+              lineTotal: "10.00",
+              name: "Sugar",
+            },
+          ],
+          payments: [{ tender: "Cash", amount: "10.00" }],
+          subtotal: "10.00",
+          discountTotal: "0",
+          taxTotal: "0",
+          grandTotal: "10.00",
+        },
+      }),
+    ).rejects.toThrow(/partition is locked/i);
   });
 });

@@ -7,11 +7,12 @@ import { renderWithRouter } from "../../shared/test/render-router";
 import { OnboardingChecklist } from "./onboarding-checklist";
 import { TrialSummary } from "./trial-summary";
 import { SampleDataActions } from "./sample-data-actions";
-import { tenantProfile } from "../../../tests/fixtures/provider/us1";
 import {
-  resetOpenShiftHintsForTests,
-  setOpenShiftHint,
-} from "../registers/shifts/open-shift-resume-store";
+  locationRecord,
+  registerRecord,
+  shiftRecord,
+  tenantProfile,
+} from "../../../tests/fixtures/provider/us1";
 
 const subscription = {
   id: "12121212-1212-4212-8212-121212121212",
@@ -38,7 +39,11 @@ function tenantHandler(overrides: Record<string, unknown> = {}) {
 
 describe("onboarding checklist", () => {
   beforeEach(() => {
-    resetOpenShiftHintsForTests();
+    server.use(
+      http.get("*/api/v1/locations", () => HttpResponse.json([locationRecord])),
+      http.get("*/api/v1/shifts", () => HttpResponse.json([])),
+      http.get("*/api/v1/registers", () => HttpResponse.json([registerRecord])),
+    );
   });
 
   it("announces loading before the tenant profile resolves", () => {
@@ -92,18 +97,19 @@ describe("onboarding checklist", () => {
   });
 
   it("shows resume links for open shifts on the first-sale step", async () => {
-    setOpenShiftHint({
-      tenantId: "22222222-2222-4222-8222-222222222222",
-      registerId: "88888888-8888-4888-8888-888888888888",
-      registerName: "Front till",
-      shiftId: "99999999-9999-4999-8999-999999999999",
-    });
-    server.use(tenantHandler());
+    server.use(
+      tenantHandler(),
+      http.get("*/api/v1/shifts", ({ request }) => {
+        expect(new URL(request.url).searchParams.get("status")).toBe("Open");
+        return HttpResponse.json([shiftRecord]);
+      }),
+      http.get("*/api/v1/registers", () => HttpResponse.json([registerRecord])),
+    );
 
     renderWithRouter(<OnboardingChecklist />);
 
     expect(
-      await screen.findByRole("link", { name: /resume shift on front till/i }),
+      await screen.findByRole("link", { name: /resume shift on counter 1/i }),
     ).toHaveAttribute("href", "/pos");
   });
 

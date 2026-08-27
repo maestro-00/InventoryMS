@@ -13,8 +13,16 @@ export interface RegisterAuthorizationState {
   unlocked: boolean;
   tenantId: string;
   registerId: string;
+  shiftId: string;
   deadline: string | null;
   credential: WrappedRegisterCredential | null;
+}
+
+/** Session-scoped wrapping keys kept in memory only (never persisted). */
+const wrappingKeys = new Map<string, CryptoKey>();
+
+function credentialKey(tenantId: string, registerId: string): string {
+  return `${tenantId}:${registerId}`;
 }
 
 function requireSubtle(): SubtleCrypto {
@@ -56,8 +64,8 @@ export async function wrapRegisterCredential(input: {
     deviceKey,
     new TextEncoder().encode(input.token),
   );
-  // Non-extractable key cannot be persisted as JWK; store a second wrapping layer
-  // with a session-scoped exportable wrapper for the open shift only.
+  // Non-extractable key cannot be persisted as JWK; keep a session-scoped exportable
+  // wrapper in memory for the open shift only.
   const exportable = await subtle.generateKey({ name: "AES-GCM", length: 256 }, true, [
     "wrapKey",
     "unwrapKey",
@@ -66,8 +74,7 @@ export async function wrapRegisterCredential(input: {
     name: "AES-GCM",
     iv,
   });
-  // Retain exportable wrapper in memory only via closure — callers store ciphertext.
-  void exportable;
+  wrappingKeys.set(credentialKey(input.tenantId, input.registerId), exportable);
   return {
     tenantId: input.tenantId,
     registerId: input.registerId,
@@ -78,13 +85,52 @@ export async function wrapRegisterCredential(input: {
   };
 }
 
+export async function unwrapRegisterCredential(
+  credential: WrappedRegisterCredential,
+): Promise<string> {
+  const subtle = requireSubtle();
+  const wrappingKey = wrappingKeys.get(
+    credentialKey(credential.tenantId, credential.registerId),
+  );
+  if (!wrappingKey) {
+    throw new Error("Register credential wrapping key is unavailable.");
+  }
+  const deviceKey = await subtle.unwrapKey(
+    "raw",
+    credential.wrappedKey,
+    wrappingKey,
+    { name: "AES-GCM", iv: credential.iv as BufferSource },
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["decrypt"],
+  );
+  const plaintext = await subtle.decrypt(
+    { name: "AES-GCM", iv: credential.iv as BufferSource },
+    deviceKey,
+    credential.ciphertext,
+  );
+  return new TextDecoder().decode(plaintext);
+}
+
+export function forgetWrappingKey(tenantId: string, registerId: string): void {
+  wrappingKeys.delete(credentialKey(tenantId, registerId));
+}
+
+export function clearAllWrappingKeys(): void {
+  wrappingKeys.clear();
+}
+
 export function lockRegisterPartition(
   state: RegisterAuthorizationState,
 ): RegisterAuthorizationState {
+  if (state.tenantId && state.registerId) {
+    forgetWrappingKey(state.tenantId, state.registerId);
+  }
   return {
     ...state,
     unlocked: false,
     credential: null,
+    shiftId: "",
     deadline: state.deadline,
   };
 }

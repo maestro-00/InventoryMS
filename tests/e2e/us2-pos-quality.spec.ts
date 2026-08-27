@@ -39,7 +39,7 @@ async function openTill(page: Page) {
   await navigate(page, "Locations");
   await page.getByLabel(/location name/i).fill("Main Shop");
   await page.getByRole("button", { name: /save location/i }).click();
-  await navigate(page, "Catalogue");
+  await navigate(page, "Products");
   await page.getByRole("button", { name: /add a product/i }).click();
   await page.getByLabel(/product name/i).fill("Sugar 1kg");
   await page.getByLabel(/^sku/i).fill("SUG-001");
@@ -48,7 +48,7 @@ async function openTill(page: Page) {
   await page.getByLabel(/cost price/i).fill("6.00");
   await page.getByLabel(/tax treatment/i).selectOption("GH-STD");
   await page.getByRole("button", { name: /save product/i }).click();
-  await navigate(page, "Point of sale");
+  await navigate(page, "Sell");
   await page.getByLabel(/register name/i).fill("Counter 1");
   await page.getByRole("button", { name: /create register/i }).click();
   await page.getByLabel(/opening float/i).fill("100.00");

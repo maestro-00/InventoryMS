@@ -17,6 +17,8 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
+import { Route as AuthenticatedReturnsRouteImport } from './routes/_authenticated/returns'
+import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
 import { Route as AuthGoogleCallbackRouteImport } from './routes/auth/google-callback'
 import { Route as InviteAcceptRouteImport } from './routes/invite/accept'
 import { Route as AuthenticatedCatalogueCategoriesRouteImport } from './routes/_authenticated/catalogue/categories'
@@ -83,6 +85,16 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
 const AuthenticatedPosRoute = AuthenticatedPosRouteImport.update({
   id: '/pos',
   path: '/pos',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedReturnsRoute = AuthenticatedReturnsRouteImport.update({
+  id: '/returns',
+  path: '/returns',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSalesRoute = AuthenticatedSalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthGoogleCallbackRoute = AuthGoogleCallbackRouteImport.update({
@@ -259,6 +271,8 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/pos': typeof AuthenticatedPosRoute
+  '/returns': typeof AuthenticatedReturnsRoute
+  '/sales': typeof AuthenticatedSalesRoute
   '/auth/google-callback': typeof AuthGoogleCallbackRoute
   '/invite/accept': typeof InviteAcceptRoute
   '/catalogue/categories': typeof AuthenticatedCatalogueCategoriesRoute
@@ -296,6 +310,8 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/pos': typeof AuthenticatedPosRoute
+  '/returns': typeof AuthenticatedReturnsRoute
+  '/sales': typeof AuthenticatedSalesRoute
   '/auth/google-callback': typeof AuthGoogleCallbackRoute
   '/invite/accept': typeof InviteAcceptRoute
   '/catalogue/categories': typeof AuthenticatedCatalogueCategoriesRoute
@@ -335,6 +351,8 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/pos': typeof AuthenticatedPosRoute
+  '/_authenticated/returns': typeof AuthenticatedReturnsRoute
+  '/_authenticated/sales': typeof AuthenticatedSalesRoute
   '/auth/google-callback': typeof AuthGoogleCallbackRoute
   '/invite/accept': typeof InviteAcceptRoute
   '/_authenticated/catalogue/categories': typeof AuthenticatedCatalogueCategoriesRoute
@@ -374,6 +392,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/onboarding'
     | '/pos'
+    | '/returns'
+    | '/sales'
     | '/auth/google-callback'
     | '/invite/accept'
     | '/catalogue/categories'
@@ -411,6 +431,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/onboarding'
     | '/pos'
+    | '/returns'
+    | '/sales'
     | '/auth/google-callback'
     | '/invite/accept'
     | '/catalogue/categories'
@@ -449,6 +471,8 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/onboarding'
     | '/_authenticated/pos'
+    | '/_authenticated/returns'
+    | '/_authenticated/sales'
     | '/auth/google-callback'
     | '/invite/accept'
     | '/_authenticated/catalogue/categories'
@@ -545,6 +569,20 @@ declare module '@tanstack/react-router' {
       path: '/pos'
       fullPath: '/pos'
       preLoaderRoute: typeof AuthenticatedPosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/returns': {
+      id: '/_authenticated/returns'
+      path: '/returns'
+      fullPath: '/returns'
+      preLoaderRoute: typeof AuthenticatedReturnsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/sales': {
+      id: '/_authenticated/sales'
+      path: '/sales'
+      fullPath: '/sales'
+      preLoaderRoute: typeof AuthenticatedSalesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/auth/google-callback': {
@@ -750,6 +788,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPosRoute: typeof AuthenticatedPosRoute
+  AuthenticatedReturnsRoute: typeof AuthenticatedReturnsRoute
+  AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
   AuthenticatedCatalogueCategoriesRoute: typeof AuthenticatedCatalogueCategoriesRoute
   AuthenticatedCatalogueImportRoute: typeof AuthenticatedCatalogueImportRoute
   AuthenticatedCatalogueProductsRoute: typeof AuthenticatedCatalogueProductsRoute
@@ -782,6 +822,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPosRoute: AuthenticatedPosRoute,
+  AuthenticatedReturnsRoute: AuthenticatedReturnsRoute,
+  AuthenticatedSalesRoute: AuthenticatedSalesRoute,
   AuthenticatedCatalogueCategoriesRoute: AuthenticatedCatalogueCategoriesRoute,
   AuthenticatedCatalogueImportRoute: AuthenticatedCatalogueImportRoute,
   AuthenticatedCatalogueProductsRoute: AuthenticatedCatalogueProductsRoute,

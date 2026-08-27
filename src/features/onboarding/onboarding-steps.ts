@@ -27,7 +27,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStep[] = [
   },
   {
     key: "openingStock",
-    label: "Record opening stock",
+    label: "What's on the shelf",
     description: "Set the quantity you already hold at each location.",
     to: "/inventory/opening-stock",
   },

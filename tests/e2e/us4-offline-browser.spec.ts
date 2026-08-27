@@ -222,6 +222,7 @@ test.describe("@us4 offline browser durability", () => {
         unlocked: true,
         tenantId: "11111111-1111-4111-8111-111111111111",
         registerId: "22222222-2222-4222-8222-222222222222",
+        shiftId: "33333333-3333-4333-8333-333333333333",
         deadline: bridge.earliestDeadline(
           new Date(Date.now() + 3_600_000).toISOString(),
           null,

@@ -144,12 +144,17 @@ export async function prepareRegister(input: {
   shiftId: string;
   credentialExpiresAt: string;
   authorizedAt?: string;
+  shiftClosesAt?: string | null;
   fetchSnapshot?: () => Promise<unknown>;
 }): Promise<{ deadline: string; productCount: number }> {
   const snapshot = await loadProviderSnapshot(input.registerId, input.fetchSnapshot);
 
   const authorizedAt = input.authorizedAt ?? new Date().toISOString();
-  const deadline = earliestDeadline(input.credentialExpiresAt, null, authorizedAt);
+  const deadline = earliestDeadline(
+    input.credentialExpiresAt,
+    input.shiftClosesAt ?? null,
+    authorizedAt,
+  );
   const meta: PartitionMeta = {
     id: partitionKey(input.tenantId, input.registerId),
     tenantId: input.tenantId,

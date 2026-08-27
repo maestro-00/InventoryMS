@@ -3401,6 +3401,9 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized"
+          },
           "402": {
             "description": "Client Error",
             "content": {
@@ -3420,9 +3423,6 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "Unauthorized"
           },
           "403": {
             "description": "Forbidden"
@@ -3522,6 +3522,12 @@
           }
         ],
         "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
           "423": {
             "description": "Client Error",
             "content": {
@@ -3541,12 +3547,6 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
           }
         },
         "security": [
@@ -4137,6 +4137,72 @@
             "oauth2": []
           }
         ]
+      },
+      "get": {
+        "tags": [
+          "Registers"
+        ],
+        "parameters": [
+          {
+            "name": "registerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryX.Application.DTOs.Selling.ShiftDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryX.Application.DTOs.Selling.ShiftDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryX.Application.DTOs.Selling.ShiftDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
+        "operationId": "get_api_v1_registers__registerId__shifts"
       }
     },
     "/api/v1/registers/shifts/{shiftId}/cash-movements": {
@@ -4573,6 +4639,9 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized"
+          },
           "402": {
             "description": "Client Error",
             "content": {
@@ -4592,9 +4661,6 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "Unauthorized"
           },
           "403": {
             "description": "Forbidden"
@@ -6824,6 +6890,12 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
           "404": {
             "description": "Not Found",
             "content": {
@@ -6843,12 +6915,6 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
           }
         },
         "security": [
@@ -6934,6 +7000,12 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
           "404": {
             "description": "Not Found",
             "content": {
@@ -6953,12 +7025,6 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
           }
         },
         "security": [
@@ -7085,6 +7151,12 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
           "404": {
             "description": "Not Found",
             "content": {
@@ -7104,12 +7176,6 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
           }
         },
         "security": [
@@ -8384,6 +8450,150 @@
             "description": "Success"
           }
         }
+      }
+    },
+    "/api/v1/shifts": {
+      "get": {
+        "tags": [
+          "ContractRoutes"
+        ],
+        "parameters": [
+          {
+            "name": "registerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryX.Application.DTOs.Selling.ShiftDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryX.Application.DTOs.Selling.ShiftDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryX.Application.DTOs.Selling.ShiftDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
+        "operationId": "get_api_v1_shifts"
+      }
+    },
+    "/api/v1/registers/{id}": {
+      "patch": {
+        "tags": [
+          "Registers"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Presentation.Controllers.v1.RegistersController.UpdateRegisterRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Presentation.Controllers.v1.RegistersController.UpdateRegisterRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Presentation.Controllers.v1.RegistersController.UpdateRegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.DTOs.Selling.RegisterDto"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.DTOs.Selling.RegisterDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.DTOs.Selling.RegisterDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
+        "operationId": "patch_api_v1_registers__id"
       }
     }
   },
@@ -13696,6 +13906,20 @@
           }
         },
         "additionalProperties": {}
+      },
+      "InventoryX.Presentation.Controllers.v1.RegistersController.UpdateRegisterRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
       }
     },
     "securitySchemes": {

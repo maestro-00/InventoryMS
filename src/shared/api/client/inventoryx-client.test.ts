@@ -1,12 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { authSessionFixture } from "../../../../tests/fixtures/domain";
 import { sessionManager } from "../../auth/session-manager";
+import {
+  getRegisterAccessToken,
+  lockRegisterAuth,
+  unlockRegister,
+} from "../../auth/register-auth-store";
 import { ifMatchHeaders, inventoryxClient, readProblem } from "./inventoryx-client";
 
 const originalFetch = globalThis.fetch;
 
-afterEach(() => {
+afterEach(async () => {
   sessionManager.signOut();
+  await lockRegisterAuth({ persistPartition: false });
   globalThis.fetch = originalFetch;
   vi.restoreAllMocks();
 });
@@ -87,5 +93,85 @@ describe("inventoryx client", () => {
 
     const empty = await readProblem(new Response("not-json", { status: 500 }));
     expect(empty.kind).toBe("transient");
+  });
+
+  it("sends the register token on sync routes when the till is unlocked", async () => {
+    sessionManager.setSession({
+      ...authSessionFixture,
+      permissions: [...authSessionFixture.permissions],
+      locationScope: [...authSessionFixture.locationScope],
+      accessToken: "user-access",
+      refreshToken: "user-refresh",
+    });
+    await unlockRegister({
+      tenantId: authSessionFixture.tenantId,
+      registerId: "88888888-8888-4888-8888-888888888888",
+      shiftId: "99999999-9999-4999-8999-999999999999",
+      accessToken: "register-access-token",
+      expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+    });
+
+    const authHeaders: string[] = [];
+    globalThis.fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      authHeaders.push(request.headers.get("Authorization") ?? "");
+      return Promise.resolve(
+        new Response(JSON.stringify({ results: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    });
+
+    await inventoryxClient.POST("/api/v1/sync/sales", {
+      body: { sales: [] } as never,
+    });
+    expect(authHeaders[0]).toBe("Bearer register-access-token");
+  });
+
+  it("does not fall back to the user JWT on sync routes after register lock", async () => {
+    sessionManager.setSession({
+      ...authSessionFixture,
+      permissions: [...authSessionFixture.permissions],
+      locationScope: [...authSessionFixture.locationScope],
+      accessToken: "user-a-access",
+      refreshToken: "user-a-refresh",
+    });
+    await unlockRegister({
+      tenantId: authSessionFixture.tenantId,
+      registerId: "88888888-8888-4888-8888-888888888888",
+      shiftId: "99999999-9999-4999-8999-999999999999",
+      accessToken: "user-a-register-token",
+      expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+    });
+    await expect(getRegisterAccessToken()).resolves.toBe("user-a-register-token");
+
+    sessionManager.setSession({
+      ...authSessionFixture,
+      userId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      permissions: [...authSessionFixture.permissions],
+      locationScope: [...authSessionFixture.locationScope],
+      accessToken: "user-b-access",
+      refreshToken: "user-b-refresh",
+    });
+    await lockRegisterAuth({ persistPartition: false });
+    await expect(getRegisterAccessToken()).resolves.toBeNull();
+
+    const authHeaders: Array<string | null> = [];
+    globalThis.fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      authHeaders.push(request.headers.get("Authorization"));
+      return Promise.resolve(
+        new Response(JSON.stringify({ results: [] }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    });
+
+    await inventoryxClient.POST("/api/v1/sync/sales", {
+      body: { sales: [] } as never,
+    });
+    expect(authHeaders[0]).toBeNull();
   });
 });

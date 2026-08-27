@@ -65,6 +65,9 @@ export async function completeOfflineSale(input: {
     if (isPastDeadline(meta.readinessDeadline)) {
       throw new Error("Offline readiness deadline has passed.");
     }
+    if (meta.shiftId && meta.shiftId !== input.shiftId) {
+      throw new Error("Offline sales require the shift this till was prepared for.");
+    }
     if (input.cart.lines.length === 0) {
       throw new Error("Cart is empty.");
     }
@@ -145,6 +148,11 @@ export async function completeOfflineSale(input: {
   }
 }
 
+/**
+ * Lists queued offline sales for review/status. Partition lock does not hide existing
+ * rows — it only blocks new completions (`completeOfflineSale`) and sync upload until
+ * the till is re-authorized.
+ */
 export async function listPendingSales(
   tenantId: string,
   registerId: string,

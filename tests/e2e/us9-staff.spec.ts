@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { navigateApp } from "./helpers/navigate";
 
 async function signIn(page: Page) {
   await page.goto("/login");
@@ -8,17 +9,13 @@ async function signIn(page: Page) {
   await expect(page).toHaveURL(/dashboard/);
 }
 
-async function navigate(page: Page, label: string) {
-  const primary = page.getByRole("navigation", { name: "Primary" });
-  if (await primary.isVisible()) {
-    await primary.getByRole("link", { name: label }).click();
-    return;
-  }
-  await page.getByRole("button", { name: /open navigation/i }).click();
-  await page
-    .getByRole("dialog", { name: /navigation/i })
-    .getByRole("link", { name: label })
-    .click();
+async function submitNamedButton(page: Page, name: RegExp) {
+  const button = page.getByRole("button", { name });
+  await expect(button).toBeVisible({ timeout: 15_000 });
+  // Firefox + React remounts race Playwright's actionability "stable" click.
+  await button.evaluate((el: HTMLButtonElement) => {
+    el.click();
+  });
 }
 
 test("@critical owner invites cashier, sets PIN, enrolls 2FA, and reviews audit", async ({
@@ -26,25 +23,31 @@ test("@critical owner invites cashier, sets PIN, enrolls 2FA, and reviews audit"
 }) => {
   test.setTimeout(180_000);
   await signIn(page);
-  await navigate(page, "Staff");
+  await navigateApp(page, "Staff");
   await expect(
     page.getByRole("heading", { name: /staff administration/i }),
   ).toBeVisible();
 
   await page.getByLabel(/invite email/i).fill("cashier@kwame.gh");
   await page.getByLabel(/^role$/i).selectOption({ label: "Cashier · Sell" });
-  await page.getByRole("button", { name: /send invitation/i }).click();
-  await expect(page.getByRole("status")).toContainText(/invitation token issued/i);
-  await expect(page.getByText(/cashier@kwame.gh · cashier · invited/i)).toBeVisible();
+  await submitNamedButton(page, /send invitation/i);
+  await expect(page.getByRole("status")).toContainText(/invitation token issued/i, {
+    timeout: 15_000,
+  });
+  await expect(page.getByText(/cashier@kwame.gh · cashier · invited/i)).toBeVisible({
+    timeout: 15_000,
+  });
 
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByLabel(/new pin/i).fill("2468");
-  await page.getByRole("button", { name: /set pin/i }).click();
-  await expect(page.getByText(/pin updated/i)).toBeVisible();
+  await submitNamedButton(page, /set pin/i);
+  await expect(page.getByText(/pin updated/i)).toBeVisible({ timeout: 15_000 });
 
   await expect(page.getByText(/userinvited|registerpinset/i).first()).toBeVisible();
 
-  await navigate(page, "Security");
-  await page.getByRole("button", { name: /enroll 2fa/i }).click();
-  await expect(page.getByText(/2fa enrollment started/i)).toBeVisible();
+  await navigateApp(page, "Security");
+  await submitNamedButton(page, /enroll 2fa/i);
+  await expect(page.getByText(/2fa enrollment started/i)).toBeVisible({
+    timeout: 15_000,
+  });
 });

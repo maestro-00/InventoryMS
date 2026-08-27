@@ -39,7 +39,6 @@ export default defineConfig({
         "src/features/pos/pos-workspace.tsx",
         "src/features/pos/acquisition/camera-scanner.tsx",
         "src/features/pos/checkout/payment-panel.tsx",
-        "src/features/registers/shifts/open-shift-resume-store.ts",
         "src/shared/ui/alert-dialog.tsx",
         "src/shared/ui/checkbox.tsx",
         "src/shared/ui/dialog.tsx",

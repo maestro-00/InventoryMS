@@ -17,6 +17,12 @@ describe("stock conflict review", () => {
             id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
             clientSaleId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
             stockConflictFlag: true,
+            lines: [
+              {
+                productId: "44444444-4444-4444-8444-444444444444",
+                qty: 1,
+              },
+            ],
           },
         ]),
       ),

@@ -180,6 +180,33 @@ describe("split tenders and change", () => {
     });
     expect(authorizedBy).toBe("manager@kwame.gh");
   });
+
+  it("blocks offline completion when the till is not PIN-unlocked for the shift", async () => {
+    const user = userEvent.setup();
+    const onProvisionalCompleted = vi.fn();
+    const cart = cartReducer(createCart(), scanProduct(sugar));
+
+    renderWithProviders(
+      <PaymentPanel
+        cart={cart}
+        registerId={us1.REGISTER_ID}
+        shiftId={us1.SHIFT_ID}
+        tenantId={us1.TENANT_ID}
+        isOnline={false}
+        onCartChange={() => undefined}
+        onCompleted={vi.fn()}
+        onProvisionalCompleted={onProvisionalCompleted}
+      />,
+    );
+
+    await user.type(screen.getByLabelText(/cash amount/i), "25.00");
+    await user.click(screen.getByRole("button", { name: /complete offline sale/i }));
+
+    expect(
+      await screen.findByText(/unlock the till with your register pin/i),
+    ).toBeVisible();
+    expect(onProvisionalCompleted).not.toHaveBeenCalled();
+  });
 });
 
 describe("held sale recall", () => {

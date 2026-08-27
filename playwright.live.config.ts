@@ -46,7 +46,7 @@ const inventoryxOrigin =
 
 export default defineConfig({
   testDir: "tests/e2e",
-  testMatch: /(?:live-smoke|us4-offline-provider)\.spec\.ts/,
+  testMatch: /(?:live-smoke|live-shift-contract|us4-offline-provider)\.spec\.ts/,
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
   retries: 0,

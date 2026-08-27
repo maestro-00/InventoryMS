@@ -24,7 +24,7 @@ describe("batches", () => {
         id: BATCH_ID,
         batchNumber: "BATCH-1",
         qty: "8",
-        expiresAt: "2026-08-20T00:00:00.000Z",
+        expiresAt: "2026-09-20T00:00:00.000Z",
         damagedQty: "1",
       },
     ];

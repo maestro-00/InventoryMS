@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { server } from "../../shared/test/msw/server";
 import { renderWithProviders } from "../../shared/test/render";
 import * as us1 from "../../../tests/fixtures/provider/us1";
+import { PurchasingPage } from "../../routes/_authenticated/purchasing/index";
 import { SupplierMaintenance } from "./suppliers/supplier-list";
 import { PurchaseOrderWorkspace } from "./orders/purchase-order-list";
 import { GoodsReceiptForm } from "./receipts/goods-receipt";
@@ -40,6 +41,26 @@ const draftOrder = (): PurchaseOrderRecord => ({
       unitCost: "6.00",
     },
   ],
+});
+
+describe("purchasing page tabs", () => {
+  it("exposes suppliers, orders, receive, and costs tabs", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<PurchasingPage />);
+
+    expect(
+      await screen.findByRole("heading", { name: /^purchasing$/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /^suppliers$/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /^orders$/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /^receive$/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /^costs$/i })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: /^receive$/i }));
+    expect(
+      await screen.findByText(/select a purchase order from the orders tab/i),
+    ).toBeInTheDocument();
+  });
 });
 
 describe("purchasing suppliers", () => {

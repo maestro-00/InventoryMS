@@ -3929,7 +3929,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["get_api_v1_registers__registerId__shifts"];
         put?: never;
         post: {
             parameters: {
@@ -7792,6 +7792,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/shifts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_api_v1_shifts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/registers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["patch_api_v1_registers__id"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -9603,6 +9635,10 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        "InventoryX.Presentation.Controllers.v1.RegistersController.UpdateRegisterRequest": {
+            name?: string | null;
+            isActive?: boolean | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -9612,6 +9648,46 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    get_api_v1_registers__registerId__shifts: {
+        parameters: {
+            query?: {
+                status?: string;
+            };
+            header?: never;
+            path: {
+                registerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": components["schemas"]["InventoryX.Application.DTOs.Selling.ShiftDto"][];
+                    "application/json": components["schemas"]["InventoryX.Application.DTOs.Selling.ShiftDto"][];
+                    "text/json": components["schemas"]["InventoryX.Application.DTOs.Selling.ShiftDto"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     post_api_v1_auth_logout: {
         parameters: {
             query?: never;
@@ -9623,6 +9699,103 @@ export interface operations {
         responses: {
             /** @description Success */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_api_v1_shifts: {
+        parameters: {
+            query?: {
+                registerId?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": components["schemas"]["InventoryX.Application.DTOs.Selling.ShiftDto"][];
+                    "application/json": components["schemas"]["InventoryX.Application.DTOs.Selling.ShiftDto"][];
+                    "text/json": components["schemas"]["InventoryX.Application.DTOs.Selling.ShiftDto"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    patch_api_v1_registers__id: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["InventoryX.Presentation.Controllers.v1.RegistersController.UpdateRegisterRequest"];
+                "text/json": components["schemas"]["InventoryX.Presentation.Controllers.v1.RegistersController.UpdateRegisterRequest"];
+                "application/*+json": components["schemas"]["InventoryX.Presentation.Controllers.v1.RegistersController.UpdateRegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryX.Application.DTOs.Selling.RegisterDto"];
+                    "text/plain": components["schemas"]["InventoryX.Application.DTOs.Selling.RegisterDto"];
+                    "text/json": components["schemas"]["InventoryX.Application.DTOs.Selling.RegisterDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
