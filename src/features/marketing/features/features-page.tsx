@@ -85,8 +85,8 @@ export function FeaturesPage() {
             Everything you need to run sales and stock
           </MarketingDisplayHeading>
           <p className="marketing-animate-in marketing-delay-2 mt-4 max-w-xl text-base leading-relaxed text-navy-foreground/70 sm:text-lg">
-            InventoryMS connects counter sales, stock control, purchasing, and
-            reporting in one Ghana-ready platform.
+            InventoryMS connects counter sales, stock control, purchasing, and reporting
+            in one Ghana-ready platform.
           </p>
         </div>
       </MarketingAtmosphere>
@@ -142,14 +142,18 @@ export function FeaturesPage() {
                   <p className="mb-2 font-mono text-xs text-primary">
                     {String(index + 1).padStart(2, "0")}
                   </p>
-                  <h2 className="mb-4 text-3xl font-bold text-foreground">{section.title}</h2>
+                  <h2 className="mb-4 text-3xl font-bold text-foreground">
+                    {section.title}
+                  </h2>
                   <ul className="mb-6 flex flex-col gap-3">
                     {section.bullets.map((bullet) => (
                       <li key={bullet} className="flex items-start gap-2.5 text-sm">
                         <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-success/15">
                           <Check className="size-3 text-success" aria-hidden />
                         </span>
-                        <span className="leading-relaxed text-foreground">{bullet}</span>
+                        <span className="leading-relaxed text-foreground">
+                          {bullet}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -174,13 +178,19 @@ export function FeaturesPage() {
       </div>
 
       <section className="border-t border-border bg-muted/50 px-4 py-12 text-center sm:py-16 md:px-16">
-        <MarketingDisplayHeading as="h2" className="mb-4 text-2xl text-foreground sm:text-3xl">
+        <MarketingDisplayHeading
+          as="h2"
+          className="mb-4 text-2xl text-foreground sm:text-3xl"
+        >
           See it in your business
         </MarketingDisplayHeading>
         <p className="mx-auto mb-6 max-w-md text-sm text-muted-foreground">
           Start your 14-day Professional trial — no credit card required.
         </p>
-        <Button asChild className="w-full max-w-xs shadow-md shadow-primary/15 sm:w-auto">
+        <Button
+          asChild
+          className="w-full max-w-xs shadow-md shadow-primary/15 sm:w-auto"
+        >
           <Link to="/register">Start free trial</Link>
         </Button>
       </section>

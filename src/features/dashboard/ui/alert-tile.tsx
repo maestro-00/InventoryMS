@@ -25,7 +25,9 @@ export function AlertTile({
       : "border-warning/25 bg-warning/5 hover:border-warning/40";
 
   const iconClass =
-    tone === "destructive" ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning";
+    tone === "destructive"
+      ? "bg-destructive/10 text-destructive"
+      : "bg-warning/10 text-warning";
 
   return (
     <Link
@@ -36,15 +38,24 @@ export function AlertTile({
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
       )}
     >
-      <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", iconClass)}>
+      <span
+        className={cn(
+          "flex size-9 shrink-0 items-center justify-center rounded-lg",
+          iconClass,
+        )}
+      >
         <Icon className="size-4" aria-hidden />
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-baseline justify-between gap-2">
           <span className="text-sm font-semibold text-foreground">{label}</span>
-          <span className="text-lg font-bold tabular-nums text-foreground">{count}</span>
+          <span className="text-lg font-bold tabular-nums text-foreground">
+            {count}
+          </span>
         </span>
-        <span className="mt-0.5 block text-xs text-muted-foreground">{description}</span>
+        <span className="mt-0.5 block text-xs text-muted-foreground">
+          {description}
+        </span>
       </span>
     </Link>
   );

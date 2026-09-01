@@ -40,20 +40,16 @@ function InviteAcceptPage() {
       leftContent={
         <div>
           <h2 className="mb-4 text-3xl font-bold leading-tight text-navy-foreground">
-            Join your team on{" "}
-            <span className="text-primary">InventoryMS</span>
+            Join your team on <span className="text-primary">InventoryMS</span>
           </h2>
           <p className="text-sm leading-relaxed text-navy-foreground/70">
-            Set a password to accept your invitation and access your business
-            account.
+            Set a password to accept your invitation and access your business account.
           </p>
         </div>
       }
       rightContent={
         <>
-          <h1 className="mb-1 text-2xl font-bold text-foreground">
-            Accept invitation
-          </h1>
+          <h1 className="mb-1 text-2xl font-bold text-foreground">Accept invitation</h1>
           <p className="mb-6 text-sm text-muted-foreground">
             Choose a password for your new account.
           </p>

@@ -1,9 +1,4 @@
-import {
-  useId,
-  type ChangeEvent,
-  type ComponentProps,
-  type ReactNode,
-} from "react";
+import { useId, type ChangeEvent, type ComponentProps, type ReactNode } from "react";
 import { Input } from "../input";
 import { Label } from "../label";
 import {
@@ -189,8 +184,7 @@ export function SelectField({
         </SelectTrigger>
         <SelectContent>
           {options.map((option) => {
-            const itemValue =
-              option.value === "" ? EMPTY_OPTION_VALUE : option.value;
+            const itemValue = option.value === "" ? EMPTY_OPTION_VALUE : option.value;
             return (
               <SelectItem
                 key={itemValue}

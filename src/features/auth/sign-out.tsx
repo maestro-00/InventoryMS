@@ -3,7 +3,10 @@ import { Button, type ButtonProps } from "../../shared/ui/button";
 import { useSession } from "../../shared/auth/session-context";
 import { cn } from "../../shared/utils/cn";
 
-export interface SignOutButtonProps extends Pick<ButtonProps, "variant" | "size" | "className"> {
+export interface SignOutButtonProps extends Pick<
+  ButtonProps,
+  "variant" | "size" | "className"
+> {
   onSignedOut?: () => void;
   showIcon?: boolean;
 }

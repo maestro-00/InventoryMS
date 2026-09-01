@@ -266,6 +266,10 @@ describe("app router", () => {
       await screen.findByRole("heading", { name: /^reports$/i }),
     ).toBeInTheDocument();
     expect(await screen.findByText(/gross profit/i)).toBeInTheDocument();
-    await selectRadixOption(user, screen.getByRole("combobox", { name: /^location$/i }), "");
+    await selectRadixOption(
+      user,
+      screen.getByRole("combobox", { name: /^location$/i }),
+      "",
+    );
   });
 });

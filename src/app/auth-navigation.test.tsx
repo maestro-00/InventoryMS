@@ -105,7 +105,9 @@ describe("authenticated navigation", () => {
     expect(
       await screen.findByRole("heading", { name: /^reports$/i }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: /welcome back/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /welcome back/i }),
+    ).not.toBeInTheDocument();
     expect(manager.getSnapshot()).not.toBeNull();
   });
 
@@ -119,7 +121,9 @@ describe("authenticated navigation", () => {
     expect(
       await screen.findByRole("heading", { name: /dashboard/i }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: /welcome back/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /welcome back/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("sends an already signed-in visitor from the register page to the dashboard", async () => {
@@ -285,7 +289,9 @@ describe("session restore on cold load", () => {
     expect(
       await screen.findByRole("heading", { name: /dashboard/i }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: /welcome back/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /welcome back/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows sign-in when no session cookie is present", async () => {

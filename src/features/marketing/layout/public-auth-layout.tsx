@@ -14,7 +14,9 @@ export function PublicAuthLayout({
     <div className="flex min-h-dvh flex-col overflow-x-hidden lg:flex-row">
       <MarketingAtmosphere className="order-2 flex w-full flex-col justify-between px-4 py-8 sm:px-6 lg:order-1 lg:w-1/2 lg:p-14">
         <MarketingBrand />
-        <div className="flex flex-1 flex-col justify-center py-6 lg:py-0">{leftContent}</div>
+        <div className="flex flex-1 flex-col justify-center py-6 lg:py-0">
+          {leftContent}
+        </div>
         <div className="mt-6 flex items-center gap-3 rounded-xl border border-navy-light/50 bg-navy-light/30 p-4 backdrop-blur-sm lg:mt-0 lg:border-t lg:border-navy-light lg:bg-transparent lg:p-0 lg:pt-6">
           <div
             className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/80 to-primary text-xs font-semibold text-primary-foreground shadow-sm"
@@ -23,7 +25,9 @@ export function PublicAuthLayout({
             AK
           </div>
           <div>
-            <p className="text-sm font-medium text-navy-foreground">Ama Kwame, Store Owner</p>
+            <p className="text-sm font-medium text-navy-foreground">
+              Ama Kwame, Store Owner
+            </p>
             <p className="text-xs text-navy-foreground/70">
               Running inventory and POS across Accra locations
             </p>
@@ -89,8 +93,8 @@ export function RegisterLeftPanel() {
         not months.
       </h2>
       <p className="mb-6 text-sm leading-relaxed text-navy-foreground/70 sm:mb-10">
-        Start your 14-day Professional trial with no credit card. Onboarding
-        walks you through the essentials.
+        Start your 14-day Professional trial with no credit card. Onboarding walks you
+        through the essentials.
       </p>
       <ol className="flex flex-col gap-3 sm:gap-4">
         {steps.map((text, index) => (

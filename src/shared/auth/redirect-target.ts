@@ -22,9 +22,15 @@ export function internalRedirectFromLocation(
   searchStr: string,
 ): string {
   const query =
-    searchStr.length > 0 ? (searchStr.startsWith("?") ? searchStr : `?${searchStr}`) : "";
+    searchStr.length > 0
+      ? searchStr.startsWith("?")
+        ? searchStr
+        : `?${searchStr}`
+      : "";
   const candidate = `${pathname}${query}`;
-  return internalRedirectTarget(candidate) ?? internalRedirectTarget(pathname) ?? pathname;
+  return (
+    internalRedirectTarget(candidate) ?? internalRedirectTarget(pathname) ?? pathname
+  );
 }
 
 export interface RedirectTarget {

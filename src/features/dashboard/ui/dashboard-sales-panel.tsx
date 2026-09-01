@@ -3,7 +3,13 @@ import { Link } from "@tanstack/react-router";
 import { formatGhanaMoney } from "../../../shared/money/decimal";
 import { cn } from "../../../shared/utils/cn";
 import { Button } from "../../../shared/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../../../shared/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../../../shared/ui/card";
 import { Skeleton } from "../../../shared/ui/skeleton";
 import { useDashboardSalesTrend } from "../hooks/use-dashboard-sales-trend";
 
@@ -12,20 +18,16 @@ const SalesChartLazy = lazy(async () => {
   return { default: SalesTrendChart };
 });
 
-function ComparisonBars({
-  today,
-  prior,
-}: {
-  today: number;
-  prior: number;
-}) {
+function ComparisonBars({ today, prior }: { today: number; prior: number }) {
   const max = Math.max(today, prior, 1);
   return (
     <div className="space-y-3" role="img" aria-label="Today versus same day last week">
       <div className="space-y-1">
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>Today</span>
-          <span className="font-medium text-foreground">{formatGhanaMoney(String(today))}</span>
+          <span className="font-medium text-foreground">
+            {formatGhanaMoney(String(today))}
+          </span>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-muted">
           <div
@@ -37,7 +39,9 @@ function ComparisonBars({
       <div className="space-y-1">
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>Same day last week</span>
-          <span className="font-medium text-foreground">{formatGhanaMoney(String(prior))}</span>
+          <span className="font-medium text-foreground">
+            {formatGhanaMoney(String(prior))}
+          </span>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-muted">
           <div
@@ -53,7 +57,11 @@ function ComparisonBars({
 function MiniBarChart({ points }: { points: Array<{ label: string; value: number }> }) {
   const max = Math.max(...points.map((p) => p.value), 1);
   return (
-    <div className="flex h-28 items-end gap-1.5 sm:h-32" role="img" aria-label="Sales trend">
+    <div
+      className="flex h-28 items-end gap-1.5 sm:h-32"
+      role="img"
+      aria-label="Sales trend"
+    >
       {points.map((point) => (
         <div key={point.label} className="flex flex-1 flex-col items-center gap-1">
           <div
@@ -134,7 +142,12 @@ export function DashboardSalesPanel({
         ) : null}
       </CardContent>
       <CardFooter>
-        <Button variant="ghost" size="sm" asChild className="px-0 text-primary hover:text-primary">
+        <Button
+          variant="ghost"
+          size="sm"
+          asChild
+          className="px-0 text-primary hover:text-primary"
+        >
           <Link to="/reports" search={{ kind: "sales" }}>
             View full report
           </Link>

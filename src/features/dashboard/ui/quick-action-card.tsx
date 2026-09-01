@@ -33,10 +33,7 @@ export function QuickActionCard({
       )}
     >
       <span
-        className={cn(
-          "flex size-10 items-center justify-center rounded-lg",
-          chipTone,
-        )}
+        className={cn("flex size-10 items-center justify-center rounded-lg", chipTone)}
       >
         <Icon className="size-5" aria-hidden />
       </span>

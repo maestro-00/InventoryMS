@@ -22,7 +22,8 @@ for (const route of PUBLIC_ROUTES) {
         .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
         .analyze();
       const serious = results.violations.filter(
-        (violation) => violation.impact === "critical" || violation.impact === "serious",
+        (violation) =>
+          violation.impact === "critical" || violation.impact === "serious",
       );
       expect(serious, JSON.stringify(serious.map((item) => item.id))).toEqual([]);
     });
@@ -31,5 +32,7 @@ for (const route of PUBLIC_ROUTES) {
 
 test("@a11y landing page exposes primary trial CTA", async ({ page }) => {
   await gotoStable(page, "/");
-  await expect(page.getByRole("link", { name: /start free trial/i }).first()).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: /start free trial/i }).first(),
+  ).toBeVisible();
 });

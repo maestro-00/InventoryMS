@@ -142,7 +142,11 @@ describe("transfer discrepancy and count etag", () => {
       await screen.findByLabelText(/from location/i),
       us1.LOCATION_ID,
     );
-    await selectRadixOption(user, screen.getByLabelText(/to location/i), us3.LOCATION_B_ID);
+    await selectRadixOption(
+      user,
+      screen.getByLabelText(/to location/i),
+      us3.LOCATION_B_ID,
+    );
     await selectRadixOption(user, screen.getByLabelText(/^product/i), us1.PRODUCT_ID);
     await user.clear(screen.getByLabelText(/quantity to dispatch/i));
     await user.type(screen.getByLabelText(/quantity to dispatch/i), "10");

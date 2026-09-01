@@ -28,7 +28,9 @@ import { useTenant } from "../features/tenant/api/tenant-queries";
 import { cn } from "../shared/utils/cn";
 import type { NavItem } from "../app/navigation/nav-config";
 
-function oauthTokenSearch(search: Record<string, unknown>): Record<string, string> | null {
+function oauthTokenSearch(
+  search: Record<string, unknown>,
+): Record<string, string> | null {
   const accessToken = search.accessToken;
   const refreshToken = search.refreshToken;
   if (typeof accessToken !== "string" || typeof refreshToken !== "string") return null;
@@ -103,11 +105,7 @@ function AuthenticatedLayout() {
   const primaryCta = session ? resolvePrimaryShellCta(session) : undefined;
   const currentPage = routeLabel(pathname);
 
-  const renderNavLink = (
-    item: NavItem,
-    className: string,
-    onNavigate?: () => void,
-  ) => (
+  const renderNavLink = (item: NavItem, className: string, onNavigate?: () => void) => (
     <Link
       to={item.to}
       className={className}
@@ -120,7 +118,9 @@ function AuthenticatedLayout() {
         onNavigate?.();
       }}
     >
-      {item.icon ? <item.icon className="size-4 shrink-0 opacity-90" aria-hidden /> : null}
+      {item.icon ? (
+        <item.icon className="size-4 shrink-0 opacity-90" aria-hidden />
+      ) : null}
       {item.label}
     </Link>
   );

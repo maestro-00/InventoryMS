@@ -51,7 +51,9 @@ export function DashboardContinuePanel() {
 
   return (
     <section className="space-y-3" aria-label="Continue where you left off">
-      <h2 className="text-base font-semibold text-foreground">Continue where you left off</h2>
+      <h2 className="text-base font-semibold text-foreground">
+        Continue where you left off
+      </h2>
       <ul className="grid gap-3 sm:grid-cols-2">
         {hasSetupCta ? (
           <li>
@@ -66,11 +68,15 @@ export function DashboardContinuePanel() {
                       {setupLabel}
                     </Link>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {completedCount(checklist)} of {ONBOARDING_STEPS.length} steps complete
+                      {completedCount(checklist)} of {ONBOARDING_STEPS.length} steps
+                      complete
                     </p>
                     <Progress value={setupProgress} className="mt-3 h-1.5" />
                   </div>
-                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                  <ChevronRight
+                    className="size-4 shrink-0 text-muted-foreground"
+                    aria-hidden
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -88,7 +94,10 @@ export function DashboardContinuePanel() {
                   to="/pos"
                 >
                   <span>Resume shift on {entry.registerName}</span>
-                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                  <ChevronRight
+                    className="size-4 shrink-0 text-muted-foreground"
+                    aria-hidden
+                  />
                 </Link>
               </CardContent>
             </Card>
@@ -103,7 +112,10 @@ export function DashboardContinuePanel() {
                   to="/pos"
                 >
                   <span>Resume held sale ({formatGhanaMoney(sale.grandTotal)})</span>
-                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                  <ChevronRight
+                    className="size-4 shrink-0 text-muted-foreground"
+                    aria-hidden
+                  />
                 </Link>
               </CardContent>
             </Card>

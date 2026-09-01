@@ -5,7 +5,10 @@ import { cn } from "@/shared/utils/cn";
 
 export type StatTrend = "up" | "down" | "flat";
 
-export function formatMetricDelta(today: string | number, prior: string | number): {
+export function formatMetricDelta(
+  today: string | number,
+  prior: string | number,
+): {
   label: string;
   trend: StatTrend;
 } {
@@ -94,10 +97,7 @@ export function StatCard({
 export function StatCardSkeleton({ className }: { className?: string }) {
   return (
     <div
-      className={cn(
-        "rounded-xl border border-border/60 bg-card p-4",
-        className,
-      )}
+      className={cn("rounded-xl border border-border/60 bg-card p-4", className)}
       aria-hidden
     >
       <div className="h-3 w-20 animate-pulse rounded bg-muted" />
@@ -108,7 +108,5 @@ export function StatCardSkeleton({ className }: { className?: string }) {
 }
 
 export function StatCardGrid({ children }: { children: ReactNode }) {
-  return (
-    <ul className="grid grid-cols-2 gap-3 lg:grid-cols-5 lg:gap-4">{children}</ul>
-  );
+  return <ul className="grid grid-cols-2 gap-3 lg:grid-cols-5 lg:gap-4">{children}</ul>;
 }

@@ -17,6 +17,8 @@ describe("google OAuth return URL", () => {
   it("passes the absolute returnUrl to the Google challenge endpoint", () => {
     const href = googleSignInUrl("http://localhost:5173/auth/google-callback");
     expect(href).toContain("returnUrl=");
-    expect(href).toContain(encodeURIComponent("http://localhost:5173/auth/google-callback"));
+    expect(href).toContain(
+      encodeURIComponent("http://localhost:5173/auth/google-callback"),
+    );
   });
 });

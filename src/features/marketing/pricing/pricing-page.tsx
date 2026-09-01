@@ -16,12 +16,7 @@ const FALLBACK_PLANS = [
     plan: "Free",
     price: "GHS 0",
     description: "For single-location shops getting started",
-    features: [
-      "1 location",
-      "500 products",
-      "Basic POS",
-      "Email support",
-    ],
+    features: ["1 location", "500 products", "Basic POS", "Email support"],
     highlighted: false,
     badge: "",
   },
@@ -55,14 +50,11 @@ const FALLBACK_PLANS = [
   },
 ] as const;
 
-function formatPlanPrice(
-  plan: BillingPlan,
-  cycle: "monthly" | "annual",
-): string {
+function formatPlanPrice(plan: BillingPlan, cycle: "monthly" | "annual"): string {
   const raw =
     cycle === "annual"
-      ? plan.annualPrice ?? plan.monthlyPrice
-      : plan.monthlyPrice ?? plan.annualPrice;
+      ? (plan.annualPrice ?? plan.monthlyPrice)
+      : (plan.monthlyPrice ?? plan.annualPrice);
   if (raw == null) return "—";
   const amount = typeof raw === "number" ? raw : Number.parseFloat(raw);
   if (Number.isNaN(amount)) return String(raw);
@@ -102,7 +94,9 @@ export function PricingPage({ plans }: { plans?: BillingPlan[] }) {
     <MarketingShell activePage="pricing">
       <MarketingAtmosphere className="px-4 py-10 text-center sm:py-16 md:px-16 md:pt-20">
         <div className="mx-auto max-w-2xl">
-          <MarketingEyebrow className="mx-auto flex justify-center">Pricing</MarketingEyebrow>
+          <MarketingEyebrow className="mx-auto flex justify-center">
+            Pricing
+          </MarketingEyebrow>
           <MarketingDisplayHeading className="mb-4 text-4xl text-navy-foreground sm:mb-5 sm:text-5xl">
             Simple, predictable pricing
           </MarketingDisplayHeading>
@@ -210,18 +204,20 @@ export function PricingPage({ plans }: { plans?: BillingPlan[] }) {
                   >
                     {row.feature}
                   </div>
-                  {[row.starter, row.professional, row.business].map((cell, cellIndex) => (
-                    <div
-                      key={`${row.feature}-${cellIndex}`}
-                      className={cn(
-                        "border-t border-border p-4 text-center text-sm",
-                        index % 2 === 0 ? "bg-background" : "bg-muted/50",
-                        cellIndex === 1 ? "font-medium text-primary" : undefined,
-                      )}
-                    >
-                      {cell}
-                    </div>
-                  ))}
+                  {[row.starter, row.professional, row.business].map(
+                    (cell, cellIndex) => (
+                      <div
+                        key={`${row.feature}-${cellIndex}`}
+                        className={cn(
+                          "border-t border-border p-4 text-center text-sm",
+                          index % 2 === 0 ? "bg-background" : "bg-muted/50",
+                          cellIndex === 1 ? "font-medium text-primary" : undefined,
+                        )}
+                      >
+                        {cell}
+                      </div>
+                    ),
+                  )}
                 </div>
               ))}
             </div>

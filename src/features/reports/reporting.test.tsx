@@ -55,7 +55,9 @@ describe("reporting dashboard and tables", () => {
     );
     expect(screen.getByText(/sales today/i)).toBeInTheDocument();
     expect(screen.getByText(/items sold/i)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /low stock warnings/i })).toHaveTextContent("1");
+    expect(screen.getByRole("link", { name: /low stock warnings/i })).toHaveTextContent(
+      "1",
+    );
     expect(screen.getByText(/gross profit/i)).toBeInTheDocument();
     expect(screen.getByText(/sugar 1kg/i)).toBeInTheDocument();
   });

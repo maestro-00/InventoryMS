@@ -4,7 +4,10 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { server } from "../../shared/test/msw/server";
 import { renderWithProviders } from "../../shared/test/render";
-import { selectRadixOption, waitForRadixSelectOptions } from "../../shared/test/select-radix";
+import {
+  selectRadixOption,
+  waitForRadixSelectOptions,
+} from "../../shared/test/select-radix";
 import { ProductForm } from "./products/product-form";
 import { ProductList } from "./products/product-list";
 import { ImportWizard } from "./import/import-wizard";

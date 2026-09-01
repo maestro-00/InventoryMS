@@ -71,7 +71,11 @@ describe("business settings", () => {
 
     renderWithRouter(<BusinessSettings />);
 
-    await selectRadixOption(user, await screen.findByLabelText(/valuation method/i), "FIFO");
+    await selectRadixOption(
+      user,
+      await screen.findByLabelText(/valuation method/i),
+      "FIFO",
+    );
     await user.click(screen.getByRole("button", { name: /save valuation method/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(

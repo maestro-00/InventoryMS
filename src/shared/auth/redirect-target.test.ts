@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { internalRedirectTarget, internalRedirectFromLocation, parseInternalRedirect } from "./redirect-target";
+import {
+  internalRedirectTarget,
+  internalRedirectFromLocation,
+  parseInternalRedirect,
+} from "./redirect-target";
 
 describe("internalRedirectTarget", () => {
   it("keeps in-app paths, including a query string", () => {

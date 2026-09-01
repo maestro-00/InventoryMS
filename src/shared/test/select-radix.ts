@@ -13,14 +13,14 @@ function optionValue(option: HTMLElement): string | null {
   if (explicit !== null) {
     return explicit;
   }
-  return (
-    option.getAttribute("data-value") ??
-    option.getAttribute("value") ??
-    null
-  );
+  return option.getAttribute("data-value") ?? option.getAttribute("value") ?? null;
 }
 
-function matchesOption(option: HTMLElement, valueOrLabel: string, radixValue: string): boolean {
+function matchesOption(
+  option: HTMLElement,
+  valueOrLabel: string,
+  radixValue: string,
+): boolean {
   const value = optionValue(option);
   if (value === radixValue || value === valueOrLabel) {
     return true;

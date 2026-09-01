@@ -66,7 +66,9 @@ function NavList({
           <p
             className={cn(
               "mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest",
-              variant === "sidebar" ? "text-navy-foreground/45" : "text-muted-foreground",
+              variant === "sidebar"
+                ? "text-navy-foreground/45"
+                : "text-muted-foreground",
             )}
           >
             {group.label}
@@ -74,12 +76,16 @@ function NavList({
           <ul className="flex flex-col gap-0.5">
             {group.items.map((item) => (
               <li key={item.to}>
-                {link(item, cn(
-                  "flex min-h-touch items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  variant === "sidebar"
-                    ? "text-navy-foreground/75 hover:bg-navy-light/70 hover:text-navy-foreground"
-                    : "text-foreground hover:bg-muted",
-                ), onNavigate)}
+                {link(
+                  item,
+                  cn(
+                    "flex min-h-touch items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    variant === "sidebar"
+                      ? "text-navy-foreground/75 hover:bg-navy-light/70 hover:text-navy-foreground"
+                      : "text-foreground hover:bg-muted",
+                  ),
+                  onNavigate,
+                )}
               </li>
             ))}
           </ul>
@@ -122,7 +128,9 @@ export function AppShell({
         onNavigate?.();
       }}
     >
-      {item.icon ? <item.icon className="size-4 shrink-0 opacity-80" aria-hidden /> : null}
+      {item.icon ? (
+        <item.icon className="size-4 shrink-0 opacity-80" aria-hidden />
+      ) : null}
       {item.label}
     </a>
   );
@@ -279,14 +287,10 @@ export function AppShell({
               <NavList
                 groups={groups}
                 link={(item, className, onNavigate) =>
-                  link(
-                    item,
-                    className,
-                    () => {
-                      onNavigate?.();
-                      setOpen(false);
-                    },
-                  )
+                  link(item, className, () => {
+                    onNavigate?.();
+                    setOpen(false);
+                  })
                 }
                 variant="sidebar"
               />

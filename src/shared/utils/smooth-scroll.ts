@@ -5,7 +5,8 @@ function easeInOutCubic(progress: number): number {
 }
 
 function scrollTargetY(element: HTMLElement): number {
-  const scrollMarginTop = Number.parseFloat(getComputedStyle(element).scrollMarginTop) || 0;
+  const scrollMarginTop =
+    Number.parseFloat(getComputedStyle(element).scrollMarginTop) || 0;
   return element.getBoundingClientRect().top + window.scrollY - scrollMarginTop;
 }
 

@@ -1,12 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import {
-  Bell,
-  MapPin,
-  RefreshCw,
-  ShoppingCart,
-  Truck,
-  WifiOff,
-} from "lucide-react";
+import { Bell, MapPin, RefreshCw, ShoppingCart, Truck, WifiOff } from "lucide-react";
 
 export const LANDING_LOGOS = [
   "Kwame Retail",

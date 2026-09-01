@@ -71,7 +71,10 @@ function DashboardPage() {
           "marketing-animate-in relative overflow-hidden rounded-2xl border border-border/60 bg-card p-5 sm:p-6",
         )}
       >
-        <div className="marketing-grid-light pointer-events-none absolute inset-0 opacity-40" aria-hidden />
+        <div
+          className="marketing-grid-light pointer-events-none absolute inset-0 opacity-40"
+          aria-hidden
+        />
         <div className="relative flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
@@ -108,11 +111,10 @@ function DashboardPage() {
       </header>
 
       {dashboard.isError ? (
-        <div
-          role="alert"
-          className="app-surface-card rounded-xl p-5"
-        >
-          <p className="font-medium text-foreground">Failed to load dashboard metrics.</p>
+        <div role="alert" className="app-surface-card rounded-xl p-5">
+          <p className="font-medium text-foreground">
+            Failed to load dashboard metrics.
+          </p>
           <Button
             type="button"
             variant="outline"

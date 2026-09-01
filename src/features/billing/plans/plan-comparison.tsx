@@ -73,7 +73,9 @@ export function PlanComparison() {
   return (
     <section aria-label="Plans" className="space-y-6 sm:space-y-8">
       <div>
-        <h1 className="text-xl font-bold text-foreground sm:text-2xl">Plan & billing</h1>
+        <h1 className="text-xl font-bold text-foreground sm:text-2xl">
+          Plan & billing
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Manage your subscription, usage, and billing details.
         </p>
@@ -126,9 +128,7 @@ export function PlanComparison() {
       {problem ? <ProblemSummary problem={problem} /> : null}
 
       <div>
-        <h2 className="mb-5 text-base font-semibold text-foreground">
-          Change plan
-        </h2>
+        <h2 className="mb-5 text-base font-semibold text-foreground">Change plan</h2>
         <div className="grid gap-4 sm:gap-5 md:grid-cols-3">
           {planList.map((plan) => {
             const isCurrent =

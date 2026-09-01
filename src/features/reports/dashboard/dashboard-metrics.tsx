@@ -1,11 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import {
-  AlertTriangle,
-  BarChart3,
-  Boxes,
-  Package,
-  ShoppingCart,
-} from "lucide-react";
+import { AlertTriangle, BarChart3, Boxes, Package, ShoppingCart } from "lucide-react";
 import { formatGhanaMoney } from "../../../shared/money/decimal";
 import { Alert, AlertDescription, AlertTitle } from "../../../shared/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../shared/ui/card";
@@ -69,7 +63,10 @@ export function DashboardPanel({
     {
       label: "Average basket",
       value: formatGhanaMoney(data.averageBasket.today),
-      delta: formatMetricDelta(data.averageBasket.today, data.averageBasket.sameDayLastWeek),
+      delta: formatMetricDelta(
+        data.averageBasket.today,
+        data.averageBasket.sameDayLastWeek,
+      ),
       link: dashboardDetailLink(data.averageBasket.detailUrl),
     },
     {
@@ -81,14 +78,22 @@ export function DashboardPanel({
     {
       label: "Cash in drawer",
       value: formatGhanaMoney(data.cashInDrawer.today),
-      delta: formatMetricDelta(data.cashInDrawer.today, data.cashInDrawer.sameDayLastWeek),
+      delta: formatMetricDelta(
+        data.cashInDrawer.today,
+        data.cashInDrawer.sameDayLastWeek,
+      ),
       link: dashboardDetailLink(data.cashInDrawer.detailUrl),
     },
   ];
 
   const quickActions = [
     canSell
-      ? { label: "Open POS", to: "/pos" as const, icon: ShoppingCart, tone: "primary" as const }
+      ? {
+          label: "Open POS",
+          to: "/pos" as const,
+          icon: ShoppingCart,
+          tone: "primary" as const,
+        }
       : null,
     canManageStock
       ? {
@@ -136,7 +141,10 @@ export function DashboardPanel({
         </DashboardSection>
       ) : null}
 
-      <DashboardSection title="Performance" description="Today compared with the same weekday last week">
+      <DashboardSection
+        title="Performance"
+        description="Today compared with the same weekday last week"
+      >
         <StatCardGrid>
           {metrics.map((metric) => (
             <li key={metric.label}>

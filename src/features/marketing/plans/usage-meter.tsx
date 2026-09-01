@@ -23,8 +23,7 @@ export function UsageMeter({
   }
 
   const pct = total > 0 ? Math.round((used / total) * 100) : 0;
-  const barColor =
-    pct > 85 ? "bg-warning" : pct > 60 ? "bg-primary" : "bg-success";
+  const barColor = pct > 85 ? "bg-warning" : pct > 60 ? "bg-primary" : "bg-success";
 
   return (
     <div className="flex-1 min-w-[140px]">

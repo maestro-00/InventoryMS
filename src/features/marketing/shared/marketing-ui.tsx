@@ -39,7 +39,10 @@ export function MarketingAtmosphere({
           />
         </>
       ) : null}
-      <div className="marketing-grain pointer-events-none absolute inset-0" aria-hidden />
+      <div
+        className="marketing-grain pointer-events-none absolute inset-0"
+        aria-hidden
+      />
       <div className="relative z-10">{children}</div>
     </div>
   );
@@ -242,7 +245,9 @@ export function FeaturePreview({ sectionId }: { sectionId: string }) {
     <div className="overflow-hidden rounded-xl border border-border bg-gradient-to-br from-card to-muted/50 p-1 shadow-sm">
       <div className="flex items-center gap-2 border-b border-border/60 px-4 py-2.5">
         <span className="size-2 rounded-full bg-primary/60" aria-hidden />
-        <span className="text-xs font-medium text-muted-foreground">{preview.title}</span>
+        <span className="text-xs font-medium text-muted-foreground">
+          {preview.title}
+        </span>
       </div>
       <div className="space-y-0 divide-y divide-border/60 p-4">
         {preview.rows.map((row) => (

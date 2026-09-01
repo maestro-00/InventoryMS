@@ -22,7 +22,10 @@ export function LandingPage() {
         <section className="mx-auto flex max-w-6xl flex-col items-stretch gap-10 md:flex-row md:items-center md:gap-16">
           <div className="flex-1">
             <div className="marketing-animate-in mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-navy-light/80 bg-navy-light/60 px-3 py-1.5 backdrop-blur-sm sm:mb-6">
-              <span className="size-1.5 shrink-0 animate-pulse rounded-full bg-success" aria-hidden />
+              <span
+                className="size-1.5 shrink-0 animate-pulse rounded-full bg-success"
+                aria-hidden
+              />
               <span className="text-xs leading-snug text-navy-foreground/80">
                 14-day Professional trial · No credit card
               </span>
@@ -78,7 +81,9 @@ export function LandingPage() {
               <span className="mb-1 text-center text-2xl font-bold text-foreground sm:text-3xl md:text-4xl">
                 {stat.value}
               </span>
-              <span className="text-center text-sm text-muted-foreground">{stat.label}</span>
+              <span className="text-center text-sm text-muted-foreground">
+                {stat.label}
+              </span>
               {index < LANDING_STATS.length - 1 ? (
                 <span
                   className="mt-3 hidden h-px w-8 bg-primary/30 md:group-last:hidden"

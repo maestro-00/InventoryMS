@@ -4,7 +4,10 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { server } from "../../shared/test/msw/server";
 import { renderWithProviders } from "../../shared/test/render";
-import { selectRadixOption, waitForRadixSelectOptions } from "../../shared/test/select-radix";
+import {
+  selectRadixOption,
+  waitForRadixSelectOptions,
+} from "../../shared/test/select-radix";
 import { LocationForm } from "./locations/location-form";
 import { LocationList } from "./locations/location-list";
 import { OpeningStockForm } from "./opening-stock/opening-stock-form";

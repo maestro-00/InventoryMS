@@ -3,7 +3,10 @@ import { cn } from "@/shared/utils/cn";
 
 export function AppBrand({ className }: { className?: string }) {
   return (
-    <div className={cn("flex items-center gap-2.5", className)} aria-label="InventoryMS">
+    <div
+      className={cn("flex items-center gap-2.5", className)}
+      aria-label="InventoryMS"
+    >
       <div className="relative flex size-8 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-md shadow-primary/25">
         <Package className="size-4 text-primary-foreground" aria-hidden />
         <div
