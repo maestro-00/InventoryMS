@@ -14,17 +14,13 @@ import {
   SheetTrigger,
 } from "../../shared/ui/sheet";
 import { cn } from "../../shared/utils/cn";
-import type { NavGroup } from "../navigation/nav-config";
+import type { NavGroup, NavItem } from "../navigation/nav-config";
 
-export interface AppShellNavItem {
-  to: string;
-  label: string;
-  icon?: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
-}
+export type AppShellNavItem = NavItem;
 
 export interface AppShellProps {
   children: ReactNode;
-  navigation?: AppShellNavItem[];
+  navigation?: NavItem[];
   navigationGroups?: NavGroup[];
   locationControl?: ReactNode;
   shiftControl?: ReactNode;
@@ -36,7 +32,7 @@ export interface AppShellProps {
   isOnline?: boolean;
   pendingSaleCount?: number;
   renderLink?: (
-    item: AppShellNavItem,
+    item: NavItem,
     className: string,
     onNavigate?: () => void,
     isActive?: boolean,
@@ -51,7 +47,7 @@ function NavList({
 }: {
   groups: NavGroup[];
   link: (
-    item: AppShellNavItem,
+    item: NavItem,
     className: string,
     onNavigate?: () => void,
     isActive?: boolean,
@@ -117,7 +113,7 @@ export function AppShell({
       : []);
 
   const defaultLink = (
-    item: AppShellNavItem,
+    item: NavItem,
     className: string,
     onNavigate?: () => void,
   ): ReactNode => (
@@ -250,7 +246,7 @@ export function AppShell({
                 <HelpCircle className="size-4" aria-hidden />
                 Help & security
               </Link>
-              {renderFooterControl()}
+              {renderFooterControl?.()}
             </div>
           </nav>
 

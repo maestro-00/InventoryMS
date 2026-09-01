@@ -11,7 +11,7 @@ export function QuickActionCard({
 }: {
   label: string;
   icon: LucideIcon;
-  to: LinkProps["to"];
+  to: NonNullable<LinkProps["to"]>;
   className?: string;
   tone?: "primary" | "success" | "warning" | "muted";
 }) {

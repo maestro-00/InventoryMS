@@ -115,8 +115,8 @@ export function PlanComparison() {
                 key={row.metric}
                 label={row.metric}
                 used={row.used}
-                total={row.limit ?? undefined}
                 unlimited={row.limit == null}
+                {...(row.limit != null ? { total: row.limit } : {})}
               />
             ))}
           </div>

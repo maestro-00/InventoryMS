@@ -22,8 +22,11 @@ export function useDashboardSalesTrend(range: "daily" | "weekly" = "weekly") {
         to,
         locationId: locationId || undefined,
       });
+      if (!("totalSales" in report)) {
+        throw new Error("Expected sales report rows");
+      }
       const points = aggregateDailySales(
-        report.rows as Array<{ occurredAt: string; total: string }>,
+        report.rows.map((row) => ({ occurredAt: row.occurredAt, total: row.total })),
         days,
       );
       const total = points.reduce((sum, point) => sum + point.value, 0);

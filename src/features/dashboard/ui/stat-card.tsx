@@ -85,7 +85,11 @@ export function StatCard({
 
   if (to) {
     return (
-      <Link to={to} search={search} className={shellClass}>
+      <Link
+        to={to}
+        {...(search !== undefined ? { search } : {})}
+        className={shellClass}
+      >
         {content}
       </Link>
     );

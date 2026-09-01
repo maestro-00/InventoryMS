@@ -100,7 +100,7 @@ function AuthenticatedLayout() {
     ? buildNavigationGroups(session, tenant.data?.tenant.onboardingChecklist)
     : [];
 
-  const tenantLabel = tenant.data?.tenant.name ?? undefined;
+  const tenantLabel = tenant.data?.tenant.name;
   const roleLabel = session?.role;
   const primaryCta = session ? resolvePrimaryShellCta(session) : undefined;
   const currentPage = routeLabel(pathname);
@@ -132,9 +132,9 @@ function AuthenticatedLayout() {
       navigationGroups={navigationGroups}
       locationControl={<LocationSwitcher />}
       shiftControl={<ShiftStatusChip />}
-      tenantLabel={tenantLabel}
-      roleLabel={roleLabel}
-      primaryCta={primaryCta}
+      {...(tenantLabel ? { tenantLabel } : {})}
+      {...(roleLabel ? { roleLabel } : {})}
+      {...(primaryCta ? { primaryCta } : {})}
       renderFooterControl={() => (
         <SignOutButton
           variant="ghost"

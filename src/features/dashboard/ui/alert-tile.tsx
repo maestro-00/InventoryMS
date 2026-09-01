@@ -13,7 +13,7 @@ export function AlertTile({
   label: string;
   count: number;
   description: string;
-  to: LinkProps["to"];
+  to: NonNullable<LinkProps["to"]>;
   icon: LucideIcon;
   tone?: "warning" | "destructive";
 }) {
