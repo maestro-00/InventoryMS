@@ -31,6 +31,7 @@ describe("internalRedirectTarget", () => {
       internalRedirectTarget("/dashboard\nLocation: https://evil.example"),
     ).toBeNull();
     expect(internalRedirectTarget("/dash\tboard")).toBeNull();
+    expect(internalRedirectTarget("/dash\x7fboard")).toBeNull();
   });
 });
 

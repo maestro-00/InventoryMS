@@ -21,4 +21,10 @@ describe("google OAuth return URL", () => {
       encodeURIComponent("http://localhost:5173/auth/google-callback"),
     );
   });
+
+  it("drops unsafe post-login targets from the callback path", () => {
+    expect(googleOAuthReturnUrl("//evil.example", "http://localhost:5173")).toBe(
+      "http://localhost:5173/auth/google-callback",
+    );
+  });
 });
