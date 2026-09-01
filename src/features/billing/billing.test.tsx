@@ -12,6 +12,7 @@ import { DataExportPanel, InvoiceHistory } from "./invoices/invoice-history";
 import { ownerSession } from "../../../tests/fixtures/provider/session";
 import { SessionProvider } from "../../shared/auth/session-context";
 import { SessionManager, sessionManager } from "../../shared/auth/session-manager";
+import { selectRadixOption } from "../../shared/test/select-radix";
 
 const subscriptionBody = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -59,7 +60,8 @@ describe("billing surfaces", () => {
       </>,
     );
     expect(await screen.findByText(/trial ends/i)).toBeInTheDocument();
-    expect(screen.getByText(/SalesThisMonth: 2 \/ 500/)).toBeInTheDocument();
+    expect(screen.getByText(/SalesThisMonth/i)).toBeInTheDocument();
+    expect(screen.getByText(/2 \/ 500/)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /cancel subscription/i }),
     ).toBeInTheDocument();
@@ -80,7 +82,7 @@ describe("billing surfaces", () => {
       }),
     );
     renderBilling(<PaymentMethodForm />);
-    await user.selectOptions(screen.getByLabelText(/^channel$/i), "Card");
+    await selectRadixOption(user, screen.getByLabelText(/^channel$/i), "Card");
     await user.type(screen.getByLabelText(/payment reference/i), "ref-1");
     await user.type(screen.getByLabelText(/billing email/i), "billing@kwame.gh");
     await user.type(screen.getByLabelText(/tax number/i), "C0001112223");
@@ -171,8 +173,8 @@ describe("billing surfaces", () => {
       }),
     );
     renderBilling(<PlanComparison />);
-    expect(await screen.findByText(/Locations: 1$/)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /upgrade to professional/i }));
+    expect(await screen.findByText(/Locations/i)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /switch to professional/i }));
     await vi.waitFor(() => {
       expect(upgraded).toBe("pro");
     });

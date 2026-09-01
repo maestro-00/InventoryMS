@@ -4,6 +4,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { server } from "../../shared/test/msw/server";
 import { renderWithProviders } from "../../shared/test/render";
+import { selectRadixOption, waitForRadixSelectOptions } from "../../shared/test/select-radix";
 import { LocationForm } from "./locations/location-form";
 import { LocationList } from "./locations/location-list";
 import { OpeningStockForm } from "./opening-stock/opening-stock-form";
@@ -149,9 +150,10 @@ describe("opening stock", () => {
 
     renderWithProviders(<OpeningStockForm />);
 
-    await screen.findByRole("option", { name: /main shop/i });
-    await user.selectOptions(screen.getByLabelText(/location/i), LOCATION_ID);
-    await user.selectOptions(screen.getByLabelText(/product/i), PRODUCT_ID);
+    const locationField = await screen.findByLabelText(/location/i);
+    await waitForRadixSelectOptions(locationField, /main shop/i);
+    await selectRadixOption(user, locationField, LOCATION_ID);
+    await selectRadixOption(user, screen.getByLabelText(/product/i), PRODUCT_ID);
     await user.clear(screen.getByLabelText(/opening quantity/i));
     await user.type(screen.getByLabelText(/opening quantity/i), "10");
     await user.click(screen.getByRole("button", { name: /record opening stock/i }));
@@ -173,9 +175,10 @@ describe("opening stock", () => {
 
     renderWithProviders(<OpeningStockForm />);
 
-    await screen.findByRole("option", { name: /main shop/i });
-    await user.selectOptions(screen.getByLabelText(/location/i), LOCATION_ID);
-    await user.selectOptions(screen.getByLabelText(/product/i), PRODUCT_ID);
+    const locationField = await screen.findByLabelText(/location/i);
+    await waitForRadixSelectOptions(locationField, /main shop/i);
+    await selectRadixOption(user, locationField, LOCATION_ID);
+    await selectRadixOption(user, screen.getByLabelText(/product/i), PRODUCT_ID);
     await user.clear(screen.getByLabelText(/opening quantity/i));
     await user.type(screen.getByLabelText(/opening quantity/i), "10.00001");
     await user.click(screen.getByRole("button", { name: /record opening stock/i }));
@@ -197,9 +200,10 @@ describe("opening stock", () => {
 
     renderWithProviders(<OpeningStockForm />);
 
-    await screen.findByRole("option", { name: /main shop/i });
-    await user.selectOptions(screen.getByLabelText(/location/i), LOCATION_ID);
-    await user.selectOptions(screen.getByLabelText(/product/i), PRODUCT_ID);
+    const locationField = await screen.findByLabelText(/location/i);
+    await waitForRadixSelectOptions(locationField, /main shop/i);
+    await selectRadixOption(user, locationField, LOCATION_ID);
+    await selectRadixOption(user, screen.getByLabelText(/product/i), PRODUCT_ID);
     await user.clear(screen.getByLabelText(/opening quantity/i));
     await user.type(screen.getByLabelText(/opening quantity/i), "10");
     await user.click(screen.getByRole("button", { name: /record opening stock/i }));

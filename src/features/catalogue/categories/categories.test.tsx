@@ -4,6 +4,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { server } from "../../../shared/test/msw/server";
 import { renderWithProviders } from "../../../shared/test/render";
+import { selectRadixOption } from "../../../shared/test/select-radix";
 import { CategoryMaintenance } from "./category-maintenance";
 import { descendantIds, wouldCreateCycle } from "./category-tree";
 import {
@@ -104,7 +105,8 @@ describe("category maintenance", () => {
 
     await screen.findByRole("listitem", { name: "Groceries" });
     await user.type(screen.getByLabelText(/new category name/i), "Grains");
-    await user.selectOptions(
+    await selectRadixOption(
+      user,
       screen.getByLabelText(/parent category/i),
       CHILD_CATEGORY_ID,
     );

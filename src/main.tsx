@@ -18,7 +18,5 @@ async function startMocks(): Promise<void> {
 
 void startMocks().then(() => {
   createRoot(root).render(<AppProviders />);
-  window.setTimeout(() => {
-    document.getElementById("boot-brand")?.remove();
-  }, 4000);
+  document.getElementById("boot-brand")?.remove();
 });

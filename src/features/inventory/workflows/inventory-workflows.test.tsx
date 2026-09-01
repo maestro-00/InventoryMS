@@ -4,6 +4,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { server } from "../../../shared/test/msw/server";
 import { ownerSessionRecord, renderWithProviders } from "../../../shared/test/render";
+import { selectRadixOption } from "../../../shared/test/select-radix";
 import * as us1 from "../../../../tests/fixtures/provider/us1";
 import * as us3 from "../../../../tests/fixtures/provider/us3";
 import { AdjustmentForm } from "../adjustments/adjustment-form";
@@ -35,13 +36,14 @@ describe("adjustment approval separation", () => {
       ),
     );
     renderWithProviders(<AdjustmentForm />);
-    await user.selectOptions(
+    await selectRadixOption(
+      user,
       await screen.findByLabelText(/^location/i),
       us1.LOCATION_ID,
     );
-    await user.selectOptions(screen.getByLabelText(/^product/i), us1.PRODUCT_ID);
+    await selectRadixOption(user, screen.getByLabelText(/^product/i), us1.PRODUCT_ID);
     await user.type(screen.getByLabelText(/quantity delta/i), "-50");
-    await user.selectOptions(screen.getByLabelText(/^reason/i), "Damage");
+    await selectRadixOption(user, screen.getByLabelText(/^reason/i), "Damage");
     await user.click(screen.getByRole("button", { name: /submit adjustment/i }));
     expect(await screen.findByText(/pending approval/i)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /approve adjustment/i }));
@@ -65,11 +67,12 @@ describe("adjustment approval separation", () => {
       ),
     );
     renderWithProviders(<AdjustmentForm />);
-    await user.selectOptions(
+    await selectRadixOption(
+      user,
       await screen.findByLabelText(/^location/i),
       us1.LOCATION_ID,
     );
-    await user.selectOptions(screen.getByLabelText(/^product/i), us1.PRODUCT_ID);
+    await selectRadixOption(user, screen.getByLabelText(/^product/i), us1.PRODUCT_ID);
     await user.type(screen.getByLabelText(/quantity delta/i), "-50");
     await user.click(screen.getByRole("button", { name: /submit adjustment/i }));
     await user.click(
@@ -134,12 +137,13 @@ describe("transfer discrepancy and count etag", () => {
       }),
     );
     renderWithProviders(<TransferWorkflow />);
-    await user.selectOptions(
+    await selectRadixOption(
+      user,
       await screen.findByLabelText(/from location/i),
       us1.LOCATION_ID,
     );
-    await user.selectOptions(screen.getByLabelText(/to location/i), us3.LOCATION_B_ID);
-    await user.selectOptions(screen.getByLabelText(/^product/i), us1.PRODUCT_ID);
+    await selectRadixOption(user, screen.getByLabelText(/to location/i), us3.LOCATION_B_ID);
+    await selectRadixOption(user, screen.getByLabelText(/^product/i), us1.PRODUCT_ID);
     await user.clear(screen.getByLabelText(/quantity to dispatch/i));
     await user.type(screen.getByLabelText(/quantity to dispatch/i), "10");
     await user.click(screen.getByRole("button", { name: /create draft transfer/i }));
@@ -179,11 +183,12 @@ describe("transfer discrepancy and count etag", () => {
       ),
     );
     renderWithProviders(<CountWorkflow />, { session: ownerSessionRecord });
-    await user.selectOptions(
+    await selectRadixOption(
+      user,
       await screen.findByLabelText(/^location/i),
       us1.LOCATION_ID,
     );
-    await user.selectOptions(screen.getByLabelText(/count scope/i), "Full");
+    await selectRadixOption(user, screen.getByLabelText(/count scope/i), "Full");
     await user.click(screen.getByRole("button", { name: /open count/i }));
     await user.type(await screen.findByLabelText(/counted quantity/i), "7");
     await user.click(screen.getByRole("button", { name: /save counted lines/i }));
@@ -204,11 +209,12 @@ describe("transfer discrepancy and count etag", () => {
       ),
     );
     renderWithProviders(<CountWorkflow />, { session: ownerSessionRecord });
-    await user.selectOptions(
+    await selectRadixOption(
+      user,
       await screen.findByLabelText(/^location/i),
       us1.LOCATION_ID,
     );
-    await user.selectOptions(screen.getByLabelText(/count scope/i), "Spot");
+    await selectRadixOption(user, screen.getByLabelText(/count scope/i), "Spot");
     await user.click(screen.getByRole("button", { name: /open count/i }));
     await screen.findByLabelText(/counted quantity/i);
     for (const key of "6001234567890") {
@@ -218,7 +224,7 @@ describe("transfer discrepancy and count etag", () => {
       new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
     );
     await waitFor(() => {
-      expect(screen.getByLabelText(/^product/i)).toHaveValue(us1.PRODUCT_ID);
+      expect(screen.getByLabelText(/^product/i)).toHaveTextContent(/sugar 1kg/i);
     });
   });
 
@@ -292,12 +298,13 @@ describe("transfer discrepancy and count etag", () => {
       ),
     );
     renderWithProviders(<CountWorkflow />, { session: ownerSessionRecord });
-    await user.selectOptions(
+    await selectRadixOption(
+      user,
       await screen.findByLabelText(/^location/i),
       us1.LOCATION_ID,
     );
-    await user.selectOptions(screen.getByLabelText(/count scope/i), "Spot");
-    await user.selectOptions(screen.getByLabelText(/^product/i), us1.PRODUCT_ID);
+    await selectRadixOption(user, screen.getByLabelText(/count scope/i), "Spot");
+    await selectRadixOption(user, screen.getByLabelText(/^product/i), us1.PRODUCT_ID);
     await user.click(screen.getByRole("button", { name: /open count/i }));
     await user.type(await screen.findByLabelText(/counted quantity/i), "7");
     await user.click(screen.getByRole("button", { name: /save counted lines/i }));

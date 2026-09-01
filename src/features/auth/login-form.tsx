@@ -3,15 +3,21 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Button } from "../../shared/ui/button";
 import { TextField } from "../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../shared/ui/forms/problem-summary";
-import { googleSignInUrl, login, type LoginOutcome } from "./api/auth-api";
+import {
+  googleOAuthReturnUrl,
+  googleSignInUrl,
+  login,
+  type LoginOutcome,
+} from "./api/auth-api";
 
 export function LoginForm({
   onSignedIn,
-  returnUrl = "/dashboard",
+  returnUrl,
 }: {
   onSignedIn: (outcome: LoginOutcome) => void;
   returnUrl?: string;
 }) {
+  const oauthReturnUrl = returnUrl ?? googleOAuthReturnUrl();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [twoFactorCode, setTwoFactorCode] = useState("");
@@ -92,12 +98,20 @@ export function LoginForm({
         </Button>
       </form>
 
-      <a
-        className="inline-flex min-h-touch items-center justify-center rounded-md border px-3 text-sm font-medium"
-        href={googleSignInUrl(returnUrl)}
-      >
-        Continue with Google
-      </a>
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-border" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">
+            or continue with
+          </span>
+        </div>
+      </div>
+
+      <Button variant="outline" className="w-full" asChild>
+        <a href={googleSignInUrl(oauthReturnUrl)}>Continue with Google</a>
+      </Button>
     </div>
   );
 }

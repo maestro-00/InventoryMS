@@ -136,7 +136,9 @@ export function sessionFromTokens(outcome: SessionTokenInput): SessionRecord | n
   const parsed = claimsSchema.safeParse(
     normalizeProviderClaims(claims as Record<string, unknown>),
   );
-  if (!parsed.success) return null;
+  if (!parsed.success) {
+    return null;
+  }
 
   const expiresAt =
     outcome.accessTokenExpiresAt ??

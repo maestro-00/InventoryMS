@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { internalRedirectTarget, parseInternalRedirect } from "./redirect-target";
+import { internalRedirectTarget, internalRedirectFromLocation, parseInternalRedirect } from "./redirect-target";
 
 describe("internalRedirectTarget", () => {
   it("keeps in-app paths, including a query string", () => {
@@ -43,6 +43,16 @@ describe("parseInternalRedirect", () => {
       to: "/dashboard",
       search: {},
     });
+  });
+
+  it("builds a safe redirect from pathname and search string", () => {
+    expect(internalRedirectFromLocation("/reports", "kind=sales")).toBe(
+      "/reports?kind=sales",
+    );
+    expect(internalRedirectFromLocation("/dashboard", "")).toBe("/dashboard");
+    expect(internalRedirectFromLocation("/dashboard", "?tab=billing")).toBe(
+      "/dashboard?tab=billing",
+    );
   });
 
   it("refuses off-site targets", () => {

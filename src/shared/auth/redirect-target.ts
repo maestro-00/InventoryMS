@@ -16,6 +16,17 @@ export function internalRedirectTarget(target: string | undefined): string | nul
   return target;
 }
 
+/** Builds a safe post-login redirect from the current router location, preserving search. */
+export function internalRedirectFromLocation(
+  pathname: string,
+  searchStr: string,
+): string {
+  const query =
+    searchStr.length > 0 ? (searchStr.startsWith("?") ? searchStr : `?${searchStr}`) : "";
+  const candidate = `${pathname}${query}`;
+  return internalRedirectTarget(candidate) ?? internalRedirectTarget(pathname) ?? pathname;
+}
+
 export interface RedirectTarget {
   to: string;
   search: Record<string, string>;

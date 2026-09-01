@@ -136,4 +136,29 @@ describe("US1 routes", () => {
       await screen.findByRole("heading", { name: /dashboard/i }),
     ).toBeInTheDocument();
   });
+
+  it("strips OAuth tokens from the URL after Google sign-in", async () => {
+    server.use(...us1ScenarioHandlers);
+    const claims = {
+      sub: ownerSessionRecord.userId,
+      tenantId: ownerSessionRecord.tenantId,
+      role: "Owner",
+      permissions: ownerSessionRecord.permissions,
+      locationScope: ownerSessionRecord.locationScope,
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    };
+    const token = `header.${btoa(JSON.stringify(claims)).replace(/=+$/, "")}.signature`;
+
+    open(
+      `/auth/google-callback?accessToken=${encodeURIComponent(token)}&refreshToken=refresh&accessTokenExpiresAt=2026-08-13T12:00:00.000Z&redirect=%2Fdashboard`,
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: /dashboard/i }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/dashboard");
+    expect(window.location.search).not.toContain("accessToken");
+    expect(window.location.search).not.toContain("refreshToken");
+    expect(window.location.search).not.toContain("accessTokenExpiresAt");
+  });
 });

@@ -3,6 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { http, HttpResponse } from "msw";
 import { SESSION_MARKER_COOKIE, SessionManager } from "../shared/auth/session-manager";
+import {
+  getRegisterAuthState,
+  unlockRegister,
+} from "../shared/auth/register-auth-store";
 import { server } from "../shared/test/msw/server";
 import { AppProviders } from "./providers/app-providers";
 import { authSessionFixture } from "../../tests/fixtures/domain";
@@ -101,7 +105,7 @@ describe("authenticated navigation", () => {
     expect(
       await screen.findByRole("heading", { name: /^reports$/i }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: /sign in/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /welcome back/i })).not.toBeInTheDocument();
     expect(manager.getSnapshot()).not.toBeNull();
   });
 
@@ -115,7 +119,22 @@ describe("authenticated navigation", () => {
     expect(
       await screen.findByRole("heading", { name: /dashboard/i }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: /sign in/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /welcome back/i })).not.toBeInTheDocument();
+  });
+
+  it("sends an already signed-in visitor from the register page to the dashboard", async () => {
+    server.use(...reportHandlers());
+    const manager = signedInManager();
+    window.history.replaceState({}, "", "/register");
+
+    render(<AppProviders manager={manager} />);
+
+    expect(
+      await screen.findByRole("heading", { name: /dashboard/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /create your business/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("lands on the dashboard after signing in instead of returning to sign-in", async () => {
@@ -177,6 +196,41 @@ describe("authenticated navigation", () => {
     ).toBeInTheDocument();
   });
 
+  it("signs out from the app shell and returns to sign-in", async () => {
+    const user = userEvent.setup();
+    server.use(
+      ...reportHandlers(),
+      http.post("*/api/v1/auth/logout", () => new HttpResponse(null, { status: 204 })),
+    );
+    const manager = signedInManager();
+    await unlockRegister({
+      tenantId: authSessionFixture.tenantId,
+      registerId: "88888888-8888-4888-8888-888888888888",
+      shiftId: "99999999-9999-4999-8999-999999999999",
+      accessToken: "register-token",
+      expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+    });
+    expect(getRegisterAuthState().unlocked).toBe(true);
+    window.history.replaceState({}, "", "/dashboard");
+
+    render(<AppProviders manager={manager} />);
+
+    expect(
+      await screen.findByRole("heading", { name: /dashboard/i }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /sign out/i }));
+
+    expect(
+      await screen.findByRole("heading", { name: /welcome back/i }),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(manager.getSnapshot()).toBeNull();
+      expect(getRegisterAuthState().unlocked).toBe(false);
+      expect(getRegisterAuthState().credential).toBeNull();
+    });
+  });
+
   it("ignores an off-site redirect target after signing in", async () => {
     const user = userEvent.setup();
     server.use(
@@ -231,7 +285,7 @@ describe("session restore on cold load", () => {
     expect(
       await screen.findByRole("heading", { name: /dashboard/i }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: /sign in/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /welcome back/i })).not.toBeInTheDocument();
   });
 
   it("shows sign-in when no session cookie is present", async () => {
@@ -241,7 +295,7 @@ describe("session restore on cold load", () => {
     render(<AppProviders manager={manager} />);
 
     expect(
-      await screen.findByRole("heading", { name: /sign in/i }),
+      await screen.findByRole("heading", { name: /welcome back/i }),
     ).toBeInTheDocument();
   });
 
@@ -256,7 +310,7 @@ describe("session restore on cold load", () => {
     render(<AppProviders manager={manager} />);
 
     expect(
-      await screen.findByRole("heading", { name: /sign in/i }),
+      await screen.findByRole("heading", { name: /welcome back/i }),
     ).toBeInTheDocument();
     await waitFor(() => {
       expect(manager.getStatus()).toBe("anonymous");

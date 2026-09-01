@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { server } from "../../../shared/test/msw/server";
 import { ownerSessionRecord } from "../../../shared/test/render";
 import { renderWithRouter } from "../../../shared/test/render-router";
+import { selectRadixOption } from "../../../shared/test/select-radix";
 import { BusinessSettings } from "./business-settings";
 import { tenantProfile } from "../../../../tests/fixtures/provider/us1";
 
@@ -70,7 +71,7 @@ describe("business settings", () => {
 
     renderWithRouter(<BusinessSettings />);
 
-    await user.selectOptions(await screen.findByLabelText(/valuation method/i), "FIFO");
+    await selectRadixOption(user, await screen.findByLabelText(/valuation method/i), "FIFO");
     await user.click(screen.getByRole("button", { name: /save valuation method/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(

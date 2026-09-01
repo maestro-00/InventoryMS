@@ -44,10 +44,19 @@ const dashboard: DashboardRecord = {
 
 describe("reporting dashboard and tables", () => {
   it("renders comparison metrics, warnings, and profit when allowed", () => {
-    renderWithRouter(<DashboardPanel data={dashboard} canViewProfit />);
+    renderWithRouter(
+      <DashboardPanel
+        data={dashboard}
+        canViewProfit
+        canSell
+        canManageStock
+        canViewReports
+      />,
+    );
     expect(screen.getByText(/sales today/i)).toBeInTheDocument();
-    expect(screen.getByText(/low stock warnings: 1/i)).toBeInTheDocument();
-    expect(screen.getByText(/gross profit today/i)).toBeInTheDocument();
+    expect(screen.getByText(/items sold/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /low stock warnings/i })).toHaveTextContent("1");
+    expect(screen.getByText(/gross profit/i)).toBeInTheDocument();
     expect(screen.getByText(/sugar 1kg/i)).toBeInTheDocument();
   });
 

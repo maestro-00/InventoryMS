@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { renderWithRouter } from "../shared/test/render-router";
 import { AppShell } from "./providers/app-shell";
 import { RouteErrorBoundary } from "./providers/error-boundary";
 
@@ -11,7 +12,7 @@ function Boom(): null {
 describe("app shell", () => {
   it("exposes keyboard-reachable navigation and a skip link", async () => {
     const user = userEvent.setup();
-    render(
+    renderWithRouter(
       <AppShell
         locationControl={
           <span className="text-sm text-muted-foreground">Accra Shop</span>
@@ -29,13 +30,14 @@ describe("app shell", () => {
     expect(skip).toHaveAttribute("href", "#main-content");
     await user.tab();
     expect(skip).toHaveFocus();
-    expect(screen.getByRole("navigation")).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: /primary/i })).toBeInTheDocument();
     expect(screen.getByRole("main")).toHaveAttribute("id", "main-content");
+    expect(screen.getAllByLabelText(/inventoryms/i).length).toBeGreaterThan(0);
   });
 
   it("restores focus to the menu trigger after the drawer closes", async () => {
     const user = userEvent.setup();
-    render(
+    renderWithRouter(
       <AppShell
         locationControl={
           <span className="text-sm text-muted-foreground">Accra Shop</span>
@@ -61,7 +63,7 @@ describe("app shell", () => {
   });
 
   it("does not overflow at 320px and respects reduced motion", () => {
-    render(
+    renderWithRouter(
       <AppShell
         locationControl={
           <span className="text-sm text-muted-foreground">Accra Shop</span>

@@ -4,6 +4,7 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { server } from "../../../shared/test/msw/server";
 import { renderWithProviders } from "../../../shared/test/render";
+import { selectRadixOption } from "../../../shared/test/select-radix";
 import * as us1 from "../../../../tests/fixtures/provider/us1";
 import * as us2 from "../../../../tests/fixtures/provider/us2";
 import { AfterSalePanel } from "./after-sale-panel";
@@ -65,7 +66,8 @@ describe("sale lookup, return, exchange, and void", () => {
     const qtyField = await screen.findByLabelText(/return quantity for sugar 1kg/i);
     await user.clear(qtyField);
     await user.type(qtyField, "1");
-    await user.selectOptions(
+    await selectRadixOption(
+      user,
       screen.getByLabelText(/disposition for sugar 1kg/i),
       "ToStock",
     );

@@ -7,6 +7,7 @@ import { server } from "../../../shared/test/msw/server";
 import { sessionManager } from "../../../shared/auth/session-manager";
 import { ownerSession } from "../../../../tests/fixtures/provider/session";
 import { StaffList } from "./staff-list";
+import { selectRadixOption } from "../../../shared/test/select-radix";
 
 const roleId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const userId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -69,7 +70,7 @@ describe("staff list", () => {
 
     expect(await screen.findByText(/cashier@kwame.gh/i)).toBeInTheDocument();
     await user.type(screen.getByLabelText(/invite email/i), "new@kwame.gh");
-    await user.selectOptions(screen.getByLabelText(/^role$/i), roleId);
+    await selectRadixOption(user, screen.getByLabelText(/^role$/i), roleId);
     await user.type(
       screen.getByLabelText(/location scope/i),
       "55555555-5555-4555-8555-555555555555",

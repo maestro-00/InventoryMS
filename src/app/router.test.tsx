@@ -8,6 +8,7 @@ import {
 } from "../../tests/fixtures/domain";
 import { sessionManager } from "../shared/auth/session-manager";
 import { server } from "../shared/test/msw/server";
+import { selectRadixOption } from "../shared/test/select-radix";
 import { AppProviders } from "./providers/app-providers";
 
 afterEach(() => {
@@ -19,14 +20,14 @@ describe("app router", () => {
     window.history.replaceState({}, "", "/login");
     const { unmount } = render(<AppProviders />);
     expect(
-      await screen.findByRole("heading", { name: /sign in/i }),
+      await screen.findByRole("heading", { name: /welcome back/i }),
     ).toBeInTheDocument();
     unmount();
 
     window.history.replaceState({}, "", "/register");
     render(<AppProviders />);
     expect(
-      await screen.findByRole("heading", { name: /create a business/i }),
+      await screen.findByRole("heading", { name: /create your business/i }),
     ).toBeInTheDocument();
   });
 
@@ -34,7 +35,7 @@ describe("app router", () => {
     window.history.replaceState({}, "", "/dashboard");
     render(<AppProviders />);
     expect(
-      await screen.findByRole("heading", { name: /sign in/i }),
+      await screen.findByRole("heading", { name: /welcome back/i }),
     ).toBeInTheDocument();
   });
 
@@ -73,19 +74,39 @@ describe("app router", () => {
   it("renders remaining public placeholders and a not-found page", async () => {
     window.history.replaceState({}, "", "/");
     const home = render(<AppProviders />);
-    expect(
-      await screen.findByRole("heading", { name: /sign in/i }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1 })).toHaveTextContent(
+      /ghana retailers/i,
+    );
     home.unmount();
 
     window.history.replaceState({}, "", "/plans");
-    const first = render(<AppProviders />);
+    const plans = render(<AppProviders />);
     expect(
-      await screen.findByRole("heading", { name: /^plans$/i }),
+      await screen.findByRole("heading", { name: /simple, predictable pricing/i }),
     ).toBeInTheDocument();
-    first.unmount();
+    plans.unmount();
 
-    window.history.replaceState({}, "", "/invite/accept");
+    window.history.replaceState({}, "", "/features");
+    const features = render(<AppProviders />);
+    expect(
+      await screen.findByRole("heading", {
+        name: /everything you need to run sales and stock/i,
+      }),
+    ).toBeInTheDocument();
+    features.unmount();
+
+    window.history.replaceState({}, "", "/pricing");
+    const pricing = render(<AppProviders />);
+    expect(
+      await screen.findByRole("heading", { name: /simple, predictable pricing/i }),
+    ).toBeInTheDocument();
+    pricing.unmount();
+
+    window.history.replaceState(
+      {},
+      "",
+      "/invite/accept?userId=test-user&token=test-token",
+    );
     const second = render(<AppProviders />);
     expect(
       await screen.findByRole("heading", { name: /accept invitation/i }),
@@ -141,7 +162,8 @@ describe("app router", () => {
     expect(
       await screen.findByRole("heading", { name: /^reports$/i }),
     ).toBeInTheDocument();
-    await user.selectOptions(
+    await selectRadixOption(
+      user,
       screen.getByRole("combobox", { name: /^report$/i }),
       "tax",
     );
@@ -244,6 +266,6 @@ describe("app router", () => {
       await screen.findByRole("heading", { name: /^reports$/i }),
     ).toBeInTheDocument();
     expect(await screen.findByText(/gross profit/i)).toBeInTheDocument();
-    await user.selectOptions(screen.getByRole("combobox", { name: /^location$/i }), "");
+    await selectRadixOption(user, screen.getByRole("combobox", { name: /^location$/i }), "");
   });
 });
