@@ -87,6 +87,14 @@
 - **UX-003**: Interactive behavior MUST be operable by keyboard with accessible names,
   visible focus, logical focus order, and WCAG 2.2 Level AA contrast.
 - **UX-004**: Content MUST remain usable at 200% browser zoom.
+- **UX-005**: The interface MUST present a polished, professional SaaS-grade appearance
+  using shared design-system components, consistent spacing and typography, and clear
+  visual hierarchy.
+- **UX-006**: Loading, empty, success, and error states MUST be visually refined and
+  consistent with the rest of the application—not placeholder or unstyled defaults.
+- **UX-007**: Layout and interaction patterns (tables, forms, modals, navigation) SHOULD
+  follow conventions familiar from popular SaaS products unless a documented exception
+  applies.
 
 ## Requirements *(mandatory)*
 

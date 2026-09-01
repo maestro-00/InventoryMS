@@ -1,23 +1,18 @@
 <!--
 Sync Impact Report
-- Version change: template (unratified) -> 1.0.0
-- Modified principles:
-  - Template Principle 1 -> I. Test-First Delivery (NON-NEGOTIABLE)
-  - Template Principle 2 -> II. User-Centered Simplicity
-  - Template Principle 3 -> III. Mobile-First and Accessible by Default
-  - Template Principle 4 -> IV. Modern, Supported Technology
-  - Template Principle 5 -> V. Production Quality
+- Version change: 1.0.0 -> 1.1.0
+- Modified principles: none (titles unchanged)
 - Added sections:
-  - Frontend Standards
-  - Development Workflow and Quality Gates
-- Removed sections: none (template placeholders were resolved)
+  - VI. Professional SaaS-Grade Visual Design
+  - Frontend Standards: visual design and polish bullets
+- Removed sections: none
 - Templates:
   - updated: .specify/templates/plan-template.md
   - updated: .specify/templates/spec-template.md
   - updated: .specify/templates/tasks-template.md
   - reviewed, no change required: .specify/templates/checklist-template.md
   - reviewed, no command templates present: .specify/templates/commands/*.md
-  - updated: README.md
+  - reviewed, no change required: README.md
 - Deferred items: none
 -->
 
@@ -96,6 +91,25 @@ speculative abstractions MUST be removed.
 Rationale: correctness includes security, performance, maintainability, and reliable
 operation, not only a visually successful happy path.
 
+### VI. Professional SaaS-Grade Visual Design
+
+Every user-facing surface MUST look polished, modern, and professional—comparable in
+quality to leading SaaS products such as Stripe, Linear, Notion, or Shopify Admin.
+Visual design MUST use consistent spacing, typography, color, elevation, and
+iconography from the shared design system (`src/shared/ui` and Tailwind tokens).
+Layouts MUST employ intentional whitespace, clear visual hierarchy, and restrained
+color to guide attention rather than decorate. Interactive feedback MUST use purposeful
+micro-interactions—loading skeletons, hover and focus states, and restrained
+transitions—that aid comprehension without distraction. Empty, loading, success, and
+error states MUST be visually refined, not afterthoughts. Tables, forms, modals, and
+navigation MUST follow established SaaS UX patterns for data density, scanability, and
+progressive disclosure. Custom styling MUST NOT fight the design system; one-off visual
+patterns require documented justification. New or materially changed screens MUST be
+reviewed for visual polish at mobile, tablet, and desktop widths before merge.
+
+Rationale: users judge product trust and quality from visual polish; inventory software
+must feel as credible and modern as the SaaS tools they use every day.
+
 ## Frontend Standards
 
 - The application MUST remain a typed, component-based web application with a coherent
@@ -107,6 +121,12 @@ operation, not only a visually successful happy path.
   performance budgets, and any dependency or constitutional exceptions.
 - Responsive behavior MUST be expressed through content-driven breakpoints and stable
   layout constraints rather than device-specific forks.
+- Visual design MUST reuse shared UI primitives, design tokens, and spacing scales;
+  ad-hoc colors, font sizes, or shadow values outside the token system require
+  justification.
+- Feature plans for user-facing work SHOULD name one or more SaaS reference patterns
+  (e.g., admin table, settings form, empty state) that inform layout and interaction
+  choices.
 - Client state MUST have a clear owner. Remote server state, transient UI state, and
   persisted user preferences MUST not be conflated.
 - API access MUST use documented contracts, explicit loading and failure handling, and
@@ -121,8 +141,8 @@ operation, not only a visually successful happy path.
    intended missing behavior.
 4. Implement only enough code to pass the tests, then refactor while keeping all tests
    green.
-5. Verify responsive layouts, keyboard operation, accessibility, error states, and
-   performance targets for each changed journey.
+5. Verify responsive layouts, keyboard operation, accessibility, visual polish, error
+   states, and performance targets for each changed journey.
 6. Run linting, type checking, all tests, and the production build. A failing gate MUST
    block merge unless a time-bounded exception is documented and approved.
 7. Reviewers MUST trace the implementation to the specification and tests, and MUST
@@ -144,4 +164,4 @@ include evidence for applicable tests and quality gates. Exceptions MUST identif
 violated rule, justification, risk controls, owner, and expiry date; expired exceptions
 block further work in the affected area.
 
-**Version**: 1.0.0 | **Ratified**: 2026-08-09 | **Last Amended**: 2026-08-09
+**Version**: 1.1.0 | **Ratified**: 2026-08-09 | **Last Amended**: 2026-09-01

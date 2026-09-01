@@ -162,6 +162,8 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] TXXX Performance optimization across all stories
 - [ ] TXXX Security hardening
 - [ ] TXXX Verify layouts at 320px and representative tablet/desktop widths
+- [ ] TXXX Verify visual polish: design-system tokens, hierarchy, and refined
+  empty/loading/error states at mobile, tablet, and desktop widths
 - [ ] TXXX Verify keyboard flow, focus, 200% zoom, and WCAG 2.2 AA checks
 - [ ] TXXX Verify documented performance budgets
 - [ ] TXXX Run lint, type checking, full tests, and production build
