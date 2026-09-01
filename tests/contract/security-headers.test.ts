@@ -10,10 +10,10 @@ describe("security headers deployment template", () => {
     expect(readFileSync("public/trusted-types-bootstrap.js", "utf8")).toMatch(
       /createPolicy/,
     );
-    expect(readFileSync("public/trusted-types-bootstrap.js", "utf8")).toMatch(/default/);
-    expect(indexHtml).toMatch(
-      /<script src="\/trusted-types-bootstrap\.js"><\/script>/,
+    expect(readFileSync("public/trusted-types-bootstrap.js", "utf8")).toMatch(
+      /default/,
     );
+    expect(indexHtml).toMatch(/<script src="\/trusted-types-bootstrap\.js"><\/script>/);
     expect(indexHtml.indexOf("trusted-types-bootstrap.js")).toBeLessThan(
       indexHtml.indexOf('type="module"'),
     );
