@@ -60,6 +60,11 @@ export function PurchasingPage() {
     name: location.name,
   }));
 
+  const supplierOptions = (suppliers.data ?? []).map((supplier) => ({
+    id: supplier.id,
+    name: supplier.name,
+  }));
+
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4">
       <h1 className="text-2xl font-semibold">Purchasing</h1>
@@ -78,10 +83,7 @@ export function PurchasingPage() {
         <TabsContent value="orders" className="flex flex-col gap-6">
           <CreateOrdersFromReorder locations={locationOptions} />
           <PurchaseOrderWorkspace
-            suppliers={(suppliers.data ?? []).map((supplier) => ({
-              id: supplier.id,
-              name: supplier.name,
-            }))}
+            suppliers={supplierOptions}
             locations={locationOptions}
             products={products.data ?? []}
             onSelectOrder={setOrder}
