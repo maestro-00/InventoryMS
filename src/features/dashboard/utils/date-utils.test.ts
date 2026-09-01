@@ -6,7 +6,9 @@ describe("dashboard date utils", () => {
     const range = buildDateRange(7);
     expect(range.from).toMatch(/T/);
     expect(range.to).toMatch(/T/);
-    expect(new Date(range.to).getTime()).toBeGreaterThanOrEqual(new Date(range.from).getTime());
+    expect(new Date(range.to).getTime()).toBeGreaterThanOrEqual(
+      new Date(range.from).getTime(),
+    );
   });
 
   it("aggregateDailySales sums totals for matching weekdays", () => {

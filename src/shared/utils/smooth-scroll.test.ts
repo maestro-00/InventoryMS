@@ -12,18 +12,17 @@ describe("smoothScrollToElement", () => {
     vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({ matches: true }));
 
     const element = document.createElement("section");
-    element.getBoundingClientRect = () =>
-      ({
-        top: 120,
-        left: 0,
-        width: 0,
-        height: 0,
-        right: 0,
-        bottom: 0,
-        x: 0,
-        y: 0,
-        toJSON: () => ({}),
-      });
+    element.getBoundingClientRect = () => ({
+      top: 120,
+      left: 0,
+      width: 0,
+      height: 0,
+      right: 0,
+      bottom: 0,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
     vi.stubGlobal("scrollY", 0);
 
     smoothScrollToElement(element);
@@ -46,18 +45,17 @@ describe("smoothScrollToElement", () => {
     vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({ matches: false }));
 
     const element = document.createElement("section");
-    element.getBoundingClientRect = () =>
-      ({
-        top: 200,
-        left: 0,
-        width: 0,
-        height: 0,
-        right: 0,
-        bottom: 0,
-        x: 0,
-        y: 0,
-        toJSON: () => ({}),
-      });
+    element.getBoundingClientRect = () => ({
+      top: 200,
+      left: 0,
+      width: 0,
+      height: 0,
+      right: 0,
+      bottom: 0,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
     vi.stubGlobal("scrollY", 0);
 
     smoothScrollToElement(element, 100);
@@ -72,18 +70,17 @@ describe("smoothScrollToElement", () => {
     vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({ matches: false }));
 
     const element = document.createElement("section");
-    element.getBoundingClientRect = () =>
-      ({
-        top: 0,
-        left: 0,
-        width: 0,
-        height: 0,
-        right: 0,
-        bottom: 0,
-        x: 0,
-        y: 0,
-        toJSON: () => ({}),
-      });
+    element.getBoundingClientRect = () => ({
+      top: 0,
+      left: 0,
+      width: 0,
+      height: 0,
+      right: 0,
+      bottom: 0,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
     vi.stubGlobal("scrollY", 0);
 
     smoothScrollToElement(element);
@@ -106,18 +103,17 @@ describe("smoothScrollToElement", () => {
     const first = document.createElement("section");
     const second = document.createElement("section");
     for (const element of [first, second]) {
-      element.getBoundingClientRect = () =>
-        ({
-          top: 300,
-          left: 0,
-          width: 0,
-          height: 0,
-          right: 0,
-          bottom: 0,
-          x: 0,
-          y: 0,
-          toJSON: () => ({}),
-        });
+      element.getBoundingClientRect = () => ({
+        top: 300,
+        left: 0,
+        width: 0,
+        height: 0,
+        right: 0,
+        bottom: 0,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      });
     }
     vi.stubGlobal("scrollY", 0);
 
