@@ -16,7 +16,7 @@ function formatPrice(plan: BillingPlan): string {
   const raw = plan.monthlyPrice ?? plan.annualPrice;
   if (raw == null) return "—";
   const amount = typeof raw === "number" ? raw : Number.parseFloat(raw);
-  if (Number.isNaN(amount)) return String(raw);
+  if (Number.isNaN(amount)) return typeof raw === "number" ? String(raw) : raw;
   return `GHS ${amount.toLocaleString("en-GH", { maximumFractionDigits: 0 })}`;
 }
 
@@ -27,7 +27,7 @@ function planFeatures(plan: BillingPlan): string[] {
     return [`${plan.tier} tier`];
   }
   return entries.map(([key, value]) =>
-    value == null ? `Unlimited ${key}` : `${value} ${key}`,
+    value == null ? `Unlimited ${key}` : `${String(value)} ${key}`,
   );
 }
 
@@ -46,9 +46,7 @@ export function PlanComparison() {
   function planRank(plan: BillingPlan): number {
     const fromPrice = plan.monthlyPrice ?? plan.annualPrice;
     const amount =
-      typeof fromPrice === "number"
-        ? fromPrice
-        : Number.parseFloat(String(fromPrice ?? "0"));
+      typeof fromPrice === "number" ? fromPrice : Number.parseFloat(fromPrice ?? "0");
     return Number.isNaN(amount) ? 0 : amount;
   }
 

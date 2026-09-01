@@ -54,7 +54,7 @@ export const Route = createFileRoute("/_authenticated")({
         location.pathname,
         location.searchStr,
       );
-      const tokenParams = oauthTokenSearch(location.search as Record<string, unknown>);
+      const tokenParams = oauthTokenSearch(location.search);
       if (tokenParams && location.pathname !== "/auth/google-callback") {
         // eslint-disable-next-line @typescript-eslint/only-throw-error -- router redirect
         throw redirect({

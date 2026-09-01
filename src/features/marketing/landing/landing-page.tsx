@@ -114,7 +114,7 @@ export function LandingPage() {
             <article
               key={feature.title}
               className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg hover:shadow-primary/5"
-              style={{ animationDelay: `${index * 0.05}s` }}
+              style={{ animationDelay: `${String(index * 0.05)}s` }}
             >
               <div
                 className="pointer-events-none absolute -right-6 -top-6 size-24 rounded-full bg-primary/5 transition-transform duration-300 group-hover:scale-150"

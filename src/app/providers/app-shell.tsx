@@ -250,7 +250,7 @@ export function AppShell({
                 <HelpCircle className="size-4" aria-hidden />
                 Help & security
               </Link>
-              {renderFooterControl?.()}
+              {renderFooterControl()}
             </div>
           </nav>
 
@@ -304,7 +304,7 @@ export function AppShell({
                   <HelpCircle className="size-4" aria-hidden />
                   Help & security
                 </Link>
-                {renderFooterControl?.()}
+                {renderFooterControl()}
               </div>
             ) : null}
             <SheetClose asChild>

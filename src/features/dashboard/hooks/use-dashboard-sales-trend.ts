@@ -22,7 +22,10 @@ export function useDashboardSalesTrend(range: "daily" | "weekly" = "weekly") {
         to,
         locationId: locationId || undefined,
       });
-      const points = aggregateDailySales(report.rows, days);
+      const points = aggregateDailySales(
+        report.rows as Array<{ occurredAt: string; total: string }>,
+        days,
+      );
       const total = points.reduce((sum, point) => sum + point.value, 0);
       return { points, total };
     },

@@ -28,7 +28,7 @@ function matchesOption(
   if (valueOrLabel === "") {
     return value === EMPTY_RADIX_VALUE || value === "";
   }
-  const text = option.textContent?.trim() ?? "";
+  const text = option.textContent.trim();
   return text === valueOrLabel || text.includes(valueOrLabel);
 }
 

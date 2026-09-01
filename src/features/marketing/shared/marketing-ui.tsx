@@ -142,7 +142,7 @@ export function DashboardPreview() {
                 <div
                   key={i}
                   className="flex-1 rounded-sm bg-gradient-to-t from-primary/40 to-primary"
-                  style={{ height: `${h}%` }}
+                  style={{ height: `${String(h)}%` }}
                   aria-hidden
                 />
               ))}
@@ -170,7 +170,7 @@ export function LogoMarquee({ logos }: { logos: readonly string[] }) {
       <div className="marketing-marquee flex w-max gap-10 md:gap-16">
         {doubled.map((logo, index) => (
           <span
-            key={`${logo}-${index}`}
+            key={`${logo}-${String(index)}`}
             className="shrink-0 text-sm font-semibold tracking-tight text-navy-foreground/35"
           >
             {logo}

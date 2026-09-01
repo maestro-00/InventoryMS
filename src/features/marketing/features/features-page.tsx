@@ -42,8 +42,6 @@ export function FeaturesPage() {
   useEffect(() => {
     const initial = sectionFromHash();
     if (window.location.hash) {
-      setActiveSection(initial);
-      animateSection(initial);
       requestAnimationFrame(() => {
         const element = document.getElementById(initial);
         if (element) smoothScrollToElement(element);
@@ -131,7 +129,7 @@ export function FeaturesPage() {
               className="scroll-mt-24 border-b border-border/60 pb-16 last:border-0 last:pb-0"
             >
               <div
-                key={`${section.id}-${sectionAnimation[section.id] ?? 0}`}
+                key={`${section.id}-${String(sectionAnimation[section.id] ?? 0)}`}
                 className={cn(
                   "flex flex-col gap-8 lg:flex-row lg:items-start",
                   index % 2 === 1 ? "lg:flex-row-reverse" : undefined,

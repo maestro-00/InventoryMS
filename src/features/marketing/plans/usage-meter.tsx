@@ -43,7 +43,7 @@ export function UsageMeter({
       >
         <div
           className={`h-full rounded-full ${barColor}`}
-          style={{ width: `${Math.min(pct, 100)}%` }}
+          style={{ width: `${String(Math.min(pct, 100))}%` }}
         />
       </div>
     </div>

@@ -68,7 +68,7 @@ function planFeatures(plan: BillingPlan): string[] {
     return [`${plan.name} tier`, `${plan.tier} plan features`];
   }
   return entries.map(([key, value]) =>
-    value == null ? `Unlimited ${key}` : `Up to ${value} ${key}`,
+    value == null ? `Unlimited ${key}` : `Up to ${String(value)} ${key}`,
   );
 }
 
@@ -207,7 +207,7 @@ export function PricingPage({ plans }: { plans?: BillingPlan[] }) {
                   {[row.starter, row.professional, row.business].map(
                     (cell, cellIndex) => (
                       <div
-                        key={`${row.feature}-${cellIndex}`}
+                        key={`${row.feature}-${String(cellIndex)}`}
                         className={cn(
                           "border-t border-border p-4 text-center text-sm",
                           index % 2 === 0 ? "bg-background" : "bg-muted/50",

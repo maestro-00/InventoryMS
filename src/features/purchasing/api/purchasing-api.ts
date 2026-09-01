@@ -96,14 +96,13 @@ export async function fetchSuppliers(): Promise<SupplierRecord[]> {
   const response = await authedFetch("/api/v1/suppliers");
   if (!response.ok) throw new Error("Failed to load suppliers");
   const raw: unknown = await response.json();
-  const items: unknown[] = Array.isArray(raw)
-    ? raw
-    : raw &&
-        typeof raw === "object" &&
-        "items" in raw &&
-        Array.isArray((raw as { items: unknown }).items)
-      ? (raw as { items: unknown[] }).items
-      : [];
+  let items: unknown[] = [];
+  if (Array.isArray(raw)) {
+    items = raw;
+  } else if (raw && typeof raw === "object" && "items" in raw) {
+    const candidate = raw.items;
+    items = Array.isArray(candidate) ? candidate : [];
+  }
   return z.array(supplierSchema).parse(items);
 }
 

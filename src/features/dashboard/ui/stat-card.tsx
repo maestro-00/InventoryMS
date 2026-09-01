@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, type LinkProps } from "@tanstack/react-router";
-import { ArrowDownRight, ArrowRight, ArrowUpRight, Minus } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 
 export type StatTrend = "up" | "down" | "flat";

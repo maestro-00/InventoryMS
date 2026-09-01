@@ -71,7 +71,7 @@ export function DashboardPanel({
     },
     {
       label: "Items sold",
-      value: String(data.itemsSold.today),
+      value: data.itemsSold.today,
       delta: formatMetricDelta(data.itemsSold.today, data.itemsSold.sameDayLastWeek),
       link: dashboardDetailLink(data.itemsSold.detailUrl),
     },
