@@ -7,6 +7,7 @@ import {
 } from "../../../shared/api/client/boundary-schema";
 import { isProblemError } from "../../../shared/api/errors/problem-error";
 import type { SessionRecord } from "../../../shared/auth/session-manager";
+import { internalRedirectTarget } from "../../../shared/auth/redirect-target";
 
 const origin = import.meta.env.VITE_INVENTORYX_ORIGIN || "http://localhost:5088";
 
@@ -143,6 +144,29 @@ export function googleSignInUrl(returnUrl: string): string {
   const url = new URL("/api/v1/auth/google", origin);
   url.searchParams.set("returnUrl", returnUrl);
   return url.toString();
+}
+
+/** Provider redirects here with tokens; optional redirect preserves the post-login destination. */
+export function googleOAuthReturnPath(postLoginTarget?: string | null): string {
+  const safe = internalRedirectTarget(postLoginTarget ?? undefined);
+  if (!safe) return "/auth/google-callback";
+  return `/auth/google-callback?redirect=${encodeURIComponent(safe)}`;
+}
+
+/**
+ * Absolute SPA URL for InventoryX OAuth `returnUrl`. Relative paths redirect to the API
+ * host after Google sign-in; the callback route lives on the frontend origin only.
+ */
+export function googleOAuthReturnUrl(
+  postLoginTarget?: string | null,
+  frontendOrigin?: string,
+): string {
+  const path = googleOAuthReturnPath(postLoginTarget);
+  const base =
+    frontendOrigin ?? (typeof window !== "undefined" ? window.location.origin : "");
+  if (!base) return path;
+  const absolute = `${base.replace(/\/$/, "")}${path}`;
+  return absolute;
 }
 
 export function isTwoFactorChallenge(error: unknown): boolean {

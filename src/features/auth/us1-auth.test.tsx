@@ -151,14 +151,16 @@ describe("login form", () => {
     expect(onSignedIn).not.toHaveBeenCalled();
   });
 
-  it("offers Google sign-in as a provider-hosted link", () => {
+  it("offers Google sign-in as a provider-hosted link with an absolute return URL", () => {
     renderWithProviders(<LoginForm onSignedIn={vi.fn()} />, { session: null });
 
     const link = screen.getByRole("link", { name: /continue with google/i });
+    const expectedReturnUrl = `${window.location.origin}/auth/google-callback`;
     expect(link).toHaveAttribute(
       "href",
       expect.stringContaining("/api/v1/auth/google"),
     );
+    expect(link.getAttribute("href")).toContain(encodeURIComponent(expectedReturnUrl));
   });
 
   it("shows the normalized problem when credentials are rejected", async () => {

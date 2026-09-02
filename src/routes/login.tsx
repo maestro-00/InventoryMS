@@ -2,6 +2,11 @@ import { Link, createFileRoute, redirect, useNavigate } from "@tanstack/react-ro
 import { useState } from "react";
 import { LoginForm } from "../features/auth/login-form";
 import { sessionFromTokens } from "../features/auth/session-bootstrap";
+import { googleOAuthReturnUrl } from "../features/auth/api/auth-api";
+import {
+  LoginLeftPanel,
+  PublicAuthLayout,
+} from "../features/marketing/layout/public-auth-layout";
 import {
   internalRedirectTarget,
   parseInternalRedirect,
@@ -16,10 +21,7 @@ export const Route = createFileRoute("/login")({
   beforeLoad: async ({ context, search }) => {
     await context.sessionManager.whenRestored();
     if (!context.sessionManager.getSnapshot()) return;
-    // Already signed in: showing the form here is what left users staring at a sign-in
-    // page while their session was still valid.
     const target = parseInternalRedirect(search.redirect);
-    // TanStack Router uses thrown redirects as control flow.
     // eslint-disable-next-line @typescript-eslint/only-throw-error -- router redirect
     throw redirect(
       target ? { to: target.to, search: target.search } : { to: "/dashboard" },
@@ -29,47 +31,54 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  // Sanitized here rather than in `validateSearch` so a crafted `?redirect=` can never
-  // reach the provider-hosted Google flow as a `returnUrl`.
   const target = internalRedirectTarget(Route.useSearch().redirect);
   const navigate = useNavigate();
   const { manager } = useSession();
   const [sessionError, setSessionError] = useState<string | null>(null);
+  const googleReturnUrl = googleOAuthReturnUrl(target);
 
   return (
-    <main
-      id="main-content"
-      className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 p-6"
-    >
-      <h1 className="text-2xl font-semibold">Sign in</h1>
-      {sessionError ? (
-        <p role="alert" className="text-sm text-destructive">
-          {sessionError}
-        </p>
-      ) : null}
-      <LoginForm
-        returnUrl={target ?? "/dashboard"}
-        onSignedIn={(outcome) => {
-          const session = sessionFromTokens(outcome);
-          if (!session) {
-            setSessionError(
-              "Signed in, but the access token is missing required claims. Try again or contact support.",
-            );
-            return;
-          }
-          setSessionError(null);
-          manager.setSession(session);
-          const destination = parseInternalRedirect(target ?? undefined);
-          void navigate(
-            destination
-              ? { to: destination.to, search: destination.search }
-              : { to: "/dashboard" },
-          );
-        }}
-      />
-      <p>
-        New to InventoryMS? <Link to="/register">Create a business</Link>
-      </p>
-    </main>
+    <PublicAuthLayout
+      leftContent={<LoginLeftPanel />}
+      rightContent={
+        <>
+          <h1 className="mb-1 text-2xl font-bold text-foreground">Welcome back</h1>
+          <p className="mb-6 text-sm text-muted-foreground">
+            Sign in to your InventoryMS account
+          </p>
+          {sessionError ? (
+            <p role="alert" className="mb-4 text-sm text-destructive">
+              {sessionError}
+            </p>
+          ) : null}
+          <LoginForm
+            returnUrl={googleReturnUrl}
+            onSignedIn={(outcome) => {
+              const session = sessionFromTokens(outcome);
+              if (!session) {
+                setSessionError(
+                  "Signed in, but the access token is missing required claims. Try again or contact support.",
+                );
+                return;
+              }
+              setSessionError(null);
+              manager.setSession(session);
+              const destination = parseInternalRedirect(target ?? undefined);
+              void navigate(
+                destination
+                  ? { to: destination.to, search: destination.search }
+                  : { to: "/dashboard" },
+              );
+            }}
+          />
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            New to InventoryMS?{" "}
+            <Link to="/register" className="font-medium text-primary hover:underline">
+              Create a business
+            </Link>
+          </p>
+        </>
+      }
+    />
   );
 }

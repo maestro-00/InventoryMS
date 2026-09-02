@@ -4,6 +4,10 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { server } from "../../shared/test/msw/server";
 import { renderWithProviders } from "../../shared/test/render";
+import {
+  selectRadixOption,
+  waitForRadixSelectOptions,
+} from "../../shared/test/select-radix";
 import { ProductForm } from "./products/product-form";
 import { ProductList } from "./products/product-list";
 import { ImportWizard } from "./import/import-wizard";
@@ -49,10 +53,10 @@ describe("manual product creation", () => {
 
     renderWithProviders(<ProductForm onCreated={onCreated} />);
 
-    await screen.findByRole("option", { name: "Groceries" });
+    await waitForRadixSelectOptions(screen.getByLabelText(/category/i), "Groceries");
     await fillRequiredProductFields(user);
-    await user.selectOptions(screen.getByLabelText(/category/i), CATEGORY_ID);
-    await user.selectOptions(screen.getByLabelText(/tax treatment/i), "GH-STD");
+    await selectRadixOption(user, screen.getByLabelText(/category/i), CATEGORY_ID);
+    await selectRadixOption(user, screen.getByLabelText(/tax treatment/i), "GH-STD");
     await user.click(screen.getByRole("button", { name: /save product/i }));
 
     await waitFor(() => {
@@ -82,8 +86,8 @@ describe("manual product creation", () => {
 
     renderWithProviders(<ProductForm onCreated={vi.fn()} />);
 
-    await screen.findByRole("option", { name: "Groceries" });
-    await user.selectOptions(screen.getByLabelText(/tracking mode/i), "Variant");
+    await waitForRadixSelectOptions(screen.getByLabelText(/category/i), "Groceries");
+    await selectRadixOption(user, screen.getByLabelText(/tracking mode/i), "Variant");
     await fillRequiredProductFields(user);
 
     await user.type(screen.getByLabelText(/variant attributes/i), "Size");
@@ -110,8 +114,8 @@ describe("manual product creation", () => {
 
     renderWithProviders(<ProductForm onCreated={vi.fn()} />);
 
-    await screen.findByRole("option", { name: "Groceries" });
-    await user.selectOptions(screen.getByLabelText(/tracking mode/i), "Batch");
+    await waitForRadixSelectOptions(screen.getByLabelText(/category/i), "Groceries");
+    await selectRadixOption(user, screen.getByLabelText(/tracking mode/i), "Batch");
 
     expect(screen.getByLabelText(/manufacture date/i)).toBeDisabled();
     expect(screen.getByLabelText(/expiry date/i)).toBeDisabled();
@@ -132,7 +136,7 @@ describe("manual product creation", () => {
 
     renderWithProviders(<ProductForm onCreated={vi.fn()} />);
 
-    await screen.findByRole("option", { name: "Groceries" });
+    await waitForRadixSelectOptions(screen.getByLabelText(/category/i), "Groceries");
     await fillRequiredProductFields(user);
     await user.click(screen.getByRole("button", { name: /save product/i }));
 
@@ -151,7 +155,7 @@ describe("manual product creation", () => {
 
     renderWithProviders(<ProductForm onCreated={vi.fn()} />);
 
-    await screen.findByRole("option", { name: "Groceries" });
+    await waitForRadixSelectOptions(screen.getByLabelText(/category/i), "Groceries");
     await user.type(screen.getByLabelText(/product name/i), "Sugar 1kg");
     await user.type(screen.getByLabelText(/^sku/i), "SUG-001");
     await user.type(screen.getByLabelText(/selling price/i), "ten");
@@ -253,7 +257,7 @@ describe("product import wizard", () => {
     );
 
     await screen.findByText(/detected columns/i);
-    await user.selectOptions(screen.getByLabelText(/map "Name"/i), "name");
+    await selectRadixOption(user, screen.getByLabelText(/map "Name"/i), "name");
     await user.click(screen.getByRole("button", { name: /preview all rows/i }));
 
     expect(

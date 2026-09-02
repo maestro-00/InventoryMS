@@ -52,6 +52,9 @@
 - **Production quality**: Define browser support, trust-boundary validation, measurable
   performance targets, and commands for lint, type checking, tests, and production
   build.
+- **SaaS-grade visual design**: Name reference SaaS patterns for changed screens;
+  confirm design-system token usage, visual hierarchy, polished empty/loading/error
+  states, and visual review at mobile, tablet, and desktop widths.
 - **Exceptions**: List each constitutional exception with justification, risk controls,
   owner, and expiry date. Use "None" when there are no exceptions.
 

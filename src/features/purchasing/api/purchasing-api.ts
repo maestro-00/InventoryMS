@@ -79,6 +79,12 @@ export const purchaseOrderSchema = z.object({
 
 export type PurchaseOrderRecord = z.infer<typeof purchaseOrderSchema>;
 
+/** InventoryX expects PurchaseOrderOrigin as int (0=Manual, 1=ReorderSuggestion). */
+function purchaseOrderOriginToApi(origin?: string): 0 | 1 | 2 {
+  if (origin === "ReorderSuggestion") return 1;
+  return 0;
+}
+
 const pagedOrdersSchema = z.object({
   items: z.array(purchaseOrderSchema),
   page: z.number().int(),
@@ -89,7 +95,15 @@ const pagedOrdersSchema = z.object({
 export async function fetchSuppliers(): Promise<SupplierRecord[]> {
   const response = await authedFetch("/api/v1/suppliers");
   if (!response.ok) throw new Error("Failed to load suppliers");
-  return z.array(supplierSchema).parse(await response.json());
+  const raw: unknown = await response.json();
+  let items: unknown[] = [];
+  if (Array.isArray(raw)) {
+    items = raw;
+  } else if (raw && typeof raw === "object" && "items" in raw) {
+    const candidate = raw.items;
+    items = Array.isArray(candidate) ? candidate : [];
+  }
+  return z.array(supplierSchema).parse(items);
 }
 
 export async function createSupplier(input: SupplierInput): Promise<SupplierRecord> {
@@ -200,7 +214,7 @@ export async function createPurchaseOrder(input: {
     body: JSON.stringify({
       supplierId: input.supplierId,
       deliverToLocationId: input.deliverToLocationId,
-      origin: input.origin ?? "Manual",
+      origin: purchaseOrderOriginToApi(input.origin),
       notes: input.notes,
       lines: input.lines.map((line) => ({
         productId: line.productId,

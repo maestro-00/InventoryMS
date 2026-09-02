@@ -25,6 +25,7 @@ export function GoogleCallback({
   useEffect(() => {
     if (!parsed.success || consumed.current) return;
     consumed.current = true;
+
     const outcome: LoginOutcome = {
       requiresTwoFactor: false,
       accessToken: parsed.data.accessToken,

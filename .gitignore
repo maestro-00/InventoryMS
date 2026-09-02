@@ -23,6 +23,7 @@ blob-report/
 .lighthouseci/
 
 # Editor directories and files
+.cursor/
 .vscode/*
 !.vscode/extensions.json
 .idea

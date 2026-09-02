@@ -1,7 +1,27 @@
-import { useId, type ComponentProps, type ReactNode } from "react";
+import { useId, type ChangeEvent, type ComponentProps, type ReactNode } from "react";
 import { Input } from "../input";
 import { Label } from "../label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../select";
 import { cn } from "../../utils/cn";
+
+const EMPTY_OPTION_VALUE = "__select_empty__";
+
+function toRadixValue(value: string | undefined): string | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  return value === "" ? EMPTY_OPTION_VALUE : value;
+}
+
+function fromRadixValue(value: string): string {
+  return value === EMPTY_OPTION_VALUE ? "" : value;
+}
 
 export interface FieldProps {
   label: string;
@@ -24,7 +44,7 @@ function FieldShell({
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-2.5">
       <Label htmlFor={controlId}>
         {label}
         {required ? <span aria-hidden="true"> *</span> : null}
@@ -104,7 +124,10 @@ export function SelectField({
   options,
   className,
   id,
-  ...select
+  value,
+  onChange,
+  disabled,
+  name,
 }: SelectFieldProps) {
   const generated = useId();
   const controlId = id ?? generated;
@@ -115,6 +138,26 @@ export function SelectField({
     .filter(Boolean)
     .join(" ");
 
+  const stringValue = typeof value === "string" ? value : undefined;
+  const hasEmptyOption = options.some((option) => option.value === "");
+  const showPlaceholder = stringValue === "" && !hasEmptyOption;
+  const radixValue = showPlaceholder ? undefined : toRadixValue(stringValue);
+
+  function handleValueChange(nextValue: string) {
+    if (!onChange) {
+      return;
+    }
+    const actualValue = fromRadixValue(nextValue);
+    const syntheticTarget = {
+      value: actualValue,
+      name: name ?? "",
+    };
+    onChange({
+      target: syntheticTarget,
+      currentTarget: syntheticTarget,
+    } as ChangeEvent<HTMLSelectElement>);
+  }
+
   return (
     <FieldShell
       label={label}
@@ -124,30 +167,36 @@ export function SelectField({
       controlId={controlId}
       describedBy={controlId}
     >
-      <select
-        id={controlId}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy || undefined}
-        className={cn(
-          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
-          error && "border-destructive",
-          className,
-        )}
-        {...select}
+      <Select
+        onValueChange={handleValueChange}
+        {...(radixValue !== undefined ? { value: radixValue } : {})}
+        {...(disabled !== undefined ? { disabled } : {})}
+        {...(required !== undefined ? { required } : {})}
+        {...(name ? { name } : {})}
       >
-        {typeof select.value === "string" &&
-        select.value === "" &&
-        !options.some((option) => option.value === "") ? (
-          <option value="" disabled>
-            Select…
-          </option>
-        ) : null}
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger
+          id={controlId}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy || undefined}
+          className={cn(error && "border-destructive", className)}
+        >
+          <SelectValue placeholder="Select…" />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((option) => {
+            const itemValue = option.value === "" ? EMPTY_OPTION_VALUE : option.value;
+            return (
+              <SelectItem
+                key={itemValue}
+                value={itemValue}
+                data-option-value={option.value}
+              >
+                {option.label}
+              </SelectItem>
+            );
+          })}
+        </SelectContent>
+      </Select>
     </FieldShell>
   );
 }

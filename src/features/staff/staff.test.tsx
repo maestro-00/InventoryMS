@@ -4,6 +4,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { server } from "../../shared/test/msw/server";
 import { renderWithProviders, ownerSessionRecord } from "../../shared/test/render";
+import { selectRadixOption } from "../../shared/test/select-radix";
 import { StaffList } from "./users/staff-list";
 import { RegisterPinForm } from "./register-pin/register-pin-form";
 import { AuditLogPanel } from "./audit-log/audit-log-panel";
@@ -62,7 +63,7 @@ describe("staff administration", () => {
     renderWithProviders(<StaffList />);
     expect(await screen.findByText(/cycle 1 roles are fixed/i)).toBeInTheDocument();
     await user.type(screen.getByLabelText(/invite email/i), "cashier@kwame.gh");
-    await user.selectOptions(screen.getByLabelText(/^role$/i), ROLE_ID);
+    await selectRadixOption(user, screen.getByLabelText(/^role$/i), ROLE_ID);
     await user.click(screen.getByRole("button", { name: /send invitation/i }));
     expect(await screen.findByRole("status")).toHaveTextContent(
       /invitation token issued/i,

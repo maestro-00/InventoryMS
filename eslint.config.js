@@ -15,6 +15,7 @@ export default tseslint.config(
       "src/shared/api/generated/**",
       "src/routeTree.gen.ts",
       "public/mockServiceWorker.js",
+      "public/trusted-types-bootstrap.js",
       "src/app/service-worker.ts",
     ],
   },

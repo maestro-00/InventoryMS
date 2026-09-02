@@ -4,6 +4,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { server } from "../../../shared/test/msw/server";
 import { renderWithProviders } from "../../../shared/test/render";
+import { selectRadixOption } from "../../../shared/test/select-radix";
 import * as us1 from "../../../../tests/fixtures/provider/us1";
 import * as us3 from "../../../../tests/fixtures/provider/us3";
 import { AlertsPanel } from "../alerts/alerts-panel";
@@ -66,13 +67,14 @@ describe("internal consumption", () => {
       }),
     );
     renderWithProviders(<ConsumptionForm />);
-    await user.selectOptions(
+    await selectRadixOption(
+      user,
       await screen.findByLabelText(/^location/i),
       us1.LOCATION_ID,
     );
-    await user.selectOptions(screen.getByLabelText(/^product/i), us1.PRODUCT_ID);
+    await selectRadixOption(user, screen.getByLabelText(/^product/i), us1.PRODUCT_ID);
     await user.type(screen.getByLabelText(/quantity used/i), "-1");
-    await user.selectOptions(screen.getByLabelText(/^reason/i), "PersonalUse");
+    await selectRadixOption(user, screen.getByLabelText(/^reason/i), "PersonalUse");
     await user.type(screen.getByLabelText(/^note/i), "Staff tea");
     await user.click(screen.getByRole("button", { name: /record consumption/i }));
     await waitFor(() => {

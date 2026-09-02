@@ -4,6 +4,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { server } from "../../shared/test/msw/server";
 import { renderWithRouter } from "../../shared/test/render-router";
+import { waitForRadixSelectOptions } from "../../shared/test/select-radix";
 import { PosWorkspace } from "./pos-workspace";
 import {
   completedSale,
@@ -49,7 +50,8 @@ function posHandlers(options: { registers?: unknown[]; openShifts?: unknown[] } 
 }
 
 async function openTheShift(user: ReturnType<typeof userEvent.setup>) {
-  await screen.findByRole("option", { name: /counter 1/i });
+  const registerField = await screen.findByLabelText(/^register/i);
+  await waitForRadixSelectOptions(registerField, /counter 1/i);
   await user.clear(screen.getByLabelText(/opening float/i));
   await user.type(screen.getByLabelText(/opening float/i), "100.00");
   await user.click(screen.getByRole("button", { name: /open shift/i }));

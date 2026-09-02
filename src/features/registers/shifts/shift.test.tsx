@@ -9,6 +9,7 @@ import { CashMovementForm } from "./cash-movement";
 import { ZReport } from "./z-report";
 import { sessionManager } from "../../../shared/auth/session-manager";
 import { ownerSession } from "../../../../tests/fixtures/provider/session";
+import { selectRadixOption } from "../../../shared/test/select-radix";
 
 const shiftId = "11111111-1111-4111-8111-111111111111";
 
@@ -66,8 +67,8 @@ describe("shift reconciliation", () => {
         <CloseShiftForm shiftId={shiftId} onClosed={onClosed} />
       </QueryClientProvider>,
     );
-    await user.selectOptions(screen.getByLabelText(/^direction/i), "CashOut");
-    await user.selectOptions(screen.getByLabelText(/^reason/i), "Banking");
+    await selectRadixOption(user, screen.getByLabelText(/^direction/i), "CashOut");
+    await selectRadixOption(user, screen.getByLabelText(/^reason/i), "Banking");
     const amount = screen.getByLabelText(/^amount/i);
     await user.clear(amount);
     await user.type(amount, "20.00");

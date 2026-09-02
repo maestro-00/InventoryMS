@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
+import { useState } from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { selectRadixOption } from "../../shared/test/select-radix";
+import type { ReportFilter, ReportKind } from "./api/reports-api";
 import { ReportFilters } from "./filters/report-filters";
 import { StandardReportTable } from "./standard-reports/report-table";
 
@@ -120,25 +123,38 @@ describe("reporting presentation", () => {
     const user = userEvent.setup();
     const onKindChange = vi.fn();
     const onFilterChange = vi.fn();
-    render(
-      <ReportFilters
-        kind="sales"
-        filter={{
-          from: "2026-08-01T00:00:00.000Z",
-          to: "2026-08-08T00:00:00.000Z",
-        }}
-        locations={[{ id: "loc-1", name: "Makola" }]}
-        onKindChange={onKindChange}
-        onFilterChange={onFilterChange}
-      />,
-    );
-    await user.selectOptions(screen.getByLabelText(/^report$/i), "tax");
+
+    function Harness() {
+      const [kind, setKind] = useState<ReportKind>("sales");
+      const [filter, setFilter] = useState<ReportFilter>({
+        from: "2026-08-01T00:00:00.000Z",
+        to: "2026-08-08T00:00:00.000Z",
+      });
+      return (
+        <ReportFilters
+          kind={kind}
+          filter={filter}
+          locations={[{ id: "loc-1", name: "Makola" }]}
+          onKindChange={(next) => {
+            onKindChange(next);
+            setKind(next);
+          }}
+          onFilterChange={(next) => {
+            onFilterChange(next);
+            setFilter(next);
+          }}
+        />
+      );
+    }
+
+    render(<Harness />);
+    await selectRadixOption(user, screen.getByLabelText(/^report$/i), "tax");
     expect(onKindChange).toHaveBeenCalledWith("tax");
-    await user.selectOptions(screen.getByLabelText(/^location$/i), "loc-1");
+    await selectRadixOption(user, screen.getByLabelText(/^location$/i), "loc-1");
     expect(onFilterChange).toHaveBeenCalledWith(
       expect.objectContaining({ locationId: "loc-1" }),
     );
-    await user.selectOptions(screen.getByLabelText(/^location$/i), "");
+    await selectRadixOption(user, screen.getByLabelText(/^location$/i), "");
     const lastCall = onFilterChange.mock.calls.at(-1)?.[0] as
       { locationId?: string } | undefined;
     expect(lastCall?.locationId).toBeUndefined();
