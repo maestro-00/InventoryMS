@@ -53,6 +53,7 @@ export interface LoginOutcome {
   accessToken?: string;
   accessTokenExpiresAt?: string;
   refreshToken?: string;
+  redirect?: string;
 }
 
 export async function registerTenant(
