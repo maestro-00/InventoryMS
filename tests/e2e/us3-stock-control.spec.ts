@@ -73,5 +73,8 @@ test("@critical a manager can transfer, receive with discrepancy, count, and app
 
   await navigateApp(page, "Inventory");
   await page.getByRole("link", { name: /movements/i }).click();
-  await expect(page.getByText(/Adjustment|Transfer/i).first()).toBeVisible();
+  await expect(page.getByRole("region", { name: /stock movements/i })).toBeVisible();
+  await expect(page.getByText(/original ledger entry/i).first()).toBeVisible({
+    timeout: 15_000,
+  });
 });
