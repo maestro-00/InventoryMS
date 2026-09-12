@@ -1185,7 +1185,7 @@ export const us1ScenarioHandlers = [
     const body = (await request.json()) as {
       supplierId: string;
       deliverToLocationId: string;
-      origin?: string;
+      origin?: string | number;
       notes?: string;
       lines: Array<{
         productId: string;
@@ -1204,12 +1204,16 @@ export const us1ScenarioHandlers = [
       damagedQty: 0,
       unitCost: line.unitCost,
     }));
+    const origin =
+      body.origin === 1 || body.origin === "ReorderSuggestion"
+        ? "ReorderSuggestion"
+        : "Manual";
     const order = {
       id: crypto.randomUUID(),
       supplierId: body.supplierId,
       deliverToLocationId: body.deliverToLocationId,
       status: "Draft",
-      origin: body.origin ?? "Manual",
+      origin,
       originReferenceId: null,
       requiredBy: null,
       notes: body.notes ?? null,

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { navigateApp } from "./helpers/navigate";
 
 async function signIn(page: Page) {
   await page.goto("/login");
@@ -8,25 +9,12 @@ async function signIn(page: Page) {
   await expect(page).toHaveURL(/dashboard/);
 }
 
-async function navigate(page: Page, label: string) {
-  const primary = page.getByRole("navigation", { name: "Primary" });
-  if (await primary.isVisible()) {
-    await primary.getByRole("link", { name: label }).click();
-    return;
-  }
-  await page.getByRole("button", { name: /open navigation/i }).click();
-  await page
-    .getByRole("dialog", { name: /navigation/i })
-    .getByRole("link", { name: label })
-    .click();
-}
-
 test("@critical billing settings show plans, payment, cancel, invoices, and export", async ({
   page,
 }) => {
   test.setTimeout(120_000);
   await signIn(page);
-  await navigate(page, "Billing");
+  await navigateApp(page, "Billing");
   await expect(
     page.getByRole("heading", { name: /billing and data control/i }),
   ).toBeVisible();

@@ -23,14 +23,12 @@ test("@critical dashboard links through filtered sales report, export, schedule,
 }) => {
   test.setTimeout(180_000);
   await signIn(page);
-  await expect(page.getByRole("region", { name: /dashboard metrics/i })).toBeVisible({
+  await expect(page.getByRole("heading", { name: /^dashboard$/i })).toBeVisible({
     timeout: 15_000,
   });
-  await expect(page.getByText(/sales today/i)).toBeVisible();
-  await expect(page.getByRole("link", { name: /sales today/i })).toHaveAttribute(
-    "href",
-    /\/reports\?kind=sales/,
-  );
+  const salesToday = page.getByRole("link", { name: /sales today/i });
+  await expect(salesToday).toBeVisible({ timeout: 15_000 });
+  await expect(salesToday).toHaveAttribute("href", /\/reports\?kind=sales/);
 
   await navigateApp(page, "Reports");
   await expect(page.getByRole("heading", { name: /^reports$/i })).toBeVisible();

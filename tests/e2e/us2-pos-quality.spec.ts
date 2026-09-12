@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { navigateApp } from "./helpers/navigate";
+import { selectFieldOption } from "./helpers/select-field";
 
 test.describe.configure({ timeout: 180_000 });
 
@@ -46,7 +47,7 @@ async function openTill(page: Page) {
   await page.getByLabel(/barcode/i).fill("6001234567890");
   await page.getByLabel(/selling price/i).fill("10.00");
   await page.getByLabel(/cost price/i).fill("6.00");
-  await page.getByLabel(/tax treatment/i).selectOption("GH-STD");
+  await selectFieldOption(page, /tax treatment/i, "GH-STD");
   await page.getByRole("button", { name: /save product/i }).click();
   await navigate(page, "Sell");
   await page.getByLabel(/register name/i).fill("Counter 1");

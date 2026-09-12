@@ -1,4 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
+import { navigateApp } from "./helpers/navigate";
+import { selectFieldOption } from "./helpers/select-field";
 
 /**
  * Onboarding through the first sale. The suite drives the app against the in-browser
@@ -14,19 +16,8 @@ async function signIn(page: Page) {
   await expect(page).toHaveURL(/dashboard/);
 }
 
-/**
- * Sessions are memory-only, so the journey moves between pages the way an owner does:
- * through the in-app navigation, never a document reload.
- */
-async function navigate(page: Page, label: string | RegExp) {
-  await page
-    .getByRole("navigation", { name: "Primary" })
-    .getByRole("link", { name: label })
-    .click();
-}
-
 async function createLocation(page: Page) {
-  await navigate(page, "Locations");
+  await navigateApp(page, "Locations");
   await page.getByLabel(/location name/i).fill("Main Shop");
   await page.getByLabel(/address/i).fill("12 Oxford Street, Accra");
   await page.getByRole("button", { name: /save location/i }).click();
@@ -34,13 +25,13 @@ async function createLocation(page: Page) {
 }
 
 async function createProduct(page: Page) {
-  await navigate(page, "Products");
+  await navigateApp(page, "Products");
   await page.getByRole("button", { name: /add a product/i }).click();
   await page.getByLabel(/product name/i).fill("Sugar 1kg");
   await page.getByLabel(/^sku/i).fill("SUG-001");
   await page.getByLabel(/selling price/i).fill("10.00");
   await page.getByLabel(/cost price/i).fill("6.00");
-  await page.getByLabel(/tax treatment/i).selectOption("GH-STD");
+  await selectFieldOption(page, /tax treatment/i, "GH-STD");
   await page.getByRole("button", { name: /save product/i }).click();
   await expect(page.getByRole("cell", { name: "Sugar 1kg" })).toBeVisible({
     timeout: 15_000,
@@ -58,9 +49,9 @@ async function submitNamedButton(page: Page, name: RegExp) {
 }
 
 async function recordOpeningStock(page: Page) {
-  await navigate(page, "Opening stock");
-  await page.getByLabel(/location/i).selectOption({ label: "Main Shop" });
-  await page.getByLabel(/product/i).selectOption({ label: "Sugar 1kg" });
+  await navigateApp(page, "Opening stock");
+  await selectFieldOption(page, /location/i, { label: "Main Shop" });
+  await selectFieldOption(page, /product/i, { label: "Sugar 1kg" });
   const qty = page.getByLabel(/opening quantity/i);
   await qty.fill("10");
   await expect(qty).toHaveValue("10");
@@ -71,7 +62,7 @@ async function recordOpeningStock(page: Page) {
 }
 
 async function createRegisterAndOpenShift(page: Page) {
-  await navigate(page, "Sell");
+  await navigateApp(page, "Sell");
   const registerName = page.getByLabel(/register name/i);
   await expect(registerName).toBeVisible({ timeout: 15_000 });
   await registerName.fill("Counter 1");

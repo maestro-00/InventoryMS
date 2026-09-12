@@ -1,4 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
+import { navigateApp } from "./helpers/navigate";
+import { selectFieldOption } from "./helpers/select-field";
 
 async function signIn(page: Page) {
   await page.goto("/login");
@@ -6,19 +8,6 @@ async function signIn(page: Page) {
   await page.getByLabel(/password/i).fill("correct-horse-battery");
   await page.getByRole("button", { name: /^sign in$/i }).click();
   await expect(page).toHaveURL(/dashboard/);
-}
-
-async function navigate(page: Page, label: string) {
-  const primary = page.getByRole("navigation", { name: "Primary" });
-  if (await primary.isVisible()) {
-    await primary.getByRole("link", { name: label }).click();
-    return;
-  }
-  await page.getByRole("button", { name: /open navigation/i }).click();
-  await page
-    .getByRole("dialog", { name: /navigation/i })
-    .getByRole("link", { name: label })
-    .click();
 }
 
 async function scanBarcode(page: Page, barcode: string) {
@@ -35,12 +24,12 @@ async function scanBarcode(page: Page, barcode: string) {
 }
 
 async function seedTill(page: Page) {
-  await navigate(page, "Locations");
+  await navigateApp(page, "Locations");
   await page.getByLabel(/location name/i).fill("Main Shop");
   await page.getByRole("button", { name: /save location/i }).click();
   await expect(page.getByRole("button", { name: /select main shop/i })).toBeVisible();
 
-  await navigate(page, "Products");
+  await navigateApp(page, "Products");
   for (const product of [
     { name: "Sugar 1kg", sku: "SUG-001", barcode: "6001234567890", price: "10.00" },
     { name: "Rice 5kg", sku: "RIC-005", barcode: "6001234567891", price: "45.00" },
@@ -57,12 +46,12 @@ async function seedTill(page: Page) {
     await page.getByLabel(/barcode/i).fill(product.barcode);
     await page.getByLabel(/selling price/i).fill(product.price);
     await page.getByLabel(/cost price/i).fill("6.00");
-    await page.getByLabel(/tax treatment/i).selectOption("GH-STD");
+    await selectFieldOption(page, /tax treatment/i, "GH-STD");
     await page.getByRole("button", { name: /save product/i }).click();
     await expect(page.getByRole("cell", { name: product.name })).toBeVisible();
   }
 
-  await navigate(page, "Sell");
+  await navigateApp(page, "Sell");
   const registerName = page.getByLabel(/register name/i);
   await expect(registerName).toBeVisible({ timeout: 15_000 });
   await registerName.fill("Counter 1");

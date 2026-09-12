@@ -71,7 +71,11 @@ export function DashboardContinuePanel() {
                       {completedCount(checklist)} of {ONBOARDING_STEPS.length} steps
                       complete
                     </p>
-                    <Progress value={setupProgress} className="mt-3 h-1.5" />
+                    <Progress
+                      value={setupProgress}
+                      aria-label="Setup progress"
+                      className="mt-3 h-1.5"
+                    />
                   </div>
                   <ChevronRight
                     className="size-4 shrink-0 text-muted-foreground"
