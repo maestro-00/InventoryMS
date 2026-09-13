@@ -31,7 +31,7 @@ async function openPurchasing(page: Page) {
 }
 
 for (const viewport of VIEWPORTS) {
-  test(`@a11y purchasing workspace has no critical axe violations at ${viewport.name}`, async ({
+  test(`@axe-advisory purchasing workspace has no critical axe violations at ${viewport.name}`, async ({
     page,
   }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });

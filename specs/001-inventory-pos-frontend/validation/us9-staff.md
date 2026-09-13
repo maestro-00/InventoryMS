@@ -11,7 +11,7 @@
 | Role/scope query clearing unit                                  | Pass   | `staff-access.test.ts`                      |
 | Invite / deactivate 409 / PIN / accept / 2FA / audit components | Pass   | `staff.test.tsx`                            |
 | Critical E2E invite → PIN → 2FA → audit                         | Pass   | `us9-staff.spec.ts`                         |
-| Responsive axe 320/768/1440                                     | Pass   | `us9-staff-quality.spec.ts`                 |
+| Responsive axe 320/768/1440 (historical; now advisory)        | Pass   | `us9-staff-quality.spec.ts` — `@axe-advisory` |
 | Keyboard invite + PIN                                           | Pass   |                                             |
 | Sensitive deactivate confirmation                               | Pass   | dismiss keeps user                          |
 

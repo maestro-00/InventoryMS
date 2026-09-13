@@ -10,7 +10,7 @@
 | Contract product batches + trace             | Pass            |
 | FEFO list / expiry filter / trace components | Pass            |
 | Critical E2E                                 | Pass (Chromium) |
-| Quality axe + keyboard                       | Pass            |
+| Quality axe (historical; now advisory) + keyboard | Pass       |
 
 ## Honest gaps
 

@@ -245,8 +245,8 @@ Tests are written and observed failing before behavior. Required layers are:
    permissions, and sync outcomes with MSW and a seeded InventoryX instance.
 4. End to end: one journey per user story. Pull requests require P1-P3 E2E; P4 offline
    E2E is gated until InventoryX readiness tasks T101-T110 pass.
-5. Accessibility and responsive: automated axe plus manual keyboard and screen-reader
-   release checks.
+5. Accessibility and responsive: hard keyboard/reflow CI gates plus advisory axe
+   (`pnpm test:a11y:advisory`) and manual screen-reader release checks.
 
 Coverage gates are 85% lines/functions and 80% branches globally, and 95% lines with
 90% branches for money, permission, mutation-idempotency, and offline modules. Coverage

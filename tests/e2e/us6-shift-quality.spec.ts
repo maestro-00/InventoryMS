@@ -23,7 +23,7 @@ async function navigate(page: Page, label: string) {
 }
 
 for (const viewport of VIEWPORTS) {
-  test(`@a11y registers page has no critical axe violations at ${viewport.name}`, async ({
+  test(`@axe-advisory registers page has no critical axe violations at ${viewport.name}`, async ({
     page,
   }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });

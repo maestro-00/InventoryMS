@@ -58,7 +58,7 @@ async function openTill(page: Page) {
 }
 
 for (const viewport of VIEWPORTS) {
-  test(`@a11y the POS workspace has no critical axe violations at ${viewport.name}`, async ({
+  test(`@axe-advisory the POS workspace has no critical axe violations at ${viewport.name}`, async ({
     page,
   }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });

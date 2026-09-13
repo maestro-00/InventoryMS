@@ -18,7 +18,7 @@ Sources: [`../spec.md`](../spec.md), story validation docs under this folder, au
 | ------ | --------------------------------------------------------------------- | ------------------------------------------------- |
 | UX-001 | `src/shared/ui/states/ui-state.test.tsx`, story empty/loading paths   | Covered (fixture)                                 |
 | UX-002 | US1–US3/US6/US7 E2E + usability protocol docs                         | Covered (Chromium); real-user % not measured      |
-| UX-003 | `tests/e2e/*accessibility*`, [`accessibility.md`](./accessibility.md) | Keyboard/axe recorded; NVDA/VoiceOver not run     |
+| UX-003 | `tests/e2e/*accessibility*`, [`accessibility.md`](./accessibility.md) | Keyboard/reflow hard CI; axe advisory; SR not run |
 | UX-004 | [`responsive.md`](./responsive.md) 200% zoom                          | Chromium only                                     |
 | UX-005 | US2 POS quality / cart tests                                          | Covered (fixture)                                 |
 | UX-006 | Alert-dialog primitives + destructive flows in stock/POS/billing      | Covered (fixture)                                 |
@@ -50,7 +50,7 @@ Sources: [`../spec.md`](../spec.md), story validation docs under this folder, au
 | SC-005     | US4 100-sale durability                  | **Blocked** on live InventoryX                                                           |
 | SC-006     | Problem/limit contract tests             | Pass MSW                                                                                 |
 | SC-007     | [`responsive.md`](./responsive.md)       | Chromium pass                                                                            |
-| SC-008     | [`accessibility.md`](./accessibility.md) | Keyboard/axe partial; SR tools not run                                                   |
+| SC-008     | [`accessibility.md`](./accessibility.md) | Keyboard/reflow hard CI; axe advisory; SR not run                                       |
 | SC-009     | Usability US6                            | Protocol/partial; no fabricated %                                                        |
 | SC-010     | Reporting E2E                            | Functional pass; 95%@3s field sample not collected                                       |
 | SC-011     | Access-policy / session tests            | Pass unit                                                                                |

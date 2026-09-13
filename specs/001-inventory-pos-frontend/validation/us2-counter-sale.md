@@ -101,10 +101,11 @@ and the US1 a11y suite re-run in the same Chromium session.
 
 | Check                                                 | Viewport / condition | Result |
 | ----------------------------------------------------- | -------------------- | ------ |
-| axe: zero critical or serious POS violations          | 320 x 800 (mobile)   | Pass   |
-| axe: zero critical or serious POS violations          | 768 x 1024 (tablet)  | Pass   |
-| axe: zero critical or serious POS violations          | 1440 x 900 (desktop) | Pass   |
-| US1 surface axe, keyboard-only till, 200% zoom reflow | Chromium             | Pass   |
+| axe: zero critical or serious POS violations (historical; now advisory)          | 320 x 800 (mobile)   | Pass   |
+| axe: zero critical or serious POS violations (historical; now advisory)          | 768 x 1024 (tablet)  | Pass   |
+| axe: zero critical or serious POS violations (historical; now advisory)          | 1440 x 900 (desktop) | Pass   |
+| keyboard-only till and 200% zoom reflow (hard `@a11y`) | Chromium          | Pass   |
+| US1 surface axe (historical; now advisory)          | Chromium             | Pass   |
 
 **Browser caveat.** Only the Chromium project ran. Playwright's Firefox and WebKit
 binaries cannot be installed on this machine, so cross-browser E2E remains unverified.

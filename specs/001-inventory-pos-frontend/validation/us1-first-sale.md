@@ -117,11 +117,15 @@ blocks concurrent and repeated submissions, and sale history contains exactly on
 
 `npx playwright test --project=chromium tests/e2e/us1-first-sale.accessibility.spec.ts`
 
+> **Note (2026-09-13):** Axe rows below are historical pre-soft-gates evidence. Axe is now
+> advisory (`@axe-advisory`, `pnpm test:a11y:advisory`); keyboard/reflow remain hard CI
+> (`@a11y`).
+
 | Check                                                                    | Viewport / condition           | Result |
 | ------------------------------------------------------------------------ | ------------------------------ | ------ |
-| axe: zero critical or serious violations                                 | 320 x 640 (mobile)             | Pass   |
-| axe: zero critical or serious violations                                 | 768 x 1024 (tablet)            | Pass   |
-| axe: zero critical or serious violations                                 | 1440 x 900 (desktop)           | Pass   |
+| axe: zero critical or serious violations (historical; now advisory)      | 320 x 640 (mobile)             | Pass   |
+| axe: zero critical or serious violations (historical; now advisory)      | 768 x 1024 (tablet)            | Pass   |
+| axe: zero critical or serious violations (historical; now advisory)      | 1440 x 900 (desktop)           | Pass   |
 | Keyboard-only reachability and visible focus through the till's controls | 1440 x 900                     | Pass   |
 | Reflow without horizontal scrolling                                      | 640 CSS px (1280 at 200% zoom) | Pass   |
 
@@ -143,7 +147,7 @@ missing host libraries), so cross-browser E2E remains unverified.
 | Unit/component | `pnpm test:coverage`                     | Pass — 33 files, 174 tests, thresholds met                       |
 | OpenAPI drift  | `pnpm api:check`                         | Pass — snapshot matches the generated client                     |
 | Build          | `pnpm build`                             | Pass — Vite 8.2.1 with PWA `injectManifest`, 46 precache entries |
-| E2E + a11y     | `npx playwright test --project=chromium` | Pass — 7 of 7 (2 `@critical`, 5 `@a11y`)                         |
+| E2E + a11y     | `npx playwright test --project=chromium` | Pass — 7 of 7 (2 `@critical`, 2 `@a11y`, 3 `@axe-advisory`)      |
 
 ### Coverage
 

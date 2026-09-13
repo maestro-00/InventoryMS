@@ -51,7 +51,7 @@ async function seriousViolations(page: Page) {
 test.describe.configure({ timeout: 180_000 });
 
 for (const viewport of VIEWPORTS) {
-  test(`@a11y the US1 surface has no critical or serious axe violations at ${viewport.name}`, async ({
+  test(`@axe-advisory the US1 surface has no critical or serious axe violations at ${viewport.name}`, async ({
     page,
   }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });

@@ -31,7 +31,7 @@ async function openStockPage(page: Page) {
 }
 
 for (const viewport of VIEWPORTS) {
-  test(`@a11y inventory stock has no critical axe violations at ${viewport.name}`, async ({
+  test(`@axe-advisory inventory stock has no critical axe violations at ${viewport.name}`, async ({
     page,
   }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });

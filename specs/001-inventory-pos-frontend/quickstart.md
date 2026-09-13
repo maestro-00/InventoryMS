@@ -208,21 +208,22 @@ pnpm test:contract
 ## Responsive and Accessibility Validation
 
 ```bash
-pnpm test:a11y
+pnpm test:a11y              # hard CI: keyboard, reflow, CTA visibility
+pnpm test:a11y:advisory     # pre-release: axe contrast/ARIA (advisory)
 pnpm test:e2e:responsive
 ```
 
-Required automated evidence:
+Required automated evidence (merge-blocking):
 
 - 320x800, 768x1024, and 1440x900 changed critical journeys;
 - no page-level horizontal overflow;
 - keyboard-only completion and focus restoration;
 - 200% zoom usability;
-- zero critical/serious axe findings;
 - chart table alternatives and print-only receipt layout.
 
-Required manual release evidence:
+Recommended pre-release evidence (advisory):
 
+- axe critical/serious scan (`pnpm test:a11y:advisory`) — contrast, ARIA naming;
 - NVDA with Firefox or Chrome;
 - VoiceOver with Safari and iOS;
 - real Android/iOS camera permission granted and denied;

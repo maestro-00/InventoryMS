@@ -171,7 +171,9 @@ pnpm api:check
 pnpm build
 ```
 
-Story E2E (Chromium): `pnpm test:e2e:critical`. Responsive: `pnpm test:responsive`.
+Story E2E (Chromium): `pnpm test:e2e:critical`. Hard a11y (keyboard, reflow, CTA): `pnpm test:a11y`.
+Advisory axe (contrast/ARIA, pre-release): `pnpm test:a11y:advisory`. Responsive:
+`pnpm test:responsive`.
 Performance budgets: `pnpm check:bundle` after build. Validation evidence patterns live
 under `specs/001-inventory-pos-frontend/validation/`.
 

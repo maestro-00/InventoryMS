@@ -16,7 +16,9 @@ Phase 2 tasks: T015–T039 marked complete in `tasks.md`
 | OpenAPI drift  | `pnpm api:check`                 | Pass — snapshot matches generated client |
 | Build          | `pnpm build`                     | Pass — Vite 8.2.1 + PWA injectManifest   |
 
-E2E (`pnpm test:e2e:critical`), axe, and Lighthouse are not Phase 2 gates; they remain for US1+ journeys.
+E2E (`pnpm test:e2e:critical`) and hard a11y (`pnpm test:a11y`: keyboard, reflow, CTA)
+are merge gates for US1+ journeys. Axe contrast/ARIA scans are advisory pre-release
+only (`pnpm test:a11y:advisory`). Lighthouse is not a Phase 2 gate.
 
 ## Coverage
 

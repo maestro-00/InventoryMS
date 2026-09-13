@@ -13,7 +13,7 @@
 | Export poll + schedule create/deactivate         | Pass   | same file                                           |
 | Notification feed + preferences                  | Pass   | `src/features/notifications/notifications.test.tsx` |
 | Critical E2E journey                             | Pass   | `tests/e2e/us8-reporting.spec.ts` (@critical)       |
-| Responsive axe 320/768/1440                      | Pass   | `us8-reporting-quality.spec.ts`                     |
+| Responsive axe 320/768/1440 (historical; now advisory) | Pass   | `us8-reporting-quality.spec.ts` — `@axe-advisory` |
 | Chart table fallback                             | Pass   | accessible chart equivalent table present           |
 | Keyboard + 200% zoom filters                     | Pass   | Report/From focus path                              |
 
