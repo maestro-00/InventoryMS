@@ -62,7 +62,10 @@ pnpm test:coverage
 pnpm api:check
 pnpm build
 pnpm check:bundle
-pnpm test:e2e:critical          # Playwright
+pnpm test:e2e:critical          # Playwright @critical journeys
+pnpm test:e2e:no-advisory       # Full E2E excluding @axe-advisory (release/nightly)
+pnpm test:a11y                  # Hard: keyboard, reflow, CTA visibility
+pnpm test:a11y:advisory         # Pre-release: axe contrast/ARIA (not in CI)
 pnpm test:responsive            # 320/768/1440 + 200% zoom (Chromium)
 pnpm test:visual                # POS/table/dialog/receipt screenshots
 pnpm test:performance           # build + bundle budget + Lighthouse CI

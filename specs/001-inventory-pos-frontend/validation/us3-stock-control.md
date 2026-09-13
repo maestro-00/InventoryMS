@@ -83,13 +83,13 @@ contains after Zod boundary parsing.
 
 ## Accessibility and responsive quality
 
-| Check                                                       | Viewport / condition | Result |
-| ----------------------------------------------------------- | -------------------- | ------ |
-| axe: zero critical or serious inventory stock violations    | 320 x 800 (mobile)   | Pass   |
-| axe: zero critical or serious inventory stock violations    | 768 x 1024 (tablet)  | Pass   |
-| axe: zero critical or serious inventory stock violations    | 1440 x 900 (desktop) | Pass   |
-| Stock table reflow at 200% zoom without page-level H-scroll | 640 x 800            | Pass   |
-| Count scanner buffer available with quantity field focused  | desktop              | Pass   |
+| Check                                                                               | Viewport / condition | Result |
+| ----------------------------------------------------------------------------------- | -------------------- | ------ |
+| axe: zero critical or serious inventory stock violations (historical; now advisory) | 320 x 800 (mobile)   | Pass   |
+| axe: zero critical or serious inventory stock violations (historical; now advisory) | 768 x 1024 (tablet)  | Pass   |
+| axe: zero critical or serious inventory stock violations (historical; now advisory) | 1440 x 900 (desktop) | Pass   |
+| Stock table reflow at 200% zoom without page-level H-scroll                         | 640 x 800            | Pass   |
+| Count scanner buffer available with quantity field focused                          | desktop              | Pass   |
 
 **Browser caveat.** Only the Chromium project ran. Cross-browser E2E (Firefox, WebKit)
 remains unverified on this machine.

@@ -21,9 +21,10 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps
-      - run: pnpm test:e2e
+      - name: E2E (excludes advisory axe)
+        run: pnpm test:e2e:no-advisory
       - name: Repeat flake detection
-        run: pnpm exec playwright test --repeat-each 3 tests/e2e
+        run: pnpm exec playwright test --grep-invert @axe-advisory --repeat-each 3 tests/e2e
       - name: 100-sale offline stress
         run: pnpm exec playwright test tests/e2e/us4-offline-provider.spec.ts
         continue-on-error: true

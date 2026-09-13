@@ -36,7 +36,7 @@ Supporting story records: [`us6-register-shift.md`](./us6-register-shift.md), [`
 | Foundation / tooling                | [`foundation.md`](./foundation.md)                                                                              |
 | Cross-browser                       | [`cross-browser.md`](./cross-browser.md) — Chromium executed; Firefox/WebKit not assessed                       |
 | Responsive 320/768/1440 + 200% zoom | [`responsive.md`](./responsive.md)                                                                              |
-| Accessibility                       | [`accessibility.md`](./accessibility.md) — axe/keyboard recorded; NVDA/VoiceOver not run                        |
+| Accessibility                       | [`accessibility.md`](./accessibility.md) — keyboard/reflow hard CI; axe advisory; SR not run                    |
 | Devices                             | [`devices.md`](./devices.md) — physical devices not assessed                                                    |
 | Security audit                      | [`security-audit.md`](./security-audit.md)                                                                      |
 | Performance                         | [`performance.md`](./performance.md)                                                                            |

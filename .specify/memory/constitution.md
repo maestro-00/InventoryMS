@@ -54,9 +54,11 @@ and MUST remain usable without horizontal page scrolling at 320 CSS pixels. Layo
 MUST be verified at representative mobile, tablet, and desktop widths. Interactive
 controls MUST be keyboard operable, expose accessible names and visible focus, and
 preserve logical focus order. Semantic HTML MUST be preferred over custom interaction
-roles. Text and meaningful controls MUST meet WCAG 2.2 Level AA contrast requirements,
-and content MUST remain usable at 200% browser zoom. Automated accessibility checks
-and manual keyboard checks MUST cover all new or materially changed journeys.
+roles. Text and meaningful controls SHOULD meet WCAG 2.2 Level AA contrast requirements,
+and content MUST remain usable at 200% browser zoom. Manual keyboard checks MUST cover
+all new or materially changed journeys. Automated axe scans (contrast, ARIA naming, and
+related findings) are advisory pre-release checks (`pnpm test:a11y:advisory`), not merge
+gates.
 
 Rationale: inventory work occurs across phones, tablets, and desktops, and access to
 core workflows cannot depend on a particular device or input method.

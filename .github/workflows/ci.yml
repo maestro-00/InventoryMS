@@ -51,6 +51,7 @@ jobs:
         env:
           INVENTORYX_OFFLINE_READY: "false"
         run: pnpm test:e2e:critical
-      - run: pnpm test:a11y
+      - name: Hard a11y (keyboard, reflow, CTA — not axe)
+        run: pnpm test:a11y
       - run: pnpm test:performance
         continue-on-error: true

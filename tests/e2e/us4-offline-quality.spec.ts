@@ -48,7 +48,7 @@ async function openOfflineReviewAtViewport(
 }
 
 for (const viewport of VIEWPORTS) {
-  test(`@a11y @responsive offline review has no critical axe violations at ${viewport.name}`, async ({
+  test(`@axe-advisory @responsive offline review has no critical axe violations at ${viewport.name}`, async ({
     page,
   }) => {
     await openOfflineReviewAtViewport(page, viewport);

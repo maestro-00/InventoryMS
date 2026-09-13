@@ -12,7 +12,7 @@
 | PO transition / ETag / approval / close-short unit                   | Pass   | `purchase-order-state.test.ts`                                                                                              |
 | Component (supplier, order, receipt, invoice, landed, reorder apply) | Pass   | `src/features/purchasing/purchasing.test.tsx`                                                                               |
 | Critical E2E replenishment journey                                   | Pass   | `tests/e2e/us7-purchasing.spec.ts` (@critical) — Chromium                                                                   |
-| Responsive 320 / 768 / 1440 axe                                      | Pass   | `us7-purchasing-quality.spec.ts` — no critical/serious axe violations                                                       |
+| Responsive 320 / 768 / 1440 axe (historical; now advisory)           | Pass   | `us7-purchasing-quality.spec.ts` — `@axe-advisory`                                                                          |
 | Dense table/form reflow (320)                                        | Pass   | no page-level horizontal scroll                                                                                             |
 | Keyboard reach supplier + filter                                     | Pass   | focus moves without trap                                                                                                    |
 | Close-short confirmation                                             | Pass   | dismiss keeps status Sent                                                                                                   |

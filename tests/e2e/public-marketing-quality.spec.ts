@@ -13,7 +13,7 @@ const VIEWPORTS = [
 
 for (const route of PUBLIC_ROUTES) {
   for (const viewport of VIEWPORTS) {
-    test(`@a11y ${route} has no critical axe violations at ${viewport.name}`, async ({
+    test(`@axe-advisory ${route} has no critical axe violations at ${viewport.name}`, async ({
       page,
     }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });

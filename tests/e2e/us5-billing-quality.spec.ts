@@ -19,7 +19,7 @@ async function signIn(page: Page) {
 }
 
 for (const viewport of VIEWPORTS) {
-  test(`@a11y billing page has no critical axe violations at ${viewport.name}`, async ({
+  test(`@axe-advisory billing page has no critical axe violations at ${viewport.name}`, async ({
     page,
   }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });

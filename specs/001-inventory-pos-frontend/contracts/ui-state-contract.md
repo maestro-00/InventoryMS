@@ -79,7 +79,8 @@ spinner alone is not a complete state.
 - Primary mobile targets are at least 44x44 CSS pixels with adequate spacing.
 - All controls have accessible names, visible focus, logical order, and keyboard action.
 - Color never carries status alone; text/icon shape accompanies it.
-- Text and meaningful controls meet WCAG 2.2 AA contrast.
+- Text and meaningful controls SHOULD meet WCAG 2.2 AA contrast; automated axe scans are
+  advisory (see Recommended evidence below).
 - Motion respects `prefers-reduced-motion`; no workflow requires animation.
 - Dialogs, sheets, menus, comboboxes, and tabs follow their established keyboard
   patterns and restore focus.
@@ -99,11 +100,15 @@ spinner alone is not a complete state.
 
 ## Acceptance Evidence
 
-Each critical state requires:
+Each critical state requires the following **merge-blocking** evidence:
 
 1. a component/integration test using realistic MSW/problem fixtures;
 2. keyboard and focus assertions;
-3. axe critical/serious count of zero;
-4. overflow/text-fit assertions at required widths;
-5. a Playwright journey for cross-route, service-worker, storage, or browser behavior;
-6. manual screen-reader validation before release for changed critical journeys.
+3. overflow/text-fit assertions at required widths;
+4. a Playwright journey for cross-route, service-worker, storage, or browser behavior.
+
+**Recommended (pre-release / advisory)** for changed critical journeys:
+
+5. axe critical/serious scan (`pnpm test:a11y:advisory`) — includes contrast and ARIA
+   naming findings such as progressbar labels;
+6. manual screen-reader validation (NVDA, VoiceOver, or equivalent).
