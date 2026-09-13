@@ -21,6 +21,9 @@ export default defineConfig({
     include: ["src/**/*.test.ts", "src/**/*.test.tsx", "tests/**/*.test.ts"],
     exclude: ["tests/e2e/**", "tests/visual/**", "node_modules/**"],
     retry: 0,
+    // The suite shares browser globals and a single MSW server; parallel files can starve
+    // async UI assertions and turn otherwise passing scenarios into timeouts.
+    fileParallelism: false,
     testTimeout: 20000,
     coverage: {
       provider: "v8",

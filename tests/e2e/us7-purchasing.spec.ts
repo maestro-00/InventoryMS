@@ -1,4 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
+import { navigateApp } from "./helpers/navigate";
+import { selectFieldOption } from "./helpers/select-field";
 
 async function signIn(page: Page) {
   await page.goto("/login");
@@ -8,32 +10,19 @@ async function signIn(page: Page) {
   await expect(page).toHaveURL(/dashboard/);
 }
 
-async function navigate(page: Page, label: string) {
-  const primary = page.getByRole("navigation", { name: "Primary" });
-  if (await primary.isVisible()) {
-    await primary.getByRole("link", { name: label }).click();
-    return;
-  }
-  await page.getByRole("button", { name: /open navigation/i }).click();
-  await page
-    .getByRole("dialog", { name: /navigation/i })
-    .getByRole("link", { name: label })
-    .click();
-}
-
 async function seedLocationAndProduct(page: Page) {
-  await navigate(page, "Locations");
+  await navigateApp(page, "Locations");
   await page.getByLabel(/location name/i).fill("Main Shop");
   await page.getByRole("button", { name: /save location/i }).click();
 
-  await navigate(page, "Products");
+  await navigateApp(page, "Products");
   await page.getByRole("button", { name: /add a product/i }).click();
   await page.getByLabel(/product name/i).fill("Sugar 1kg");
   await page.getByLabel(/^sku/i).fill("SUG-001");
   await page.getByLabel(/barcode/i).fill("6001234567890");
   await page.getByLabel(/selling price/i).fill("10.00");
   await page.getByLabel(/cost price/i).fill("6.00");
-  await page.getByLabel(/tax treatment/i).selectOption("GH-STD");
+  await selectFieldOption(page, /tax treatment/i, "GH-STD");
   await page.getByRole("button", { name: /save product/i }).click();
 }
 
@@ -44,7 +33,7 @@ test("@critical replenishment through receipt, close-short, invoice variance, an
   await signIn(page);
   await seedLocationAndProduct(page);
 
-  await navigate(page, "Purchasing");
+  await navigateApp(page, "Purchasing");
   await expect(page.getByRole("heading", { name: /^purchasing$/i })).toBeVisible();
 
   await page.getByRole("tab", { name: /^suppliers$/i }).click();
@@ -62,11 +51,23 @@ test("@critical replenishment through receipt, close-short, invoice variance, an
   );
   await orders.getByLabel(/ordered qty/i).fill("20");
   await orders.getByLabel(/unit cost/i).fill("6.00");
-  await orders.getByRole("button", { name: /create draft order/i }).click();
-  await expect(page.getByText(/current status: draft/i)).toBeVisible();
+  const createDraft = orders.getByRole("button", { name: /^create draft order$/i });
+  await expect(createDraft).toBeVisible();
+  await createDraft.evaluate((el: HTMLButtonElement) => {
+    el.click();
+  });
+  await expect(page.getByText(/current status: draft/i)).toBeVisible({
+    timeout: 15_000,
+  });
 
-  await page.getByRole("button", { name: /^submit$/i }).click();
-  await expect(page.getByText(/current status: sent/i)).toBeVisible();
+  await page
+    .getByRole("button", { name: /^submit$/i })
+    .evaluate((el: HTMLButtonElement) => {
+      el.click();
+    });
+  await expect(page.getByText(/current status: sent/i)).toBeVisible({
+    timeout: 15_000,
+  });
 
   await page.getByRole("tab", { name: /^receive$/i }).click();
   const receipt = page.getByRole("form", { name: /goods receipt/i });

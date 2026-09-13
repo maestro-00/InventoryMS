@@ -7,15 +7,25 @@ import { expect, type Page } from "@playwright/test";
  */
 export async function navigateApp(page: Page, label: string | RegExp) {
   const primary = page.getByRole("navigation", { name: "Primary" });
+  const hamburger = page.getByRole("button", { name: /open navigation/i });
+  // After sign-in the shell is still mounting. A synchronous isVisible() check
+  // misses the desktop sidebar and then waits forever for the mobile hamburger.
+  await expect(primary.or(hamburger)).toBeVisible({ timeout: 15_000 });
+
+  const navLink = (scope: ReturnType<Page["getByRole"]>) =>
+    typeof label === "string"
+      ? scope.getByRole("link", { name: label, exact: true })
+      : scope.getByRole("link", { name: label });
+
   if (await primary.isVisible()) {
-    await primary.getByRole("link", { name: label }).click();
+    await navLink(primary).click();
     return;
   }
 
-  await page.getByRole("button", { name: /open navigation/i }).click();
+  await hamburger.click();
   const dialog = page.getByRole("dialog", { name: /navigation/i });
   await expect(dialog).toBeVisible();
-  const link = dialog.getByRole("link", { name: label });
+  const link = navLink(dialog);
   await link.evaluate((el: HTMLAnchorElement) => {
     el.click();
   });

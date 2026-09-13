@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { navigateApp } from "./helpers/navigate";
+import { selectFieldOption } from "./helpers/select-field";
 
 async function signIn(page: Page) {
   await page.goto("/login");
@@ -29,7 +30,7 @@ test("@critical owner invites cashier, sets PIN, enrolls 2FA, and reviews audit"
   ).toBeVisible();
 
   await page.getByLabel(/invite email/i).fill("cashier@kwame.gh");
-  await page.getByLabel(/^role$/i).selectOption({ label: "Cashier · Sell" });
+  await selectFieldOption(page, /^role$/i, { label: "Cashier · Sell" });
   await submitNamedButton(page, /send invitation/i);
   await expect(page.getByRole("status")).toContainText(/invitation token issued/i, {
     timeout: 15_000,

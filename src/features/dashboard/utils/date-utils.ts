@@ -25,18 +25,32 @@ function buildDateRange(days: number): { from: string; to: string } {
   };
 }
 
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
 function aggregateDailySales(
   rows: Array<{ occurredAt: string; total: string }>,
   days: number,
 ): SalesTrendPoint[] {
+  const windowEnd = startOfDay(new Date());
+  const windowStart = subDays(windowEnd, days - 1);
+  const windowExclusiveEnd = addDays(windowEnd, 1);
+
   const buckets = new Map<string, number>();
   for (let i = days - 1; i >= 0; i -= 1) {
-    const key = formatWeekday(subDays(startOfDay(new Date()), i));
+    const key = formatWeekday(subDays(windowEnd, i));
     buckets.set(key, 0);
   }
 
   for (const row of rows) {
-    const key = formatWeekday(new Date(row.occurredAt));
+    const occurred = new Date(row.occurredAt);
+    if (occurred < windowStart || occurred >= windowExclusiveEnd) {
+      continue;
+    }
+    const key = formatWeekday(occurred);
     if (buckets.has(key)) {
       buckets.set(key, (buckets.get(key) ?? 0) + Number(row.total));
     }

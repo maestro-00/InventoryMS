@@ -1,4 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
+import { navigateApp } from "./helpers/navigate";
+import { selectFieldOption } from "./helpers/select-field";
 
 async function signIn(page: Page) {
   await page.goto("/login");
@@ -8,40 +10,27 @@ async function signIn(page: Page) {
   await expect(page).toHaveURL(/dashboard/);
 }
 
-async function navigate(page: Page, label: string) {
-  const primary = page.getByRole("navigation", { name: "Primary" });
-  if (await primary.isVisible()) {
-    await primary.getByRole("link", { name: label }).click();
-    return;
-  }
-  await page.getByRole("button", { name: /open navigation/i }).click();
-  await page
-    .getByRole("dialog", { name: /navigation/i })
-    .getByRole("link", { name: label })
-    .click();
-}
-
 async function seedLocationsAndProduct(page: Page) {
-  await navigate(page, "Locations");
+  await navigateApp(page, "Locations");
   await page.getByLabel(/location name/i).fill("Main Shop");
   await page.getByRole("button", { name: /save location/i }).click();
   await page.getByLabel(/location name/i).fill("Warehouse B");
-  await page.getByLabel(/location kind/i).selectOption("Warehouse");
+  await selectFieldOption(page, /location kind/i, "Warehouse");
   await page.getByRole("button", { name: /save location/i }).click();
 
-  await navigate(page, "Products");
+  await navigateApp(page, "Products");
   await page.getByRole("button", { name: /add a product/i }).click();
   await page.getByLabel(/product name/i).fill("Sugar 1kg");
   await page.getByLabel(/^sku/i).fill("SUG-001");
   await page.getByLabel(/barcode/i).fill("6001234567890");
   await page.getByLabel(/selling price/i).fill("10.00");
   await page.getByLabel(/cost price/i).fill("6.00");
-  await page.getByLabel(/tax treatment/i).selectOption("GH-STD");
+  await selectFieldOption(page, /tax treatment/i, "GH-STD");
   await page.getByRole("button", { name: /save product/i }).click();
 
-  await navigate(page, "Opening stock");
-  await page.getByLabel(/location/i).selectOption({ label: "Main Shop" });
-  await page.getByLabel(/product/i).selectOption({ label: "Sugar 1kg" });
+  await navigateApp(page, "Opening stock");
+  await selectFieldOption(page, /location/i, { label: "Main Shop" });
+  await selectFieldOption(page, /product/i, { label: "Sugar 1kg" });
   await page.getByLabel(/opening quantity/i).fill("10");
   await page
     .getByRole("button", { name: /record opening stock|save opening stock/i })
@@ -55,11 +44,11 @@ test("@critical a manager can transfer, receive with discrepancy, count, and app
   await signIn(page);
   await seedLocationsAndProduct(page);
 
-  await navigate(page, "Inventory");
+  await navigateApp(page, "Inventory");
   await page.getByRole("link", { name: /transfers/i }).click();
-  await page.getByLabel(/from location/i).selectOption({ label: "Main Shop" });
-  await page.getByLabel(/to location/i).selectOption({ label: "Warehouse B" });
-  await page.getByLabel(/^product/i).selectOption({ label: "Sugar 1kg" });
+  await selectFieldOption(page, /from location/i, { label: "Main Shop" });
+  await selectFieldOption(page, /to location/i, { label: "Warehouse B" });
+  await selectFieldOption(page, /^product/i, { label: "Sugar 1kg" });
   await page.getByLabel(/quantity to dispatch/i).fill("10");
   await page.getByRole("button", { name: /create draft transfer/i }).click();
   await page.getByRole("button", { name: /dispatch transfer/i }).click();
@@ -70,11 +59,11 @@ test("@critical a manager can transfer, receive with discrepancy, count, and app
     page.getByText(/ReceivedWithDiscrepancy|Two bags damaged/i),
   ).toBeVisible();
 
-  await navigate(page, "Inventory");
+  await navigateApp(page, "Inventory");
   await page.getByRole("link", { name: /^counts$/i }).click();
-  await page.getByLabel(/^location/i).selectOption({ label: "Main Shop" });
-  await page.getByLabel(/count scope/i).selectOption("Spot");
-  await page.getByLabel(/^product/i).selectOption({ label: "Sugar 1kg" });
+  await selectFieldOption(page, /^location/i, { label: "Main Shop" });
+  await selectFieldOption(page, /count scope/i, "Spot");
+  await selectFieldOption(page, /^product/i, { label: "Sugar 1kg" });
   await page.getByRole("button", { name: /open count/i }).click();
   await page.getByLabel(/counted quantity/i).fill("7");
   await page.getByRole("button", { name: /save counted lines/i }).click();
@@ -82,7 +71,10 @@ test("@critical a manager can transfer, receive with discrepancy, count, and app
   await page.getByRole("button", { name: /approve count/i }).click();
   await expect(page.getByText(/Approved/i)).toBeVisible();
 
-  await navigate(page, "Inventory");
+  await navigateApp(page, "Inventory");
   await page.getByRole("link", { name: /movements/i }).click();
-  await expect(page.getByText(/Adjustment|Transfer/i).first()).toBeVisible();
+  await expect(page.getByRole("region", { name: /stock movements/i })).toBeVisible();
+  await expect(page.getByText(/original ledger entry/i).first()).toBeVisible({
+    timeout: 15_000,
+  });
 });

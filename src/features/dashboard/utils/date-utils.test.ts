@@ -25,9 +25,10 @@ describe("dashboard date utils", () => {
   });
 
   it("aggregateDailySales ignores rows outside the window", () => {
-    const stale = new Date("2000-01-01T12:00:00.000Z");
+    const sameWeekdayLastWeek = new Date();
+    sameWeekdayLastWeek.setDate(sameWeekdayLastWeek.getDate() - 7);
     const points = aggregateDailySales(
-      [{ occurredAt: stale.toISOString(), total: "99" }],
+      [{ occurredAt: sameWeekdayLastWeek.toISOString(), total: "99" }],
       1,
     );
     expect(points.every((point) => point.value === 0)).toBe(true);

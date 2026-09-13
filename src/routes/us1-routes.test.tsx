@@ -161,4 +161,25 @@ describe("US1 routes", () => {
     expect(window.location.search).not.toContain("refreshToken");
     expect(window.location.search).not.toContain("accessTokenExpiresAt");
   });
+
+  it("reports an incomplete Google token instead of leaving the callback pending", async () => {
+    const claims = {
+      sub: ownerSessionRecord.userId,
+      email: "owner@kwame.gh",
+      location_scope: "*",
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    };
+    const token = `header.${btoa(JSON.stringify(claims)).replace(/=+$/, "")}.signature`;
+
+    open(
+      `/auth/google-callback?accessToken=${encodeURIComponent(token)}&refreshToken=refresh&redirect=%2Fdashboard`,
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /without a tenant or role/i,
+    );
+    expect(window.location.search).not.toContain("accessToken");
+    expect(window.location.search).not.toContain("refreshToken");
+    expect(window.location.search).not.toContain("redirect");
+  });
 });

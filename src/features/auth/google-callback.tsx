@@ -8,6 +8,7 @@ export const googleCallbackSearchSchema = z.object({
   accessToken: z.string().min(1),
   refreshToken: z.string().min(1),
   accessTokenExpiresAt: z.string().optional(),
+  redirect: z.string().optional(),
 });
 
 export function GoogleCallback({
@@ -34,8 +35,11 @@ export function GoogleCallback({
     if (parsed.data.accessTokenExpiresAt) {
       outcome.accessTokenExpiresAt = parsed.data.accessTokenExpiresAt;
     }
+    if (parsed.data.redirect) {
+      outcome.redirect = parsed.data.redirect;
+    }
     onSignedIn(outcome);
-  }, [parsed.success, parsed.data, onSignedIn]);
+  }, [onSignedIn, parsed.data, parsed.success]);
 
   if (!parsed.success) {
     return (
