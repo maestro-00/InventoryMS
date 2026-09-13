@@ -5,12 +5,12 @@
 
 ## Evidence
 
-| Check                                        | Result          |
-| -------------------------------------------- | --------------- |
-| Contract product batches + trace             | Pass            |
-| FEFO list / expiry filter / trace components | Pass            |
-| Critical E2E                                 | Pass (Chromium) |
-| Quality axe (historical; now advisory) + keyboard | Pass       |
+| Check                                             | Result          |
+| ------------------------------------------------- | --------------- |
+| Contract product batches + trace                  | Pass            |
+| FEFO list / expiry filter / trace components      | Pass            |
+| Critical E2E                                      | Pass (Chromium) |
+| Quality axe (historical; now advisory) + keyboard | Pass            |
 
 ## Honest gaps
 

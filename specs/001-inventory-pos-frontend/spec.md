@@ -413,7 +413,7 @@ the older-expiring batch is used first, then trace it to its receipt and sales.
 - **UX-003**: All interactive behavior MUST be keyboard operable with accessible names,
   visible focus, and logical focus order. Text and meaningful controls SHOULD meet WCAG
   2.2 Level AA contrast; automated axe contrast checks are advisory (`pnpm
-  test:a11y:advisory`).
+test:a11y:advisory`).
 - **UX-004**: Content MUST remain usable at 200% browser zoom.
 - **UX-005**: Frequent POS actions MUST keep the current sale in context and MUST NOT
   require navigating away to scan, search, change quantity, hold, or take payment.

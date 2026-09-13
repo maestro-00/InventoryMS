@@ -2,13 +2,13 @@
 
 **Date**: 2026-09-13 (soft a11y gates reassessment)
 
-| Check                                                  | Gate tier   | Result                                                                      |
-| ------------------------------------------------------ | ----------- | --------------------------------------------------------------------------- |
-| Keyboard reachability (`pnpm test:a11y`)               | **Hard CI** | Pass on story quality specs run this session / prior                        |
-| 200% reflow without horizontal scroll (`pnpm test:a11y`) | **Hard CI** | Pass on US1 till reflow spec                                                |
-| Chromium axe (critical/serious) (`pnpm test:a11y:advisory`) | **Advisory** | Known contrast failures on navy/light surfaces; run pre-release locally |
-| NVDA                                                   | **Advisory** | Not assessed — no Windows + NVDA host in this Linux CI agent environment    |
-| VoiceOver                                              | **Advisory** | Not assessed — no macOS + VoiceOver host in this Linux CI agent environment |
+| Check                                                       | Gate tier    | Result                                                                      |
+| ----------------------------------------------------------- | ------------ | --------------------------------------------------------------------------- |
+| Keyboard reachability (`pnpm test:a11y`)                    | **Hard CI**  | Pass on story quality specs run this session / prior                        |
+| 200% reflow without horizontal scroll (`pnpm test:a11y`)    | **Hard CI**  | Pass on US1 till reflow spec                                                |
+| Chromium axe (critical/serious) (`pnpm test:a11y:advisory`) | **Advisory** | Known contrast failures on navy/light surfaces; run pre-release locally     |
+| NVDA                                                        | **Advisory** | Not assessed — no Windows + NVDA host in this Linux CI agent environment    |
+| VoiceOver                                                   | **Advisory** | Not assessed — no macOS + VoiceOver host in this Linux CI agent environment |
 
 ## Gate policy
 

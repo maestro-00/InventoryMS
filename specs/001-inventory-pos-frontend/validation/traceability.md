@@ -50,7 +50,7 @@ Sources: [`../spec.md`](../spec.md), story validation docs under this folder, au
 | SC-005     | US4 100-sale durability                  | **Blocked** on live InventoryX                                                           |
 | SC-006     | Problem/limit contract tests             | Pass MSW                                                                                 |
 | SC-007     | [`responsive.md`](./responsive.md)       | Chromium pass                                                                            |
-| SC-008     | [`accessibility.md`](./accessibility.md) | Keyboard/reflow hard CI; axe advisory; SR not run                                       |
+| SC-008     | [`accessibility.md`](./accessibility.md) | Keyboard/reflow hard CI; axe advisory; SR not run                                        |
 | SC-009     | Usability US6                            | Protocol/partial; no fabricated %                                                        |
 | SC-010     | Reporting E2E                            | Functional pass; 95%@3s field sample not collected                                       |
 | SC-011     | Access-policy / session tests            | Pass unit                                                                                |

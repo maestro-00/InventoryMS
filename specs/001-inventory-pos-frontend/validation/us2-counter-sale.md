@@ -99,13 +99,13 @@ Email delivery is asserted: the mocked provider queued email and the workspace s
 `pnpm exec playwright test --project=chromium tests/e2e/us2-pos-quality.spec.ts`
 and the US1 a11y suite re-run in the same Chromium session.
 
-| Check                                                 | Viewport / condition | Result |
-| ----------------------------------------------------- | -------------------- | ------ |
-| axe: zero critical or serious POS violations (historical; now advisory)          | 320 x 800 (mobile)   | Pass   |
-| axe: zero critical or serious POS violations (historical; now advisory)          | 768 x 1024 (tablet)  | Pass   |
-| axe: zero critical or serious POS violations (historical; now advisory)          | 1440 x 900 (desktop) | Pass   |
-| keyboard-only till and 200% zoom reflow (hard `@a11y`) | Chromium          | Pass   |
-| US1 surface axe (historical; now advisory)          | Chromium             | Pass   |
+| Check                                                                   | Viewport / condition | Result |
+| ----------------------------------------------------------------------- | -------------------- | ------ |
+| axe: zero critical or serious POS violations (historical; now advisory) | 320 x 800 (mobile)   | Pass   |
+| axe: zero critical or serious POS violations (historical; now advisory) | 768 x 1024 (tablet)  | Pass   |
+| axe: zero critical or serious POS violations (historical; now advisory) | 1440 x 900 (desktop) | Pass   |
+| keyboard-only till and 200% zoom reflow (hard `@a11y`)                  | Chromium             | Pass   |
+| US1 surface axe (historical; now advisory)                              | Chromium             | Pass   |
 
 **Browser caveat.** Only the Chromium project ran. Playwright's Firefox and WebKit
 binaries cannot be installed on this machine, so cross-browser E2E remains unverified.
