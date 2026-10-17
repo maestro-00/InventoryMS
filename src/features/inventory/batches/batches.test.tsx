@@ -13,18 +13,20 @@ const BATCH_ID = "d1111111-1111-4111-8111-111111111111";
 describe("batches", () => {
   it("orders batches FEFO and filters expiry horizon", async () => {
     const user = userEvent.setup();
+    const expiresIn = (days: number) =>
+      new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
     const batches = [
       {
         id: "d2222222-2222-4222-8222-222222222222",
         batchNumber: "BATCH-2",
         qty: "12",
-        expiresAt: "2026-10-01T00:00:00.000Z",
+        expiresAt: expiresIn(20),
       },
       {
         id: BATCH_ID,
         batchNumber: "BATCH-1",
         qty: "8",
-        expiresAt: "2026-09-20T00:00:00.000Z",
+        expiresAt: expiresIn(5),
         damagedQty: "1",
       },
     ];

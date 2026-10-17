@@ -1,9 +1,18 @@
-import type { BillingPlan } from "../../billing/api/billing-queries";
-import { PRICING_COMPARISON_ROWS, PRICING_FAQ } from "../shared/marketing-content";
+import type { BillingPlan } from "../../billing/api/plan-schema";
+import { PlanComparisonTable } from "../../billing/plans/plan-comparison-table";
+import {
+  buildPlanFeatureBullets,
+  formatPlanPrice,
+  partitionPlansForMarketing,
+  recommendedPlanIndex,
+  salesContactHref,
+  type BillingCycle,
+} from "../../billing/plans/plan-presentation";
+import { PRICING_FAQ } from "../shared/marketing-content";
 import { MarketingShell } from "../layout/marketing-shell";
 import { PricingCard } from "./pricing-card";
-import { PricingComparisonMobile } from "./pricing-comparison-mobile";
 import { useState } from "react";
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/utils/cn";
 import {
   MarketingAtmosphere,
@@ -11,88 +20,30 @@ import {
   MarketingEyebrow,
 } from "../shared/marketing-ui";
 
-const FALLBACK_PLANS = [
-  {
-    plan: "Free",
-    price: "GHS 0",
-    description: "For single-location shops getting started",
-    features: ["1 location", "500 products", "Basic POS", "Email support"],
-    highlighted: false,
-    badge: "",
-  },
-  {
-    plan: "Standard",
-    price: "GHS 249",
-    description: "For growing retailers with multiple locations",
-    features: [
-      "3 locations",
-      "5,000 products",
-      "Offline POS",
-      "Purchasing & reports",
-      "Priority support",
-    ],
-    highlighted: true,
-    badge: "Most popular",
-  },
-  {
-    plan: "Professional",
-    price: "GHS 499",
-    description: "For larger operations needing advanced control",
-    features: [
-      "Unlimited locations",
-      "Unlimited products",
-      "Advanced reports",
-      "Staff roles",
-      "Dedicated support",
-    ],
-    highlighted: false,
-    badge: "",
-  },
-] as const;
-
-function formatPlanPrice(plan: BillingPlan, cycle: "monthly" | "annual"): string {
-  const raw =
-    cycle === "annual"
-      ? (plan.annualPrice ?? plan.monthlyPrice)
-      : (plan.monthlyPrice ?? plan.annualPrice);
-  if (raw == null) return "—";
-  const amount = typeof raw === "number" ? raw : Number.parseFloat(raw);
-  if (Number.isNaN(amount)) return String(raw);
-  return `GHS ${amount.toLocaleString("en-GH", { maximumFractionDigits: 0 })}`;
-}
-
-function planFeatures(plan: BillingPlan): string[] {
-  const limits = plan.limits ?? {};
-  const entries = Object.entries(limits).slice(0, 5);
-  if (entries.length === 0) {
-    return [`${plan.name} tier`, `${plan.tier} plan features`];
-  }
-  return entries.map(([key, value]) =>
-    value == null ? `Unlimited ${key}` : `Up to ${String(value)} ${key}`,
-  );
-}
-
-export function PricingPage({ plans }: { plans?: BillingPlan[] }) {
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
-
-  const displayPlans =
-    plans && plans.length >= 3
-      ? plans.slice(0, 3).map((plan, index) => ({
-          plan: plan.name,
-          price: formatPlanPrice(plan, billingCycle),
-          description: `${plan.tier} plan for your business`,
-          features: planFeatures(plan),
-          highlighted: index === 1,
-          badge: index === 1 ? "Most popular" : "",
-        }))
-      : FALLBACK_PLANS.map((plan) => ({
-          ...plan,
-          price: plan.price,
-        }));
+export function PricingPage({
+  plans,
+  isLoading = false,
+  isError = false,
+  onRetry,
+}: {
+  plans?: BillingPlan[];
+  isLoading?: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
+}) {
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
+  const { selfServe, contact } = partitionPlansForMarketing(plans ?? []);
+  const highlightIndex = recommendedPlanIndex(selfServe);
 
   return (
     <MarketingShell activePage="pricing">
-      <MarketingAtmosphere className="px-4 py-10 text-center sm:py-16 md:px-16 md:pt-20">
+      <MarketingAtmosphere
+        backgroundImage="/images/marketing/pricing-header.webp"
+        imagePosition="center 46%"
+        imageClassName="saturate-50"
+        overlayClassName="bg-navy/90"
+        className="px-4 py-10 text-center sm:py-16 md:px-16 md:pt-20"
+      >
         <div className="mx-auto max-w-2xl">
           <MarketingEyebrow className="mx-auto flex justify-center">
             Pricing
@@ -151,79 +102,81 @@ export function PricingPage({ plans }: { plans?: BillingPlan[] }) {
       </MarketingAtmosphere>
 
       <section className="bg-background px-4 py-10 sm:py-16 md:px-16">
-        <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3 md:items-stretch">
-          {displayPlans.map((plan) => (
-            <PricingCard
-              key={plan.plan}
-              plan={plan.plan}
-              price={plan.price}
-              period={billingCycle === "annual" ? "/ year" : "/ month"}
-              description={plan.description}
-              features={[...plan.features]}
-              cta="Start free trial"
-              highlighted={plan.highlighted}
-              badge={plan.badge}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="border-t border-border px-4 py-10 sm:py-16 md:px-16">
-        <MarketingDisplayHeading
-          as="h2"
-          className="mb-6 text-center text-2xl text-foreground sm:mb-10 sm:text-3xl"
-        >
-          Compare plans
-        </MarketingDisplayHeading>
-        <div className="mx-auto max-w-4xl">
-          <PricingComparisonMobile />
-          <div className="hidden overflow-x-auto md:block">
-            <div className="grid min-w-[640px] grid-cols-4 overflow-hidden rounded-xl border border-border shadow-sm">
-              <div className="bg-muted p-5 text-sm font-semibold text-muted-foreground">
-                Feature
-              </div>
-              {["Starter", "Professional", "Business"].map((tier) => (
-                <div
-                  key={tier}
-                  className={cn(
-                    "bg-muted p-5 text-center text-sm font-semibold",
-                    tier === "Professional" ? "text-primary" : "text-foreground",
-                  )}
-                >
-                  {tier}
-                </div>
-              ))}
-              {PRICING_COMPARISON_ROWS.map((row, index) => (
-                <div key={row.feature} className="contents">
-                  <div
-                    className={
-                      index % 2 === 0
-                        ? "border-t border-border bg-background p-4 text-sm text-foreground"
-                        : "border-t border-border bg-muted/50 p-4 text-sm text-foreground"
-                    }
-                  >
-                    {row.feature}
-                  </div>
-                  {[row.starter, row.professional, row.business].map(
-                    (cell, cellIndex) => (
-                      <div
-                        key={`${row.feature}-${String(cellIndex)}`}
-                        className={cn(
-                          "border-t border-border p-4 text-center text-sm",
-                          index % 2 === 0 ? "bg-background" : "bg-muted/50",
-                          cellIndex === 1 ? "font-medium text-primary" : undefined,
-                        )}
-                      >
-                        {cell}
-                      </div>
-                    ),
-                  )}
-                </div>
+        {isLoading ? <PricingSkeleton /> : null}
+        {isError ? (
+          <div className="mx-auto flex max-w-md flex-col items-center gap-3 text-center">
+            <p role="alert" className="text-sm text-muted-foreground">
+              Pricing is unavailable right now. Try again to load current plans.
+            </p>
+            {onRetry ? (
+              <Button type="button" variant="outline" onClick={onRetry}>
+                Retry
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+        {!isLoading && !isError && selfServe.length === 0 ? (
+          <p role="status" className="text-center text-sm text-muted-foreground">
+            Plans are not published yet.
+          </p>
+        ) : null}
+        {!isLoading && !isError && selfServe.length > 0 ? (
+          <div className="mx-auto flex max-w-5xl flex-col gap-6">
+            <div className="grid gap-6 md:grid-cols-3 md:items-stretch">
+              {selfServe.map((plan, index) => (
+                <PricingCard
+                  key={plan.id}
+                  plan={plan.name}
+                  price={formatPlanPrice(plan, billingCycle)}
+                  period={billingCycle === "annual" ? "/ year" : "/ month"}
+                  description={`${plan.tier} plan for your business`}
+                  features={buildPlanFeatureBullets(plan)}
+                  cta="Start free trial"
+                  highlighted={index === highlightIndex}
+                  badge={index === highlightIndex ? "Most popular" : ""}
+                />
               ))}
             </div>
+            {contact ? (
+              <PricingCard
+                plan={contact.name}
+                price="Custom"
+                period=""
+                description="For larger operations that need a tailored rollout and dedicated support."
+                features={buildPlanFeatureBullets(contact)}
+                cta="Contact sales"
+                ctaHref={salesContactHref()}
+              />
+            ) : null}
           </div>
-        </div>
+        ) : null}
       </section>
+
+      {!isLoading && !isError && selfServe.length > 0 ? (
+        <section className="border-t border-border px-4 py-10 sm:py-16 md:px-16">
+          <MarketingDisplayHeading
+            as="h2"
+            className="mb-6 text-center text-2xl text-foreground sm:mb-10 sm:text-3xl"
+          >
+            Compare plans
+          </MarketingDisplayHeading>
+          <div className="mx-auto max-w-4xl">
+            <PlanComparisonTable plans={selfServe} highlightIndex={highlightIndex} />
+            {contact ? (
+              <p className="mt-4 text-center text-sm text-muted-foreground">
+                Need {contact.name}?{" "}
+                <a
+                  href={salesContactHref()}
+                  className="font-medium text-primary hover:underline"
+                >
+                  Contact sales
+                </a>{" "}
+                for a custom plan.
+              </p>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
 
       <section className="bg-muted/50 px-4 py-10 sm:py-16 md:px-16">
         <MarketingDisplayHeading
@@ -245,5 +198,29 @@ export function PricingPage({ plans }: { plans?: BillingPlan[] }) {
         </div>
       </section>
     </MarketingShell>
+  );
+}
+
+function PricingSkeleton() {
+  return (
+    <div
+      className="mx-auto flex max-w-5xl flex-col gap-10"
+      aria-busy="true"
+      aria-label="Loading plans"
+    >
+      <div className="grid gap-6 md:grid-cols-3">
+        {["a", "b", "c"].map((slot) => (
+          <div
+            key={slot}
+            className="h-80 animate-pulse rounded-xl border border-border bg-muted"
+          />
+        ))}
+      </div>
+      <div className="flex flex-col gap-3" aria-label="Loading plan comparison">
+        {["r1", "r2", "r3", "r4"].map((slot) => (
+          <div key={slot} className="h-12 animate-pulse rounded-lg bg-muted" />
+        ))}
+      </div>
+    </div>
   );
 }

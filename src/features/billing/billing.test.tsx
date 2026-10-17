@@ -9,6 +9,7 @@ import { CancellationPanel } from "./subscription/cancellation";
 import { ChangePlanForm } from "./subscription/change-plan";
 import { PaymentMethodForm } from "./payment-method/payment-method-form";
 import { DataExportPanel, InvoiceHistory } from "./invoices/invoice-history";
+import { billingPlansFixture } from "../../../tests/fixtures/billing-plans";
 import { ownerSession } from "../../../tests/fixtures/provider/session";
 import { SessionProvider } from "../../shared/auth/session-context";
 import { SessionManager, sessionManager } from "../../shared/auth/session-manager";
@@ -140,15 +141,12 @@ describe("billing surfaces", () => {
     let upgraded: string | undefined;
     server.use(
       http.get("*/api/v1/billing/plans", () =>
-        HttpResponse.json([
-          { id: "starter", name: "Starter", tier: "Starter" },
-          { id: "pro", name: "Professional", tier: "Professional" },
-        ]),
+        HttpResponse.json([billingPlansFixture[0], billingPlansFixture[2]]),
       ),
       http.get("*/api/v1/billing/subscription", () =>
         HttpResponse.json({
           ...subscriptionBody,
-          plan: "Starter",
+          plan: "Free",
           status: "Active",
           trialEndsAt: null,
           usage: [{ metric: "Locations", used: 1 }],
@@ -173,10 +171,12 @@ describe("billing surfaces", () => {
       }),
     );
     renderBilling(<PlanComparison />);
-    expect(await screen.findByText(/Locations/i)).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: /switch to professional/i }),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /switch to professional/i }));
     await vi.waitFor(() => {
-      expect(upgraded).toBe("pro");
+      expect(upgraded).toBe("plan-professional");
     });
   });
 
@@ -265,5 +265,43 @@ describe("billing surfaces", () => {
       expect(reactivated).toBe(true);
     });
     confirm.mockRestore();
+  });
+
+  it("renders four API plans and withholds switch actions on contact-sales", async () => {
+    server.use(
+      http.get("*/api/v1/billing/plans", () => HttpResponse.json(billingPlansFixture)),
+      http.get("*/api/v1/billing/subscription", () =>
+        HttpResponse.json({
+          ...subscriptionBody,
+          plan: "Standard",
+          status: "Active",
+          trialEndsAt: null,
+        }),
+      ),
+    );
+    renderBilling(<PlanComparison />);
+    expect(await screen.findByLabelText(/plan free/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/plan standard/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/plan professional/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/plan business/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /switch to professional/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /switch to business/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /contact sales to change/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen
+        .getAllByText("Standard")
+        .some((node) => node.classList.contains("text-primary")),
+    ).toBe(true);
+    expect(
+      screen
+        .getAllByText("Free")
+        .some((node) => node.classList.contains("text-primary")),
+    ).toBe(false);
   });
 });

@@ -5,6 +5,7 @@ import {
   rfc7807Problem,
   stockFixture,
 } from "../../../../tests/fixtures/domain";
+import { billingPlansFixture } from "../../../../tests/fixtures/billing-plans";
 import { ownerSession } from "../../../../tests/fixtures/provider/session";
 
 const origin = "*" as const;
@@ -48,6 +49,9 @@ export const handlers = [
     }),
   ),
   http.get(`${origin}/api/v1/tenant`, () => HttpResponse.json(ownerSession)),
+  http.get(`${origin}/api/v1/billing/plans`, () =>
+    HttpResponse.json(billingPlansFixture),
+  ),
   http.get(`${origin}/api/v1/registers/:registerId/favourites`, () =>
     HttpResponse.json({
       registerId: "88888888-8888-4888-8888-888888888888",

@@ -76,7 +76,12 @@ export function FeaturesPage() {
 
   return (
     <MarketingShell activePage="features">
-      <MarketingAtmosphere className="px-4 py-10 sm:py-16 md:px-16 md:py-20">
+      <MarketingAtmosphere
+        backgroundImage="/images/marketing/features-header.webp"
+        imagePosition="center 48%"
+        overlayClassName="bg-gradient-to-r from-navy/96 via-navy/88 to-navy/64"
+        className="px-4 py-10 sm:py-16 md:px-16 md:py-20"
+      >
         <div className="mx-auto max-w-3xl">
           <MarketingEyebrow>Features</MarketingEyebrow>
           <MarketingDisplayHeading className="text-4xl text-navy-foreground sm:text-5xl md:text-6xl">

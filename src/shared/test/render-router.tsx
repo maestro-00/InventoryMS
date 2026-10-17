@@ -32,6 +32,7 @@ export function renderWithRouter(
   const router = createAppRouter({
     session: manager.getSnapshot(),
     sessionManager: manager,
+    queryClient,
   });
 
   function Wrapper({ children }: { children: ReactNode }) {

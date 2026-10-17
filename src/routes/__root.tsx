@@ -1,3 +1,4 @@
+import type { QueryClient } from "@tanstack/react-query";
 import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
 import type { SessionSnapshot } from "../shared/auth/access-policy";
 import type { SessionManager } from "../shared/auth/session-manager";
@@ -11,6 +12,8 @@ export interface RouterContext {
    * exists now, not the one React has finished rendering.
    */
   sessionManager: SessionManager;
+  /** Shared with route loaders so prefetch and `useQuery` hit the same cache. */
+  queryClient: QueryClient;
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({

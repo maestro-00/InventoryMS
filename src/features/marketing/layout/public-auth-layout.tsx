@@ -6,13 +6,22 @@ import { MarketingAtmosphere } from "../shared/marketing-ui";
 export function PublicAuthLayout({
   leftContent,
   rightContent,
+  backgroundImage,
+  imagePosition = "center",
 }: {
   leftContent: ReactNode;
   rightContent: ReactNode;
+  backgroundImage?: string;
+  imagePosition?: string;
 }) {
   return (
     <div className="flex min-h-dvh flex-col overflow-x-hidden lg:flex-row">
-      <MarketingAtmosphere className="order-2 flex w-full flex-col justify-between px-4 py-8 sm:px-6 lg:order-1 lg:w-1/2 lg:p-14">
+      <MarketingAtmosphere
+        {...(backgroundImage ? { backgroundImage } : {})}
+        imagePosition={imagePosition}
+        overlayClassName="bg-gradient-to-b from-navy/88 via-navy/80 to-navy/94"
+        className="order-2 flex w-full flex-col justify-between px-4 py-8 sm:px-6 lg:order-1 lg:w-1/2 lg:p-14"
+      >
         <MarketingBrand />
         <div className="flex flex-1 flex-col justify-center py-6 lg:py-0">
           {leftContent}

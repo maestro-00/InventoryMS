@@ -7,6 +7,7 @@ import {
   fetchPlans,
   fetchSubscription,
 } from "../../src/features/billing/api/billing-queries";
+import { billingPlansFixture } from "../fixtures/billing-plans";
 
 const SNAPSHOT_PATH = "openapi/inventoryx-v1.json";
 
@@ -46,9 +47,7 @@ describe("US5 provider contract surface", () => {
 describe("billing queries", () => {
   it("loads plans, subscription, and invoices from the provider", async () => {
     server.use(
-      http.get("*/api/v1/billing/plans", () =>
-        HttpResponse.json([{ id: "starter", name: "Starter", tier: "Starter" }]),
-      ),
+      http.get("*/api/v1/billing/plans", () => HttpResponse.json(billingPlansFixture)),
       http.get("*/api/v1/billing/subscription", () =>
         HttpResponse.json({
           id: "11111111-1111-4111-8111-111111111111",
@@ -74,7 +73,14 @@ describe("billing queries", () => {
       ),
     );
 
-    expect(await fetchPlans()).toHaveLength(1);
+    const plans = await fetchPlans();
+    expect(plans).toHaveLength(billingPlansFixture.length);
+    expect(plans.map((plan) => plan.name)).toEqual([
+      "Free",
+      "Standard",
+      "Professional",
+      "Business",
+    ]);
     expect((await fetchSubscription()).status).toBe("Trialing");
     expect((await fetchInvoices())[0]?.number).toBe("INV-1");
   });

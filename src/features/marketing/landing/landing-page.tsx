@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, PlayCircle } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { MarketingShell } from "../layout/marketing-shell";
 import {
@@ -18,7 +18,13 @@ import {
 export function LandingPage() {
   return (
     <MarketingShell>
-      <MarketingAtmosphere className="px-4 py-10 sm:py-16 md:px-16 md:py-24">
+      <MarketingAtmosphere
+        backgroundImage="/images/marketing/landing-hero.webp"
+        imagePosition="center 48%"
+        imageClassName="scale-[1.02]"
+        overlayClassName="bg-gradient-to-r from-navy/96 via-navy/88 to-navy/70"
+        className="px-4 py-10 sm:py-16 md:px-16 md:py-24"
+      >
         <section className="mx-auto flex max-w-6xl flex-col items-stretch gap-10 md:flex-row md:items-center md:gap-16">
           <div className="flex-1">
             <div className="marketing-animate-in mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-navy-light/80 bg-navy-light/60 px-3 py-1.5 backdrop-blur-sm sm:mb-6">
@@ -27,7 +33,7 @@ export function LandingPage() {
                 aria-hidden
               />
               <span className="text-xs leading-snug text-navy-foreground/80">
-                14-day Professional trial · No credit card
+                14-day Professional trial · No credit card required
               </span>
             </div>
             <MarketingDisplayHeading className="mb-4 text-4xl text-navy-foreground sm:mb-6 sm:text-5xl md:text-6xl lg:text-7xl">
@@ -38,7 +44,7 @@ export function LandingPage() {
               for Ghana retailers.
             </MarketingDisplayHeading>
             <p className="marketing-animate-in marketing-delay-2 mb-8 max-w-lg text-base leading-relaxed text-navy-foreground/70 sm:mb-10 sm:text-lg">
-              Real-time stock, counter sales, and reporting across every location —
+              Real-time stock, counter sales, and reporting across every location,
               including offline POS when connectivity is unreliable.
             </p>
             <div className="marketing-animate-in marketing-delay-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
@@ -53,7 +59,7 @@ export function LandingPage() {
                 className="group inline-flex min-h-touch w-full items-center justify-center gap-2 rounded-md border border-navy-light/60 bg-navy-light/30 px-4 text-sm font-medium text-navy-foreground backdrop-blur-sm transition-colors hover:bg-navy-light/50 sm:w-auto sm:justify-start"
               >
                 See features
-                <PlayCircle
+                <Sparkles
                   className="size-4 transition-transform group-hover:scale-110"
                   aria-hidden
                 />
@@ -137,7 +143,12 @@ export function LandingPage() {
         </div>
       </section>
 
-      <MarketingAtmosphere className="mx-4 mb-24 rounded-2xl sm:mb-20 md:mx-16">
+      <MarketingAtmosphere
+        backgroundImage="/images/marketing/closing-cta.webp"
+        imagePosition="center 48%"
+        overlayClassName="bg-gradient-to-r from-navy/95 via-navy/86 to-navy/68"
+        className="mx-4 mb-24 rounded-2xl sm:mb-20 md:mx-16"
+      >
         <section className="flex flex-col items-stretch justify-between gap-6 px-5 py-8 sm:px-8 sm:py-10 md:flex-row md:items-center md:px-14 md:py-14">
           <div>
             <MarketingDisplayHeading
