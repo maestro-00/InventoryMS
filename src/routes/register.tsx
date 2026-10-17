@@ -22,6 +22,8 @@ function RegisterPage() {
 
   return (
     <PublicAuthLayout
+      backgroundImage="/images/marketing/registration.webp"
+      imagePosition="center 42%"
       leftContent={<RegisterLeftPanel />}
       rightContent={
         <>

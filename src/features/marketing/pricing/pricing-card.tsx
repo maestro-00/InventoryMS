@@ -10,9 +10,18 @@ export type PricingCardProps = {
   features: string[];
   cta: string;
   ctaTo?: string;
+  ctaHref?: string;
   highlighted?: boolean;
   badge?: string;
 };
+
+const ctaClassName = (highlighted: boolean) =>
+  cn(
+    "relative inline-flex min-h-touch items-center justify-center rounded-lg py-2.5 text-center text-sm font-medium transition-transform hover:scale-[1.02] active:scale-[0.98]",
+    highlighted
+      ? "bg-primary-foreground text-primary shadow-md"
+      : "bg-primary text-primary-foreground shadow-sm shadow-primary/20",
+  );
 
 export function PricingCard({
   plan,
@@ -22,6 +31,7 @@ export function PricingCard({
   features,
   cta,
   ctaTo = "/register",
+  ctaHref,
   highlighted = false,
   badge = "",
 }: PricingCardProps) {
@@ -71,14 +81,16 @@ export function PricingCard({
         >
           {price}
         </span>
-        <span
-          className={cn(
-            "mb-1.5 text-sm",
-            highlighted ? "text-primary-foreground/70" : "text-muted-foreground",
-          )}
-        >
-          {period}
-        </span>
+        {period ? (
+          <span
+            className={cn(
+              "mb-1.5 text-sm",
+              highlighted ? "text-primary-foreground/70" : "text-muted-foreground",
+            )}
+          >
+            {period}
+          </span>
+        ) : null}
       </div>
       <p
         className={cn(
@@ -109,17 +121,15 @@ export function PricingCard({
           </li>
         ))}
       </ul>
-      <Link
-        to={ctaTo}
-        className={cn(
-          "relative inline-flex min-h-touch items-center justify-center rounded-lg py-2.5 text-center text-sm font-medium transition-transform hover:scale-[1.02] active:scale-[0.98]",
-          highlighted
-            ? "bg-primary-foreground text-primary shadow-md"
-            : "bg-primary text-primary-foreground shadow-sm shadow-primary/20",
-        )}
-      >
-        {cta}
-      </Link>
+      {ctaHref ? (
+        <a href={ctaHref} className={ctaClassName(highlighted)}>
+          {cta}
+        </a>
+      ) : (
+        <Link to={ctaTo} className={ctaClassName(highlighted)}>
+          {cta}
+        </Link>
+      )}
     </article>
   );
 }

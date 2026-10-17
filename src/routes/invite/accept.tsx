@@ -37,6 +37,8 @@ function InviteAcceptPage() {
 
   return (
     <PublicAuthLayout
+      backgroundImage="/images/marketing/invitation.webp"
+      imagePosition="center 44%"
       leftContent={
         <div>
           <h2 className="mb-4 text-3xl font-bold leading-tight text-navy-foreground">

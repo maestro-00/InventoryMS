@@ -9,6 +9,12 @@ import {
   scopedQueryKey,
 } from "../../../shared/api/client/query-scope";
 import { authorizedFetch } from "../../../shared/api/client/authorized-fetch";
+import { normalizeBillingPlans, planSchema, type BillingPlan } from "./plan-schema";
+
+export type { BillingPlan } from "./plan-schema";
+export { planSchema } from "./plan-schema";
+
+export const billingPlansQueryKey = ["billing", "plans"] as const;
 
 const origin = (
   import.meta.env.VITE_INVENTORYX_ORIGIN || "http://localhost:5088"
@@ -17,17 +23,6 @@ const origin = (
 function authedFetch(path: string, init?: RequestInit): Promise<Response> {
   return authorizedFetch(`${origin}${path}`, init);
 }
-
-const planSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  tier: z.string(),
-  monthlyPrice: z.union([z.string(), z.number()]).optional(),
-  annualPrice: z.union([z.string(), z.number()]).optional(),
-  limits: z.record(z.string(), z.number().nullable()).optional(),
-});
-
-export type BillingPlan = z.infer<typeof planSchema>;
 
 const usageSchema = z.object({
   metric: z.string(),
@@ -64,7 +59,9 @@ export type BillingInvoice = z.infer<typeof invoiceSchema>;
 
 export async function fetchPlans(): Promise<BillingPlan[]> {
   const outcome = await inventoryxClient.GET("/api/v1/billing/plans");
-  return parseValue(outcome, z.array(planSchema), "Billing plans");
+  return normalizeBillingPlans(
+    parseValue(outcome, z.array(planSchema), "Billing plans"),
+  );
 }
 
 export async function fetchSubscription(): Promise<BillingSubscription> {
@@ -167,7 +164,7 @@ export async function fetchExportJob(jobId: string): Promise<{
 }
 
 export function useBillingPlans(): UseQueryResult<BillingPlan[]> {
-  return useQuery({ queryKey: ["billing", "plans"], queryFn: fetchPlans });
+  return useQuery({ queryKey: billingPlansQueryKey, queryFn: fetchPlans });
 }
 
 export function useBillingSubscription(): UseQueryResult<BillingSubscription> {

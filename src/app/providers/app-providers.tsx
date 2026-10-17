@@ -47,12 +47,13 @@ function QueryScopeTeardown() {
 
 function RoutedApp() {
   const { session, manager } = useSession();
+  const queryClient = useQueryClient();
   // One router instance for the life of the app: recreating it on every session change
   // would throw away the current location. Signing in or out re-runs the guards through
   // an invalidation with the fresh context instead.
   const router = useMemo(
-    () => createAppRouter({ session: null, sessionManager: manager }),
-    [manager],
+    () => createAppRouter({ session: null, sessionManager: manager, queryClient }),
+    [manager, queryClient],
   );
 
   useEffect(() => {
@@ -60,7 +61,10 @@ function RoutedApp() {
   }, [router, session]);
 
   return (
-    <RouterProvider router={router} context={{ session, sessionManager: manager }} />
+    <RouterProvider
+      router={router}
+      context={{ session, sessionManager: manager, queryClient }}
+    />
   );
 }
 

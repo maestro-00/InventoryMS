@@ -132,20 +132,10 @@ export const PRICING_FAQ = [
   },
   {
     q: "Does offline POS work on every plan?",
-    a: "Offline counter sales are included on Professional and higher tiers. See plan details for limits.",
+    a: "Offline counter sales are included on paid plans. See plan details for limits.",
   },
   {
     q: "Who owns my data?",
     a: "Your business data stays yours. Export options are available from billing settings.",
   },
-] as const;
-
-export const PRICING_COMPARISON_ROWS = [
-  { feature: "Locations", starter: "1", professional: "3", business: "Unlimited" },
-  { feature: "Products", starter: "500", professional: "5,000", business: "Unlimited" },
-  { feature: "Staff users", starter: "3", professional: "10", business: "Unlimited" },
-  { feature: "Offline POS", starter: "—", professional: "✓", business: "✓" },
-  { feature: "Purchasing", starter: "—", professional: "✓", business: "✓" },
-  { feature: "Advanced reports", starter: "—", professional: "✓", business: "✓" },
-  { feature: "Priority support", starter: "—", professional: "—", business: "✓" },
 ] as const;

@@ -33,6 +33,22 @@ describe("marketing-ui", () => {
     expect(container.querySelector(".marketing-grid-light")).toBeTruthy();
   });
 
+  it("renders an optional decorative background image", () => {
+    const { container } = render(
+      <MarketingAtmosphere
+        backgroundImage="/images/marketing/test.webp"
+        imagePosition="center right"
+      >
+        <p>Foreground content</p>
+      </MarketingAtmosphere>,
+    );
+
+    const image = screen.getByRole("presentation");
+    expect(image).toHaveAttribute("src", "/images/marketing/test.webp");
+    expect(image).toHaveStyle({ objectPosition: "center right" });
+    expect(container.querySelector(".marketing-grid-navy")).toBeNull();
+  });
+
   it("renders dashboard preview and logo marquee", () => {
     render(
       <>

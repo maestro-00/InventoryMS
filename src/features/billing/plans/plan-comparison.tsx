@@ -11,25 +11,15 @@ import { Button } from "../../../shared/ui/button";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
 import { UsageMeter } from "../../marketing/plans/usage-meter";
 import { cn } from "@/shared/utils/cn";
-
-function formatPrice(plan: BillingPlan): string {
-  const raw = plan.monthlyPrice ?? plan.annualPrice;
-  if (raw == null) return "—";
-  const amount = typeof raw === "number" ? raw : Number.parseFloat(raw);
-  if (Number.isNaN(amount)) return typeof raw === "number" ? String(raw) : raw;
-  return `GHS ${amount.toLocaleString("en-GH", { maximumFractionDigits: 0 })}`;
-}
-
-function planFeatures(plan: BillingPlan): string[] {
-  const limits = plan.limits ?? {};
-  const entries = Object.entries(limits).slice(0, 6);
-  if (entries.length === 0) {
-    return [`${plan.tier} tier`];
-  }
-  return entries.map(([key, value]) =>
-    value == null ? `Unlimited ${key}` : `${String(value)} ${key}`,
-  );
-}
+import { PlanComparisonTable } from "./plan-comparison-table";
+import {
+  buildPlanFeatureBullets,
+  formatPlanPrice,
+  isContactSalesPlan,
+  recommendedHighlightIndex,
+  salesContactHref,
+  sortPlansByRank,
+} from "./plan-presentation";
 
 export function PlanComparison() {
   const plans = useBillingPlans();
@@ -41,13 +31,11 @@ export function PlanComparison() {
   );
 
   const currentPlanName = subscription.data?.plan ?? "";
-  const planList = plans.data ?? [];
+  const planList = sortPlansByRank(plans.data ?? []);
+  const highlightIndex = recommendedHighlightIndex(planList);
 
   function planRank(plan: BillingPlan): number {
-    const fromPrice = plan.monthlyPrice ?? plan.annualPrice;
-    const amount =
-      typeof fromPrice === "number" ? fromPrice : Number.parseFloat(fromPrice ?? "0");
-    return Number.isNaN(amount) ? 0 : amount;
+    return plan.monthlyPrice ?? plan.annualPrice ?? 0;
   }
 
   function handlePlanAction(plan: BillingPlan) {
@@ -127,12 +115,13 @@ export function PlanComparison() {
 
       <div>
         <h2 className="mb-5 text-base font-semibold text-foreground">Change plan</h2>
-        <div className="grid gap-4 sm:gap-5 md:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
           {planList.map((plan) => {
             const isCurrent =
               plan.name === currentPlanName ||
               plan.tier === currentPlanName ||
               plan.id === currentPlanName;
+            const contactSales = isContactSalesPlan(plan);
             return (
               <article
                 key={plan.id}
@@ -164,12 +153,14 @@ export function PlanComparison() {
                       isCurrent ? "text-secondary-foreground" : "text-foreground",
                     )}
                   >
-                    {formatPrice(plan)}
+                    {contactSales ? "Custom" : formatPlanPrice(plan, "monthly")}
                   </span>
-                  <span className="mb-1 text-xs text-muted-foreground">/ month</span>
+                  {contactSales ? null : (
+                    <span className="mb-1 text-xs text-muted-foreground">/ month</span>
+                  )}
                 </div>
                 <ul className="mb-6 flex flex-1 flex-col gap-2.5">
-                  {planFeatures(plan).map((feature) => (
+                  {buildPlanFeatureBullets(plan).map((feature) => (
                     <li key={feature} className="flex items-center gap-2">
                       <Check
                         className={cn(
@@ -193,6 +184,13 @@ export function PlanComparison() {
                   <div className="rounded-md border border-primary py-2.5 text-center text-sm font-medium text-secondary-foreground">
                     Active plan
                   </div>
+                ) : contactSales ? (
+                  <a
+                    href={salesContactHref()}
+                    className="inline-flex min-h-touch items-center justify-center rounded-md border border-border py-2.5 text-center text-sm font-medium text-foreground hover:border-primary"
+                  >
+                    Contact sales to change
+                  </a>
                 ) : (
                   <Button
                     type="button"
@@ -214,11 +212,17 @@ export function PlanComparison() {
         </div>
       </div>
 
-      <p className="text-sm text-muted-foreground">
-        <a href="/pricing" className="font-medium text-primary hover:underline">
-          Compare all features →
-        </a>
-      </p>
+      {planList.length > 0 ? (
+        <div>
+          <h2 className="mb-5 text-base font-semibold text-foreground">
+            Compare all features
+          </h2>
+          <PlanComparisonTable
+            plans={planList}
+            highlightIndex={Math.min(highlightIndex, Math.max(planList.length - 1, 0))}
+          />
+        </div>
+      ) : null}
     </section>
   );
 }

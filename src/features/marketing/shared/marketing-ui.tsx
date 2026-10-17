@@ -7,10 +7,18 @@ export function MarketingAtmosphere({
   children,
   className,
   variant = "navy",
+  backgroundImage,
+  imagePosition = "center",
+  imageClassName,
+  overlayClassName,
 }: {
   children: ReactNode;
   className?: string;
   variant?: "navy" | "light";
+  backgroundImage?: string;
+  imagePosition?: string;
+  imageClassName?: string;
+  overlayClassName?: string;
 }) {
   return (
     <div
@@ -20,13 +28,37 @@ export function MarketingAtmosphere({
         className,
       )}
     >
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-0",
-          variant === "navy" ? "marketing-grid-navy" : "marketing-grid-light",
-        )}
-        aria-hidden
-      />
+      {backgroundImage ? (
+        <>
+          <img
+            src={backgroundImage}
+            alt=""
+            role="presentation"
+            className={cn(
+              "pointer-events-none absolute inset-0 size-full object-cover",
+              imageClassName,
+            )}
+            style={{ objectPosition: imagePosition }}
+          />
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-0",
+              variant === "navy" ? "bg-navy/82" : "bg-background/85",
+              overlayClassName,
+            )}
+            aria-hidden
+          />
+        </>
+      ) : null}
+      {!backgroundImage ? (
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-0",
+            variant === "navy" ? "marketing-grid-navy" : "marketing-grid-light",
+          )}
+          aria-hidden
+        />
+      ) : null}
       {variant === "navy" ? (
         <>
           <div

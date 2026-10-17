@@ -39,6 +39,8 @@ function LoginPage() {
 
   return (
     <PublicAuthLayout
+      backgroundImage="/images/marketing/login.webp"
+      imagePosition="center 58%"
       leftContent={<LoginLeftPanel />}
       rightContent={
         <>
