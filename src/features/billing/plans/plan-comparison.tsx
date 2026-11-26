@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check } from "lucide-react";
 import {
   downgradePlan,
@@ -12,6 +12,7 @@ import { useConfirmDialog } from "../../../shared/ui/use-confirm-dialog";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
 import { UsageMeter } from "../../marketing/plans/usage-meter";
 import { cn } from "@/shared/utils/cn";
+import { formatUtcDateTime } from "../../../shared/utils/date-time";
 import { PlanComparisonTable } from "./plan-comparison-table";
 import {
   buildPlanFeatureBullets,
@@ -22,12 +23,24 @@ import {
   sortPlansByRank,
 } from "./plan-presentation";
 
+const usageLabels: Record<string, string> = {
+  salesThisMonth: "Sales this month",
+  locations: "Locations",
+  users: "Staff users",
+  products: "Products",
+  registers: "Registers",
+};
+
 export function PlanComparison() {
   const { confirm, dialog } = useConfirmDialog();
+  const queryClient = useQueryClient();
   const plans = useBillingPlans();
   const subscription = useBillingSubscription();
-  const upgrade = useMutation({ mutationFn: upgradePlan });
-  const downgrade = useMutation({ mutationFn: downgradePlan });
+  const refreshSubscription = () => queryClient.invalidateQueries({
+    predicate: (query) => query.queryKey[4] === "billing-subscription",
+  });
+  const upgrade = useMutation({ mutationFn: upgradePlan, onSuccess: refreshSubscription });
+  const downgrade = useMutation({ mutationFn: downgradePlan, onSuccess: refreshSubscription });
   const problem = toProblem(
     plans.error ?? subscription.error ?? upgrade.error ?? downgrade.error,
   );
@@ -89,11 +102,11 @@ export function PlanComparison() {
           </div>
           {subscription.data.trialEndsAt ? (
             <p className="mt-1 text-xs text-navy-foreground/70">
-              Trial ends {subscription.data.trialEndsAt}
+              Trial ends {formatUtcDateTime(subscription.data.trialEndsAt)}
             </p>
           ) : (
             <p className="mt-1 text-xs text-navy-foreground/70">
-              Period ends {subscription.data.currentPeriodEnd}
+              Period ends {formatUtcDateTime(subscription.data.currentPeriodEnd)}
             </p>
           )}
         </div>
@@ -101,14 +114,12 @@ export function PlanComparison() {
 
       {subscription.data?.usage.length ? (
         <div className="rounded-lg border border-border bg-card p-4 sm:p-6">
-          <h2 className="mb-5 text-base font-semibold text-foreground">
-            Usage this billing period
-          </h2>
+          <h2 className="mb-5 text-base font-semibold text-foreground">Plan usage</h2>
           <div className="flex flex-col gap-6 md:flex-row md:gap-8">
             {subscription.data.usage.map((row) => (
               <UsageMeter
                 key={row.metric}
-                label={row.metric}
+                label={usageLabels[row.metric] ?? row.metric}
                 used={row.used}
                 unlimited={row.limit == null}
                 {...(row.limit != null ? { total: row.limit } : {})}
@@ -122,7 +133,7 @@ export function PlanComparison() {
 
       <div>
         <h2 className="mb-5 text-base font-semibold text-foreground">Change plan</h2>
-        <div className="grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
           {planList.map((plan) => {
             const isCurrent =
               plan.name === currentPlanName ||

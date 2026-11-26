@@ -57,19 +57,26 @@ describe("billing queries", () => {
           currentPeriodStart: "2026-08-01T00:00:00Z",
           currentPeriodEnd: "2026-08-15T00:00:00Z",
           trialEndsAt: "2026-08-15T00:00:00Z",
-          usage: [{ metric: "SalesThisMonth", used: 2, limit: 500 }],
+          usage: [{ metric: "salesThisMonth", current: 2, limit: 500 }],
         }),
       ),
       http.get("*/api/v1/billing/invoices", () =>
-        HttpResponse.json([
-          {
-            id: "22222222-2222-4222-8222-222222222222",
-            number: "INV-1",
-            status: "Paid",
-            total: "49.00",
-            issuedAt: "2026-08-01T00:00:00Z",
-          },
-        ]),
+        HttpResponse.json({
+          items: [
+            {
+              id: "22222222-2222-4222-8222-222222222222",
+              number: "INV-1",
+              status: "Paid",
+              amount: 49,
+              taxAmount: 0,
+              currency: "GHS",
+              createdAt: "2026-08-01T00:00:00Z",
+            },
+          ],
+          page: 1,
+          pageSize: 50,
+          totalCount: 1,
+        }),
       ),
     );
 

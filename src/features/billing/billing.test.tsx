@@ -23,7 +23,7 @@ const subscriptionBody = {
   currentPeriodStart: "2026-08-01T00:00:00Z",
   currentPeriodEnd: "2026-08-15T00:00:00Z",
   trialEndsAt: "2026-08-15T00:00:00Z",
-  usage: [{ metric: "SalesThisMonth", used: 2, limit: 500 }],
+  usage: [{ metric: "salesThisMonth", current: 2, limit: 500 }],
 };
 
 function renderBilling(ui: React.ReactNode) {
@@ -61,7 +61,8 @@ describe("billing surfaces", () => {
       </>,
     );
     expect(await screen.findByText(/trial ends/i)).toBeInTheDocument();
-    expect(screen.getByText(/SalesThisMonth/i)).toBeInTheDocument();
+    expect(screen.queryByText(/2026-08-15T00:00:00Z/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Sales this month/i)).toBeInTheDocument();
     expect(screen.getByText(/2 \/ 500/)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /cancel subscription/i }),
@@ -99,27 +100,35 @@ describe("billing surfaces", () => {
 
   it("lists invoices and starts a data export job", async () => {
     const user = userEvent.setup();
+    const createObjectURL = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:export");
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    let downloads = 0;
     server.use(
       http.get("*/api/v1/billing/invoices", () =>
-        HttpResponse.json([
-          {
-            id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-            number: "INV-1",
-            status: "Paid",
-            total: "120.00",
-            issuedAt: "2026-08-01T00:00:00Z",
-          },
-        ]),
+        HttpResponse.json({
+          items: [
+            {
+              id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+              number: "INV-1",
+              status: "Paid",
+              amount: 120,
+              taxAmount: 0,
+              currency: "GHS",
+              createdAt: "2026-08-01T00:00:00Z",
+            },
+          ],
+          page: 1,
+          pageSize: 50,
+          totalCount: 1,
+        }),
       ),
       http.post("*/api/v1/tenant/export", () =>
         HttpResponse.json({ jobId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" }),
       ),
-      http.get("*/api/v1/tenant/export/:jobId", () =>
-        HttpResponse.json({
-          status: "Completed",
-          downloadUrl: "https://example.test/export.zip",
-        }),
-      ),
+      http.get("*/api/v1/tenant/export/:jobId", () => {
+        downloads += 1;
+        return new HttpResponse(new Blob(["zip-data"], { type: "application/zip" }));
+      }),
     );
     renderBilling(
       <>
@@ -127,13 +136,15 @@ describe("billing surfaces", () => {
         <DataExportPanel />
       </>,
     );
-    expect(await screen.findByText(/INV-1 · Paid · 120.00/)).toBeInTheDocument();
+    expect(await screen.findByText(/INV-1 · Paid · .*120\.00/)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/invalid input: expected array/i),
+    ).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /start export/i }));
-    expect(await screen.findByText(/Status: Completed/i)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /download export/i })).toHaveAttribute(
-      "href",
-      "https://example.test/export.zip",
-    );
+    await user.click(await screen.findByRole("button", { name: /download export/i }));
+    await vi.waitFor(() => expect(click).toHaveBeenCalledOnce());
+    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect(downloads).toBe(1);
   });
 
   it("upgrades from plan cards and handles usage without limits", async () => {
@@ -149,12 +160,12 @@ describe("billing surfaces", () => {
           plan: "Free",
           status: "Active",
           trialEndsAt: null,
-          usage: [{ metric: "Locations", used: 1 }],
+          usage: [{ metric: "locations", current: 1 }],
         }),
       ),
       http.post("*/api/v1/billing/subscription/upgrade", async ({ request }) => {
-        const body = (await request.json()) as { planId: string };
-        upgraded = body.planId;
+        const body = (await request.json()) as { planDefinitionId: string };
+        upgraded = body.planDefinitionId;
         return HttpResponse.json({
           ...subscriptionBody,
           plan: "Professional",
@@ -162,10 +173,10 @@ describe("billing surfaces", () => {
         });
       }),
       http.post("*/api/v1/billing/subscription/downgrade", async ({ request }) => {
-        const body = (await request.json()) as { planId: string };
+        const body = (await request.json()) as { planDefinitionId: string };
         return HttpResponse.json({
           ...subscriptionBody,
-          plan: body.planId,
+          plan: body.planDefinitionId,
           status: "Active",
         });
       }),
@@ -174,10 +185,38 @@ describe("billing surfaces", () => {
     expect(
       await screen.findByRole("button", { name: /switch to professional/i }),
     ).toBeInTheDocument();
+    expect(screen.getByText(/period ends/i)).toHaveTextContent(/Aug 2026.*UTC/);
+    expect(screen.queryByText(/2026-08-15T00:00:00Z/)).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /switch to professional/i }));
     await vi.waitFor(() => {
       expect(upgraded).toBe("plan-professional");
     });
+  });
+
+  it("shows the billing prerequisite instead of subscription parsing errors", async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get("*/api/v1/billing/plans", () =>
+        HttpResponse.json([billingPlansFixture[0], billingPlansFixture[1]]),
+      ),
+      http.get("*/api/v1/billing/subscription", () =>
+        HttpResponse.json({ ...subscriptionBody, plan: "Free", status: "Active" }),
+      ),
+      http.post("*/api/v1/billing/subscription/upgrade", () =>
+        HttpResponse.json(
+          {
+            title: "Validation failed",
+            detail: "Add a billing email and payment method before switching to a paid plan.",
+            status: 400,
+          },
+          { status: 400 },
+        ),
+      ),
+    );
+    renderBilling(<PlanComparison />);
+    await user.click(await screen.findByRole("button", { name: /switch to standard/i }));
+    expect(await screen.findByText(/add a billing email and payment method/i)).toBeInTheDocument();
+    expect(screen.queryByText(/invalid input: expected string/i)).not.toBeInTheDocument();
   });
 
   it("upgrades and downgrades plans via change form", async () => {
@@ -194,20 +233,20 @@ describe("billing surfaces", () => {
         }),
       ),
       http.post("*/api/v1/billing/subscription/upgrade", async ({ request }) => {
-        const body = (await request.json()) as { planId: string };
-        upgraded = body.planId;
+        const body = (await request.json()) as { planDefinitionId: string };
+        upgraded = body.planDefinitionId;
         return HttpResponse.json({
           ...subscriptionBody,
-          plan: body.planId,
+          plan: body.planDefinitionId,
           status: "Active",
         });
       }),
       http.post("*/api/v1/billing/subscription/downgrade", async ({ request }) => {
-        const body = (await request.json()) as { planId: string };
-        downgraded = body.planId;
+        const body = (await request.json()) as { planDefinitionId: string };
+        downgraded = body.planDefinitionId;
         return HttpResponse.json({
           ...subscriptionBody,
-          plan: body.planId,
+          plan: body.planDefinitionId,
           status: "Active",
         });
       }),

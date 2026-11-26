@@ -1,8 +1,9 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { fetchExportJob, fetchInvoices, startDataExport } from "../api/billing-queries";
+import { downloadDataExport, fetchInvoices, startDataExport } from "../api/billing-queries";
 import { Button } from "../../../shared/ui/button";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
 import { useState } from "react";
+import { formatGhanaMoney } from "../../../shared/money/decimal";
 
 export function InvoiceHistory() {
   const invoices = useQuery({
@@ -17,7 +18,8 @@ export function InvoiceHistory() {
       <ul>
         {(invoices.data ?? []).map((invoice) => (
           <li key={invoice.id}>
-            {invoice.number} · {invoice.status} · {String(invoice.total)}
+            {invoice.number} · {invoice.status} ·{" "}
+            {formatGhanaMoney(invoice.amount, invoice.currency)}
             <a href={`/api/v1/billing/invoices/${invoice.id}/pdf`}>Download PDF</a>
           </li>
         ))}
@@ -34,38 +36,33 @@ export function DataExportPanel() {
       setJobId(result.jobId);
     },
   });
-  const job = useQuery({
-    queryKey: ["billing", "export", jobId],
-    queryFn: () => {
-      if (!jobId) throw new Error("Export job id is required");
-      return fetchExportJob(jobId);
-    },
-    enabled: Boolean(jobId),
-    refetchInterval: (query) =>
-      query.state.data?.status === "Completed" ? false : 1500,
-  });
-  const problem = toProblem(start.error ?? job.error);
+  const download = useMutation({ mutationFn: downloadDataExport });
+  const problem = toProblem(start.error ?? download.error);
 
   return (
     <section aria-label="Data export" className="space-y-3">
       <h2>Full data export</h2>
-      <p>
-        Export is available even in read-only recovery so you are never held hostage.
-      </p>
       {problem ? <ProblemSummary problem={problem} /> : null}
-      <Button
-        type="button"
-        onClick={() => {
-          start.mutate();
-        }}
-        disabled={start.isPending}
-      >
-        Start export
-      </Button>
-      {job.data ? <p>Status: {job.data.status}</p> : null}
-      {job.data?.downloadUrl ? (
-        <a href={job.data.downloadUrl}>Download export</a>
-      ) : null}
+      <div className="flex flex-wrap gap-3">
+        <Button
+          type="button"
+          onClick={() => {
+            start.mutate();
+          }}
+          disabled={start.isPending}
+        >
+          Start export
+        </Button>
+        {jobId ? (
+          <Button
+            type="button"
+            disabled={download.isPending}
+            onClick={() => download.mutate(jobId)}
+          >
+            {download.isPending ? "Downloading…" : "Download export"}
+          </Button>
+        ) : null}
+      </div>
     </section>
   );
 }

@@ -18,10 +18,6 @@ export function CancellationPanel() {
   return (
     <section aria-label="Cancellation" className="space-y-3">
       <h2>Cancel or reactivate</h2>
-      <p>
-        Cancellation keeps read-only access until the retention purge date. Export your
-        data before purge.
-      </p>
       {subscription.data?.purgeAt ? (
         <p>Retention purge at {subscription.data.purgeAt}</p>
       ) : null}

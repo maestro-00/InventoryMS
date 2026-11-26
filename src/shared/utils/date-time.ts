@@ -20,6 +20,15 @@ export function formatCreatedAt(createdAt: string, locale = "en-GH"): string {
   return formatInstant(toUtcInstant(createdAt), locale, "Recorded");
 }
 
+export function formatUtcDateTime(value: string, locale = "en-GH"): string {
+  const formatted = new Intl.DateTimeFormat(locale, {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "UTC",
+  }).format(new Date(toUtcInstant(value)));
+  return `${formatted} UTC`;
+}
+
 function formatInstant(value: string, locale: string, label: string): string {
   const formatted = new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
