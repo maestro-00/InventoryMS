@@ -3,7 +3,6 @@ import { useMemo, useState } from "react";
 import { useSession } from "../../../shared/auth/session-context";
 import { hasPermission } from "../../../shared/auth/access-policy";
 import { formatGhanaMoney } from "../../../shared/money/decimal";
-import { Button } from "../../../shared/ui/button";
 import { SelectField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
 import { LoadingState } from "../../../shared/ui/states/ui-state";
@@ -21,9 +20,13 @@ export function StockLevelsView() {
   const visibleLocations = useMemo(() => {
     const all = locations.data ?? [];
     const scope = session?.locationScope ?? [];
-    if (scope.length === 0) return all;
+    if (scope.length === 0 || scope.includes("*")) return all;
     return all.filter((location) => scope.includes(location.id));
   }, [locations.data, session?.locationScope]);
+  const locationNames = useMemo(
+    () => new Map(visibleLocations.map((location) => [location.id, location.name])),
+    [visibleLocations],
+  );
 
   const stock = useQuery({
     queryKey: ["stock-levels", locationId, groupByProduct, belowReorder],
@@ -105,7 +108,11 @@ export function StockLevelsView() {
                 key={`${row.productId}-${row.locationId ?? "all"}-${row.batchId ?? ""}`}
               >
                 <td>{row.productName ?? row.productId}</td>
-                <td>{row.locationId ?? "All locations"}</td>
+                <td>
+                  {row.locationId
+                    ? (locationNames.get(row.locationId) ?? "Unknown location")
+                    : "All locations"}
+                </td>
                 <td>{row.qtyOnHand}</td>
                 <td>{row.qtyInTransit}</td>
                 <td>{row.qtyQuarantine}</td>
@@ -124,9 +131,6 @@ export function StockLevelsView() {
           Cost and valuation fields are hidden without ViewProfit.
         </p>
       ) : null}
-      <Button type="button" variant="outline" disabled>
-        Thresholds are provider-defined and read-only in this build
-      </Button>
     </section>
   );
 }

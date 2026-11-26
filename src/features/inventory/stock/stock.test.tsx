@@ -26,6 +26,32 @@ describe("stock levels and profit fields", () => {
     renderWithProviders(<StockLevelsView />);
     expect(await screen.findByText(/avg unit cost/i)).toBeInTheDocument();
     expect(screen.getByText(/6\.00/)).toBeInTheDocument();
+    expect(screen.getByRole("cell", { name: us1.locationRecord.name })).toBeInTheDocument();
+    expect(screen.queryByText(us1.locationRecord.id)).not.toBeInTheDocument();
+    expect(screen.queryByText(/thresholds are provider-defined/i)).not.toBeInTheDocument();
+  });
+
+  it("resolves location names for a business-wide location scope", async () => {
+    server.use(
+      http.get("*/api/v1/locations", () => HttpResponse.json([us1.locationRecord])),
+      http.get("*/api/v1/stock", () =>
+        HttpResponse.json({
+          items: [us3.stockAtA],
+          page: 1,
+          pageSize: 50,
+          totalCount: 1,
+        }),
+      ),
+    );
+
+    renderWithProviders(<StockLevelsView />, {
+      session: { ...ownerSessionRecord, locationScope: ["*"] },
+    });
+
+    expect(
+      await screen.findByRole("cell", { name: us1.locationRecord.name }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Unknown location")).not.toBeInTheDocument();
   });
 
   it("hides cost columns without ViewProfit", async () => {
