@@ -172,7 +172,7 @@ describe("purchasing orders and receipts", () => {
     );
 
     await user.click(
-      await screen.findByRole("button", { name: /create draft order/i }),
+      await screen.findByRole("button", { name: /create one draft order/i }),
     );
     expect(await screen.findByText(/current status: draft/i)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /^submit$/i }));
@@ -293,7 +293,34 @@ describe("purchasing orders and receipts", () => {
     const row = suggestion.closest("li");
     expect(row).toBeTruthy();
     await user.click(within(row as HTMLElement).getByRole("checkbox"));
-    await user.click(screen.getByRole("button", { name: /create draft orders/i }));
+    await user.click(
+      screen.getByRole("button", { name: /create orders from selected suggestions/i }),
+    );
     expect(await screen.findByText(/1 draft purchase order/i)).toBeInTheDocument();
+  });
+
+  it("keeps reorder creation unavailable when there are no suggestions", async () => {
+    let applyCalls = 0;
+    server.use(
+      http.get("*/api/v1/reorder/suggestions", () => HttpResponse.json({ items: [] })),
+      http.post("*/api/v1/reorder/suggestions/apply", () => {
+        applyCalls += 1;
+        return HttpResponse.json([]);
+      }),
+    );
+
+    renderWithProviders(
+      <CreateOrdersFromReorder
+        locations={[{ id: us1.LOCATION_ID, name: "Main Shop" }]}
+      />,
+    );
+
+    expect(
+      await screen.findByText(/no reorder suggestions for this location/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /create orders from selected suggestions/i }),
+    ).toBeDisabled();
+    expect(applyCalls).toBe(0);
   });
 });
