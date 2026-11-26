@@ -6,6 +6,7 @@ import {
 } from "../api/purchasing-api";
 import { requiresCloseShortReason } from "./purchase-order-state";
 import { Button } from "../../../shared/ui/button";
+import { useConfirmDialog } from "../../../shared/ui/use-confirm-dialog";
 import { TextField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
 
@@ -17,6 +18,7 @@ export function CloseShortForm({
   onClosed: (order: PurchaseOrderRecord) => void | Promise<void>;
 }) {
   const [reason, setReason] = useState("");
+  const { confirm, dialog } = useConfirmDialog();
   const mutation = useMutation({
     mutationFn: () => closePurchaseOrderShort(order.id, reason),
     onSuccess: onClosed,
@@ -27,12 +29,14 @@ export function CloseShortForm({
   function submit(event: FormEvent) {
     event.preventDefault();
     if (!reason.trim()) return;
-    if (
-      !window.confirm("Close this order short? Outstanding qty will not be received.")
-    ) {
-      return;
-    }
-    mutation.mutate();
+    confirm({
+      title: "Close this order short?",
+      description: "Outstanding quantity will not be received.",
+      actionLabel: "Close short",
+      onConfirm: () => {
+        mutation.mutate();
+      },
+    });
   }
 
   return (
@@ -51,6 +55,7 @@ export function CloseShortForm({
       <Button type="submit" disabled={mutation.isPending || !reason.trim()}>
         Close short
       </Button>
+      {dialog}
     </form>
   );
 }

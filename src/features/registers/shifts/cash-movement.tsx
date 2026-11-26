@@ -1,18 +1,24 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { Button } from "../../../shared/ui/button";
 import { SelectField, TextField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
-import { recordCashMovement } from "./shifts-api";
+import { recordCashMovement, zReportQueryKey } from "./shifts-api";
 
 export function CashMovementForm({ shiftId }: { shiftId: string }) {
+  const queryClient = useQueryClient();
   const [direction, setDirection] = useState<"CashIn" | "CashOut">("CashOut");
   const [reason, setReason] = useState<
     "PettyCash" | "Banking" | "ChangeOrder" | "Other"
   >("PettyCash");
   const [amount, setAmount] = useState("0.00");
   const [note, setNote] = useState("");
-  const mutation = useMutation({ mutationFn: recordCashMovement });
+  const mutation = useMutation({
+    mutationFn: recordCashMovement,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: zReportQueryKey(shiftId) });
+    },
+  });
   const problem = toProblem(mutation.error);
 
   function submit(event: FormEvent) {

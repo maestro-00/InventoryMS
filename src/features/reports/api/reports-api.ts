@@ -2,6 +2,11 @@ import { z } from "zod";
 import { authorizedFetch } from "../../../shared/api/client/authorized-fetch";
 import { inventoryxClient } from "../../../shared/api/client/inventoryx-client";
 import { parseValue } from "../../../shared/api/client/api-result";
+import { ResponseValidationError } from "../../../shared/api/errors/response-validation-error";
+import {
+  notificationChannelSchema,
+  notificationTypeSchema,
+} from "./notification-enums";
 import {
   apiDecimalSchema,
   clampPageSize,
@@ -278,8 +283,8 @@ export async function pollExportJob(
 
 export const notificationSchema = z.object({
   id: uuidSchema,
-  type: z.string(),
-  channel: z.string(),
+  type: notificationTypeSchema,
+  channel: notificationChannelSchema,
   title: z.string(),
   message: z.string().nullish(),
   occurrences: z.number().int().default(1),
@@ -287,6 +292,16 @@ export const notificationSchema = z.object({
   lastRaisedAt: z.string(),
   resolvedAt: z.string().nullish(),
 });
+
+function parseNotificationResponse<T>(
+  schema: z.ZodType<T>,
+  body: unknown,
+  label: string,
+): T {
+  const result = schema.safeParse(body);
+  if (!result.success) throw new ResponseValidationError(label, result.error.issues);
+  return result.data;
+}
 
 export async function fetchNotifications(page = 1, pageSize = 50) {
   const params = new URLSearchParams({
@@ -297,14 +312,23 @@ export async function fetchNotifications(page = 1, pageSize = 50) {
   if (!response.ok) throw new Error("Failed to load notifications");
   const body: unknown = await response.json();
   if (Array.isArray(body)) {
-    return { items: z.array(notificationSchema).parse(body), totalCount: body.length };
+    return {
+      items: parseNotificationResponse(
+        z.array(notificationSchema),
+        body,
+        "Notifications",
+      ),
+      totalCount: body.length,
+    };
   }
-  return z
-    .object({
+  return parseNotificationResponse(
+    z.object({
       items: z.array(notificationSchema),
       totalCount: z.number().int(),
-    })
-    .parse(body);
+    }),
+    body,
+    "Notifications",
+  );
 }
 
 export async function markNotificationRead(id: string): Promise<void> {
@@ -326,8 +350,8 @@ export async function markAllNotificationsRead(): Promise<number> {
 }
 
 export const preferenceSchema = z.object({
-  type: z.string(),
-  channel: z.string(),
+  type: notificationTypeSchema,
+  channel: notificationChannelSchema,
   isEnabled: z.boolean(),
   threshold: apiDecimalSchema.nullish(),
 });
@@ -335,13 +359,17 @@ export const preferenceSchema = z.object({
 export async function fetchNotificationPreferences() {
   const response = await authedFetch("/api/v1/notification-preferences");
   if (!response.ok) throw new Error("Failed to load preferences");
-  return z.array(preferenceSchema).parse(await response.json());
+  return parseNotificationResponse(
+    z.array(preferenceSchema),
+    await response.json(),
+    "Notification preferences",
+  );
 }
 
 export async function updateNotificationPreferences(
   preferences: Array<{
-    type: string;
-    channel: string;
+    type: number;
+    channel: number;
     isEnabled: boolean;
     threshold?: number | null;
   }>,
@@ -351,5 +379,9 @@ export async function updateNotificationPreferences(
     body: JSON.stringify({ preferences }),
   });
   if (!response.ok) throw new Error("Failed to save preferences");
-  return z.array(preferenceSchema).parse(await response.json());
+  return parseNotificationResponse(
+    z.array(preferenceSchema),
+    await response.json(),
+    "Notification preferences",
+  );
 }

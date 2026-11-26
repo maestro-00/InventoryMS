@@ -95,7 +95,7 @@ describe("sale lookup, return, exchange, and void", () => {
     await user.click(screen.getByRole("button", { name: /add cooking oil 1l/i }));
     await user.click(screen.getByRole("button", { name: /confirm exchange/i }));
 
-    expect(await screen.findByText(/net amount -8/i)).toBeInTheDocument();
+    expect(await screen.findByText(/net amount: -GH₵8\.00/i)).toBeInTheDocument();
   });
 
   it("voids the looked-up sale with a reason", async () => {

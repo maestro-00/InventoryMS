@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { describe, expect, it, vi } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { server } from "../../../shared/test/msw/server";
 import { renderWithProviders } from "../../../shared/test/render";
@@ -65,6 +65,172 @@ function checkoutHandlers() {
 }
 
 describe("split tenders and change", () => {
+  it("submits a card payment without requiring cash", async () => {
+    const user = userEvent.setup();
+    const onCompleted = vi.fn();
+    let payments: Array<{ tender: string; amount: number }> = [];
+    server.use(
+      http.post("*/api/v1/sales", async ({ request }) => {
+        const body = (await request.json()) as {
+          payments: Array<{ tender: string; amount: number }>;
+        };
+        payments = body.payments;
+        return HttpResponse.json(us2.splitCompletedSale, { status: 201 });
+      }),
+    );
+
+    const cart = cartReducer(createCart(), scanProduct(sugar));
+    renderWithProviders(
+      <PaymentPanel
+        cart={cart}
+        registerId={us1.REGISTER_ID}
+        shiftId={us1.SHIFT_ID}
+        tenantId={us1.TENANT_ID}
+        isOnline
+        onCartChange={() => undefined}
+        onCompleted={onCompleted}
+        onProvisionalCompleted={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Add card tender" }));
+    await user.type(screen.getByLabelText("Card amount"), "25.00");
+    await user.type(screen.getByLabelText(/card reference/i), "AUTH-25");
+    await user.click(screen.getByRole("button", { name: "Take split payment" }));
+
+    await waitFor(() => {
+      expect(onCompleted).toHaveBeenCalledOnce();
+    });
+    expect(payments).toEqual([{ tender: "Card", amount: 25, reference: "AUTH-25" }]);
+  });
+
+  it("requires references for noncash tenders with amounts", async () => {
+    const user = userEvent.setup();
+    const onCompleted = vi.fn();
+    let posts = 0;
+    server.use(
+      http.post("*/api/v1/sales", () => {
+        posts += 1;
+        return HttpResponse.json(us2.splitCompletedSale, { status: 201 });
+      }),
+    );
+    const cart = cartReducer(createCart(), scanProduct(sugar));
+    renderWithProviders(
+      <PaymentPanel
+        cart={cart}
+        registerId={us1.REGISTER_ID}
+        shiftId={us1.SHIFT_ID}
+        tenantId={us1.TENANT_ID}
+        isOnline
+        onCartChange={() => undefined}
+        onCompleted={onCompleted}
+        onProvisionalCompleted={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Add card tender" }));
+    await user.type(screen.getByLabelText("Card amount"), "10.00");
+    await user.click(screen.getByRole("button", { name: "Add MobileMoney tender" }));
+    await user.type(screen.getByLabelText("MobileMoney amount"), "15.00");
+    await user.click(screen.getByRole("button", { name: "Take split payment" }));
+
+    expect(screen.getByLabelText(/card reference/i)).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    expect(screen.getByLabelText(/MobileMoney reference/i)).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    expect(posts).toBe(0);
+
+    await user.type(screen.getByLabelText(/card reference/i), "AUTH-10");
+    await user.type(screen.getByLabelText(/MobileMoney reference/i), "MOMO-15");
+    await user.click(screen.getByRole("button", { name: "Take split payment" }));
+
+    await waitFor(() => {
+      expect(onCompleted).toHaveBeenCalledOnce();
+    });
+    expect(posts).toBe(1);
+  });
+
+  it("shows each extra tender once and removes its add option", async () => {
+    const user = userEvent.setup();
+    const cart = cartReducer(createCart(), scanProduct(sugar));
+
+    renderWithProviders(
+      <PaymentPanel
+        cart={cart}
+        registerId={us1.REGISTER_ID}
+        shiftId={us1.SHIFT_ID}
+        tenantId={us1.TENANT_ID}
+        isOnline
+        onCartChange={() => undefined}
+        onCompleted={vi.fn()}
+        onProvisionalCompleted={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Add MobileMoney tender" }));
+    const mobileMoney = screen.getByRole("group", { name: "MobileMoney tender" });
+    expect(within(mobileMoney).getByLabelText("MobileMoney amount")).toBeVisible();
+    expect(within(mobileMoney).getByLabelText("MobileMoney reference")).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Add MobileMoney tender" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Add BankTransfer tender" }),
+    ).toBeVisible();
+  });
+
+  it("shows payment progress before grouped fields and add buttons above checkout", async () => {
+    const user = userEvent.setup();
+    const cart = cartReducer(createCart(), scanProduct(sugar));
+
+    renderWithProviders(
+      <PaymentPanel
+        cart={cart}
+        previewTotal="10.00"
+        registerId={us1.REGISTER_ID}
+        shiftId={us1.SHIFT_ID}
+        tenantId={us1.TENANT_ID}
+        isOnline
+        onCartChange={() => undefined}
+        onCompleted={vi.fn()}
+        onProvisionalCompleted={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Add card tender" }));
+    await user.click(screen.getByRole("button", { name: "Add MobileMoney tender" }));
+    await user.type(screen.getByLabelText("Card amount"), "2");
+
+    const panel = screen.getByRole("region", { name: "Split payment" });
+    const card = within(panel).getByRole("group", { name: "Card tender" });
+    const mobileMoney = within(panel).getByRole("group", {
+      name: "MobileMoney tender",
+    });
+    const children = Array.from(panel.children);
+    const position = (element: Element) => children.indexOf(element);
+
+    expect(within(card).getByLabelText("Card amount")).toBeVisible();
+    expect(within(card).getByLabelText(/Card reference/i)).toBeVisible();
+    expect(within(mobileMoney).getByLabelText("MobileMoney amount")).toBeVisible();
+    expect(within(mobileMoney).getByLabelText(/MobileMoney reference/i)).toBeVisible();
+    expect(position(within(panel).getByText(/Still to pay:/i))).toBeLessThan(
+      position(card),
+    );
+    expect(position(card)).toBeLessThan(position(mobileMoney));
+    expect(position(mobileMoney)).toBeLessThan(
+      position(within(panel).getByRole("button", { name: "Add Cheque tender" })),
+    );
+    expect(
+      position(within(panel).getByRole("button", { name: "Add Cheque tender" })),
+    ).toBeLessThan(
+      position(within(panel).getByRole("button", { name: "Take split payment" })),
+    );
+  });
+
   it("submits Cash and Card together and shows the server change due", async () => {
     const user = userEvent.setup();
     const onCompleted = vi.fn();
@@ -244,11 +410,17 @@ describe("held sale recall", () => {
       }),
     );
 
+    const heldLine = us2.heldSale.lines[0];
+    if (!heldLine) throw new Error("Expected held sale line");
     let cart = cartReducer(createCart(), scanProduct(sugar));
     cart = {
       ...cart,
       heldSaleId: us2.HELD_SALE_ID,
       quote: saleSchema.parse(us2.heldSale),
+      lines: cart.lines.map((line) => ({
+        ...line,
+        heldLineId: heldLine.id,
+      })),
     };
 
     renderWithProviders(
@@ -264,6 +436,13 @@ describe("held sale recall", () => {
       />,
     );
 
+    await user.type(screen.getByLabelText(/cash amount/i), "10.00");
+    await user.click(screen.getByRole("button", { name: /take split payment/i }));
+    expect(
+      screen.getByText(/payments do not cover the held sale total/i),
+    ).toBeVisible();
+    expect(completedId).toBeUndefined();
+    await user.clear(screen.getByLabelText(/cash amount/i));
     await user.type(screen.getByLabelText(/cash amount/i), "25.00");
     await user.click(screen.getByRole("button", { name: /take split payment/i }));
 

@@ -4,23 +4,25 @@ import {
   fetchNotificationPreferences,
   updateNotificationPreferences,
 } from "../../reports/api/reports-api";
+import {
+  notificationChannelName,
+  notificationTypeName,
+  notificationTypeNames,
+} from "../../reports/api/notification-enums";
 import { Button } from "../../../shared/ui/button";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
 
-const CHANNELS = ["InApp", "Email", "Push", "Sms"] as const;
-const TYPES = ["LowStock", "Expiry", "Overstock"] as const;
-
 type PreferenceRow = {
-  type: string;
-  channel: string;
+  type: number;
+  channel: number;
   isEnabled: boolean;
   threshold?: string;
 };
 
 function rowsFromServer(
   data: Array<{
-    type: string;
-    channel: string;
+    type: number;
+    channel: number;
     isEnabled: boolean;
     threshold?: string | null | undefined;
   }>,
@@ -36,14 +38,14 @@ function rowsFromServer(
       return next;
     });
   }
-  return TYPES.flatMap((type) =>
-    CHANNELS.map((channel) => {
+  return notificationTypeNames.flatMap((_, type) =>
+    [0, 1, 2, 3].map((channel) => {
       const next: PreferenceRow = {
         type,
         channel,
-        isEnabled: channel === "InApp",
+        isEnabled: channel === 0,
       };
-      if (type === "LowStock") next.threshold = "5";
+      if (type === 0) next.threshold = "5";
       return next;
     }),
   );
@@ -99,13 +101,13 @@ export function NotificationPreferences() {
         </thead>
         <tbody>
           {matrix.map((row, index) => (
-            <tr key={`${row.type}-${row.channel}`}>
-              <td>{row.type}</td>
-              <td>{row.channel}</td>
+            <tr key={`${String(row.type)}-${String(row.channel)}`}>
+              <td>{notificationTypeName(row.type)}</td>
+              <td>{notificationChannelName(row.channel)}</td>
               <td>
                 <input
                   type="checkbox"
-                  aria-label={`${row.type} ${row.channel}`}
+                  aria-label={`${notificationTypeName(row.type)} ${notificationChannelName(row.channel)}`}
                   checked={row.isEnabled}
                   onChange={(event) => {
                     setMatrix((current) =>
@@ -120,7 +122,7 @@ export function NotificationPreferences() {
               </td>
               <td>
                 <input
-                  aria-label={`${row.type} threshold`}
+                  aria-label={`${notificationTypeName(row.type)} ${notificationChannelName(row.channel)} threshold`}
                   value={row.threshold ?? ""}
                   onChange={(event) => {
                     setMatrix((current) =>

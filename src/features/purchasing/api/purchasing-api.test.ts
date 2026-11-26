@@ -56,6 +56,34 @@ const sampleOrder = (status = "Draft"): PurchaseOrderRecord => ({
 });
 
 describe("purchasing api helpers", () => {
+  it("preserves the provider reason when draft order creation is rejected", async () => {
+    server.use(
+      http.post("*/api/v1/purchase-orders", () =>
+        HttpResponse.json(
+          {
+            title: "Purchase orders unavailable on this plan",
+            detail: "Upgrade the subscription to create purchase orders.",
+            status: 402,
+          },
+          { status: 402, headers: { "Content-Type": "application/problem+json" } },
+        ),
+      ),
+    );
+    await expect(
+      createPurchaseOrder({
+        supplierId,
+        deliverToLocationId: locationId,
+        lines: [{ productId, description: "Sugar", orderedQty: "1", unitCost: "1" }],
+      }),
+    ).rejects.toMatchObject({
+      problem: {
+        status: 402,
+        title: "Purchase orders unavailable on this plan",
+        detail: "Upgrade the subscription to create purchase orders.",
+      },
+    });
+  });
+
   it("covers supplier, order lifecycle, and receipt endpoints", async () => {
     sessionManager.setSession({
       ...ownerSession,
@@ -327,14 +355,24 @@ describe("purchasing api helpers", () => {
     await expect(fetchSupplierOrders("x")).rejects.toThrow(/Failed/);
     await expect(fetchSupplierPerformance("x")).rejects.toThrow(/Failed/);
     await expect(putSupplierProducts("x", [])).rejects.toThrow(/Failed/);
-    await expect(fetchPurchaseOrders()).rejects.toThrow(/Failed/);
+    await expect(fetchPurchaseOrders()).rejects.toMatchObject({
+      problem: {
+        status: 500,
+        title: "Could not load purchase orders (HTTP 500)",
+      },
+    });
     await expect(
       createPurchaseOrder({
         supplierId,
         deliverToLocationId: locationId,
         lines: [{ productId, description: "Sugar", orderedQty: "1", unitCost: "1" }],
       }),
-    ).rejects.toThrow(/Failed/);
+    ).rejects.toMatchObject({
+      problem: {
+        status: 500,
+        title: "Could not create draft order (HTTP 500)",
+      },
+    });
     await expect(sendPurchaseOrder("x")).rejects.toThrow(/Failed/);
     await expect(
       recordGoodsReceipt({

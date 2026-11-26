@@ -8,10 +8,18 @@ import {
   updateStaffUser,
 } from "../api/staff-api";
 import { Button } from "../../../shared/ui/button";
+import { useConfirmDialog } from "../../../shared/ui/use-confirm-dialog";
 import { SelectField, TextField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
+import { RegisterPinForm } from "../register-pin/register-pin-form";
+import { useSession } from "../../../shared/auth/session-context";
+import { useLocations } from "../../inventory/locations/api/location-queries";
 
 export function StaffList() {
+  const { confirm, dialog } = useConfirmDialog();
+  const { session } = useSession();
+  const canManagePins = session?.role === "Owner" || session?.role === "Administrator";
+  const locations = useLocations();
   const queryClient = useQueryClient();
   const users = useQuery({ queryKey: ["staff", "users"], queryFn: fetchStaffUsers });
   const roles = useQuery({ queryKey: ["staff", "roles"], queryFn: fetchRoles });
@@ -72,12 +80,13 @@ export function StaffList() {
   return (
     <section aria-label="Staff" className="space-y-4">
       <h2>Staff</h2>
-      <p>
-        Cycle 1 roles are fixed: Owner, Administrator, Manager, Cashier, Accountant.
-        Permissions and discount/refund ceilings come from InventoryX.
-      </p>
       {problem ? <ProblemSummary problem={problem} /> : null}
-      {plainError ? <p role="alert">{plainError.message}</p> : null}
+      {plainError ? (
+        <ProblemSummary
+          title="Staff data unavailable"
+          messages={[plainError.message]}
+        />
+      ) : null}
       <form className="grid gap-3 md:grid-cols-2" onSubmit={submitInvite}>
         <TextField
           label="Invite email"
@@ -102,13 +111,23 @@ export function StaffList() {
             setRoleId(event.target.value);
           }}
         />
-        <TextField
+        <SelectField
           label="Location scope"
           value={locationScope}
+          options={[
+            { value: "", label: "All locations" },
+            ...(locations.data ?? [])
+              .filter((location) => location.isActive)
+              .map((location) => ({
+                value: location.id,
+                label: location.name,
+              })),
+          ]}
+          disabled={locations.isPending}
           onChange={(event) => {
             setLocationScope(event.target.value);
           }}
-          hint="Comma-separated location IDs; blank means all allowed locations"
+          hint={locations.isPending ? "Loading locations…" : undefined}
         />
         <Button type="submit" disabled={invite.isPending}>
           Send invitation
@@ -128,12 +147,29 @@ export function StaffList() {
               Scope: {user.locationScope || "all"} · Active:{" "}
               {user.status === "Active" ? "yes" : "no"}
             </p>
+            {canManagePins && user.status === "Active" ? (
+              <details className="my-2 rounded-md border p-3">
+                <summary className="min-h-touch cursor-pointer font-medium">
+                  Set register PIN
+                </summary>
+                <p className="my-2 text-sm text-muted-foreground">
+                  This staff PIN works on any till they are assigned to.
+                </p>
+                <RegisterPinForm userId={user.id} />
+              </details>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
                 onClick={() => {
-                  if (!window.confirm("Deactivate this user?")) return;
-                  update.mutate({ id: user.id, status: "Inactive" });
+                  confirm({
+                    title: `Deactivate ${user.email ?? "this user"}?`,
+                    description: "They will no longer have access to this workspace.",
+                    actionLabel: "Deactivate user",
+                    onConfirm: () => {
+                      update.mutate({ id: user.id, status: "Inactive" });
+                    },
+                  });
                 }}
               >
                 Deactivate
@@ -153,6 +189,7 @@ export function StaffList() {
           </li>
         ))}
       </ul>
+      {dialog}
     </section>
   );
 }

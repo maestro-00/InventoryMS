@@ -211,7 +211,9 @@ describe("opening stock", () => {
     await user.type(screen.getByLabelText(/opening quantity/i), "10");
     await user.click(screen.getByRole("button", { name: /record opening stock/i }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/validation failed/i);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /SKU must be unique within the tenant/i,
+    );
     expect(screen.getByLabelText(/opening quantity/i)).toHaveValue("10");
   });
 });

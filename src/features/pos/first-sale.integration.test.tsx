@@ -15,6 +15,7 @@ import {
   shiftRecord,
   stockLevel,
   stockLevelAfterSale,
+  taxTreatments,
   LOCATION_ID,
   SALE_ID,
 } from "../../../tests/fixtures/provider/us1";
@@ -32,6 +33,7 @@ function posHandlers(options: { registers?: unknown[]; openShifts?: unknown[] } 
       return HttpResponse.json(options.openShifts ?? []);
     }),
     http.get("*/api/v1/products", () => HttpResponse.json(pagedProducts)),
+    http.get("*/api/v1/tax-treatments", () => HttpResponse.json(taxTreatments)),
     http.post("*/api/v1/registers/:registerId/shifts", () =>
       HttpResponse.json(shiftRecord, { status: 201 }),
     ),
@@ -66,6 +68,220 @@ async function ringUpTwoUnits(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe("online first sale", () => {
+  it("clears a cash-only error when switching to a card payment", async () => {
+    const user = userEvent.setup();
+    let payments: Array<{ tender: string; amount: number }> = [];
+    server.use(
+      ...posHandlers(),
+      http.get("*/api/v1/stock", () =>
+        HttpResponse.json({
+          items: [stockLevel],
+          page: 1,
+          pageSize: 50,
+          totalCount: 1,
+        }),
+      ),
+      http.post("*/api/v1/sales", async ({ request }) => {
+        const body = (await request.json()) as {
+          payments: Array<{ tender: string; amount: number }>;
+        };
+        payments = body.payments;
+        return HttpResponse.json(completedSale, { status: 201 });
+      }),
+    );
+
+    renderWithRouter(<PosWorkspace />);
+    await openTheShift(user);
+    await user.click(await screen.findByRole("button", { name: /add sugar 1kg/i }));
+    await user.click(screen.getByRole("button", { name: /take cash payment/i }));
+    expect(
+      screen.getAllByText(/enter the cash received from the customer/i).length,
+    ).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: /add card tender/i }));
+    expect(
+      screen.queryByText(/enter the cash received from the customer/i),
+    ).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText(/card amount/i), "25.00");
+    await user.type(screen.getByLabelText(/card reference/i), "AUTH-25");
+    await user.click(screen.getByRole("button", { name: /take split payment/i }));
+
+    await screen.findByText(/receipt rcp-000001/i);
+    expect(payments).toEqual([{ tender: "Card", amount: 25, reference: "AUTH-25" }]);
+  });
+
+  it("sends a 5% discount as 0.50 off a 10.00 item", async () => {
+    const user = userEvent.setup();
+    let discount: number | undefined;
+    server.use(
+      ...posHandlers(),
+      http.get("*/api/v1/stock", () =>
+        HttpResponse.json({
+          items: [stockLevel],
+          page: 1,
+          pageSize: 50,
+          totalCount: 1,
+        }),
+      ),
+      http.post("*/api/v1/sales", async ({ request }) => {
+        const body = (await request.json()) as {
+          lines: Array<{ lineDiscount: number }>;
+        };
+        discount = body.lines[0]?.lineDiscount;
+        return HttpResponse.json(completedSale, { status: 201 });
+      }),
+    );
+
+    renderWithRouter(<PosWorkspace />);
+    await openTheShift(user);
+    await user.click(await screen.findByRole("button", { name: /add sugar 1kg/i }));
+    await user.clear(screen.getByLabelText(/discount.*sugar 1kg/i));
+    await user.type(screen.getByLabelText(/discount.*sugar 1kg/i), "5");
+    expect(screen.getByText(/0.50 off this line/i)).toBeInTheDocument();
+    expect(screen.getByText(/10.00 each/i)).toBeInTheDocument();
+    const summary = screen.getByRole("region", { name: "Sale summary" });
+    expect(await within(summary).findByText(/10.92/)).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/cash received/i), "25.00");
+    expect(screen.getByText(/change to give/i)).toBeInTheDocument();
+    expect(screen.getByText(/14.08/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /take cash payment/i }));
+
+    await screen.findByText(/receipt rcp-000001/i);
+    expect(discount).toBe(0.5);
+  });
+
+  it("blocks cash and split payment when requested quantity exceeds stock", async () => {
+    const user = userEvent.setup();
+    let available = 0;
+    let posts = 0;
+    server.use(
+      ...posHandlers(),
+      http.get("*/api/v1/stock", ({ request }) => {
+        const pageSize = Number(
+          new URL(request.url).searchParams.get("pageSize") ?? 50,
+        );
+        return HttpResponse.json({
+          items: [{ ...stockLevel, qtyOnHand: available }],
+          page: 1,
+          pageSize,
+          totalCount: 1,
+        });
+      }),
+      http.post("*/api/v1/sales", () => {
+        posts += 1;
+        return HttpResponse.json(completedSale, { status: 201 });
+      }),
+    );
+
+    renderWithRouter(<PosWorkspace />);
+    await openTheShift(user);
+    await ringUpTwoUnits(user);
+    await user.click(screen.getByRole("button", { name: /take cash payment/i }));
+    expect(
+      (await screen.findAllByText(/Sugar 1kg: 0 available, 2 requested/)).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getByLabelText(/quantity for sugar 1kg/i)).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    expect(posts).toBe(0);
+
+    await user.type(screen.getByLabelText(/cash amount/i), "25.00");
+    await user.click(screen.getByRole("button", { name: /take split payment/i }));
+    expect(
+      (await screen.findAllByText(/Sugar 1kg: 0 available, 2 requested/)).length,
+    ).toBeGreaterThan(0);
+    expect(posts).toBe(0);
+
+    available = 1;
+    await user.clear(screen.getByLabelText(/quantity for sugar 1kg/i));
+    await user.type(screen.getByLabelText(/quantity for sugar 1kg/i), "1");
+    expect(screen.getByLabelText(/quantity for sugar 1kg/i)).not.toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    await user.click(screen.getByRole("button", { name: /take cash payment/i }));
+    expect(await screen.findByText(/receipt rcp-000001/i)).toBeInTheDocument();
+    expect(posts).toBe(1);
+  });
+
+  it("shows a payment validation error beside cash without losing the sale", async () => {
+    const user = userEvent.setup();
+    server.use(
+      ...posHandlers(),
+      http.get("*/api/v1/stock", () =>
+        HttpResponse.json({
+          items: [stockLevel],
+          page: 1,
+          pageSize: 50,
+          totalCount: 1,
+        }),
+      ),
+      http.post("*/api/v1/sales", () =>
+        HttpResponse.json(
+          {
+            title: "One or more validation errors occurred.",
+            status: 400,
+            errors: { "Payments[0].Amount": ["Enter an amount greater than zero."] },
+            traceId: "sale-trace",
+          },
+          { status: 400, headers: { "Content-Type": "application/problem+json" } },
+        ),
+      ),
+    );
+    renderWithRouter(<PosWorkspace />);
+    await openTheShift(user);
+    await ringUpTwoUnits(user);
+    await user.click(screen.getByRole("button", { name: /take cash payment/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Payment amount: Enter an amount greater than zero.",
+    );
+    expect(screen.getByLabelText(/cash received/i)).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    expect(screen.getByLabelText(/cash received/i)).toHaveValue("25.00");
+    expect(screen.getByText(/sale-trace/i)).toBeInTheDocument();
+  });
+
+  it("keeps the completed sale visible when its receipt fails to load", async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get(`*/api/v1/sales/${SALE_ID}/receipt`, () =>
+        HttpResponse.json(
+          { title: "Receipt unavailable", status: 503 },
+          { status: 503 },
+        ),
+      ),
+      ...posHandlers(),
+      http.get("*/api/v1/stock", () =>
+        HttpResponse.json({
+          items: [stockLevel],
+          page: 1,
+          pageSize: 50,
+          totalCount: 1,
+        }),
+      ),
+      http.post("*/api/v1/sales", () =>
+        HttpResponse.json(completedSale, { status: 201 }),
+      ),
+    );
+    renderWithRouter(<PosWorkspace />);
+    await openTheShift(user);
+    await ringUpTwoUnits(user);
+    await user.click(screen.getByRole("button", { name: /take cash payment/i }));
+
+    expect(await screen.findByText("Sale completed")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /receipt could not be loaded/i,
+    );
+    expect(
+      screen.getByRole("button", { name: /try loading receipt again/i }),
+    ).toBeEnabled();
+    expect(screen.getByRole("button", { name: /start a new sale/i })).toBeEnabled();
+  });
+
   it("blocks selling until a shift is open, then completes the sale with server totals", async () => {
     const user = userEvent.setup();
     let saleBody: Record<string, unknown> | null = null;
@@ -405,11 +621,16 @@ describe("counter-sale workspace extensions", () => {
     );
 
     expect(await screen.findByLabelText(/quantity for sugar 1kg/i)).toBeVisible();
-    await user.clear(screen.getByLabelText(/discount for sugar 1kg/i));
-    await user.type(screen.getByLabelText(/discount for sugar 1kg/i), "1.00");
+    await user.clear(screen.getByLabelText(/discount.*sugar 1kg/i));
+    await user.type(screen.getByLabelText(/discount.*sugar 1kg/i), "1.00");
     await user.type(screen.getByLabelText(/note for sugar 1kg/i), "Opened");
     await user.click(screen.getByRole("button", { name: /take cash payment/i }));
-    expect(await screen.findByText(/enter the cash received/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByLabelText(/cash received/i)).toHaveAttribute(
+        "aria-invalid",
+        "true",
+      );
+    });
 
     await user.click(screen.getByRole("button", { name: /hold this sale/i }));
     await waitFor(() => {
@@ -422,6 +643,133 @@ describe("counter-sale workspace extensions", () => {
 
     await user.click(screen.getByRole("tab", { name: /returns/i }));
     expect(screen.getByLabelText(/receipt number/i)).toBeVisible();
+  });
+
+  it("completes a recalled held sale with cash and loads its receipt", async () => {
+    const user = userEvent.setup();
+    let completed = false;
+    let created = false;
+    server.use(
+      ...posHandlers(),
+      http.get("*/api/v1/stock", () =>
+        HttpResponse.json({
+          items: [stockLevel],
+          page: 1,
+          pageSize: 50,
+          totalCount: 1,
+        }),
+      ),
+      http.get("*/api/v1/sales/held", () => HttpResponse.json([us2.heldSale])),
+      http.get(`*/api/v1/sales/held/${us2.HELD_SALE_ID}`, () =>
+        HttpResponse.json(us2.heldSale),
+      ),
+      http.post("*/api/v1/sales", () => {
+        created = true;
+        return HttpResponse.json(us2.heldSale, { status: 201 });
+      }),
+      http.post(`*/api/v1/sales/${us2.HELD_SALE_ID}/complete`, async ({ request }) => {
+        const body = (await request.json()) as {
+          payments: Array<{ tender: string; amount: number }>;
+        };
+        expect(body.payments).toEqual([
+          { tender: "Cash", amount: 11.5, reference: null },
+        ]);
+        completed = true;
+        return HttpResponse.json({
+          ...us2.heldSale,
+          status: "Completed",
+          payments: body.payments,
+        });
+      }),
+      http.get(`*/api/v1/sales/${us2.HELD_SALE_ID}/receipt`, () =>
+        HttpResponse.json({ ...receiptRecord, saleId: us2.HELD_SALE_ID }),
+      ),
+    );
+
+    renderWithRouter(<PosWorkspace />);
+    await openTheShift(user);
+    await user.click(await screen.findByRole("button", { name: /recall held sale/i }));
+    await screen.findByLabelText(/quantity for sugar 1kg/i);
+    await user.type(screen.getByLabelText(/cash received/i), "10.00");
+    await user.click(screen.getByRole("button", { name: /take cash payment/i }));
+    expect(screen.getByLabelText(/cash received/i)).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    expect(completed).toBe(false);
+    await user.clear(screen.getByLabelText(/cash received/i));
+    await user.type(screen.getByLabelText(/cash received/i), "11.50");
+    await user.click(screen.getByRole("button", { name: /take cash payment/i }));
+
+    expect(await screen.findByText(/receipt rcp-000001/i)).toBeInTheDocument();
+    expect(completed).toBe(true);
+    expect(created).toBe(false);
+  });
+
+  it("sends an edited held sale discount for server recalculation", async () => {
+    const user = userEvent.setup();
+    let editedDiscount: number | undefined;
+    server.use(
+      ...posHandlers(),
+      http.get("*/api/v1/stock", () =>
+        HttpResponse.json({
+          items: [stockLevel],
+          page: 1,
+          pageSize: 50,
+          totalCount: 1,
+        }),
+      ),
+      http.get("*/api/v1/sales/held", () => HttpResponse.json([us2.heldSale])),
+      http.get(`*/api/v1/sales/held/${us2.HELD_SALE_ID}`, () =>
+        HttpResponse.json(us2.heldSale),
+      ),
+      http.post(`*/api/v1/sales/${us2.HELD_SALE_ID}/complete`, async ({ request }) => {
+        const body = (await request.json()) as {
+          lines: Array<{ id: string; qty: number; lineDiscount: number }>;
+          payments: Array<{ amount: number }>;
+        };
+        expect(body.lines).toEqual([
+          expect.objectContaining({
+            id: us2.heldSale.lines[0]?.id,
+            qty: 1,
+            lineDiscount: 5,
+          }),
+        ]);
+        editedDiscount = body.lines[0]?.lineDiscount;
+        expect(body.payments[0]?.amount).toBe(10);
+        return HttpResponse.json({
+          ...us2.heldSale,
+          status: "Completed",
+          discountTotal: 5,
+          taxTotal: 0.75,
+          grandTotal: 5.75,
+          lines: [
+            {
+              ...us2.heldSale.lines[0],
+              lineDiscount: 5,
+              taxAmount: 0.75,
+              lineTotal: 5.75,
+            },
+          ],
+          payments: [{ tender: "Cash", amount: 10, reference: null }],
+        });
+      }),
+      http.get(`*/api/v1/sales/${us2.HELD_SALE_ID}/receipt`, () =>
+        HttpResponse.json({ ...receiptRecord, saleId: us2.HELD_SALE_ID }),
+      ),
+    );
+
+    renderWithRouter(<PosWorkspace />);
+    await openTheShift(user);
+    await user.click(await screen.findByRole("button", { name: /recall held sale/i }));
+    const discount = await screen.findByLabelText(/discount.*sugar 1kg/i);
+    await user.clear(discount);
+    await user.type(discount, "50");
+    await user.type(screen.getByLabelText(/cash received/i), "10");
+    await user.click(screen.getByRole("button", { name: /take cash payment/i }));
+
+    expect(await screen.findByText(/receipt rcp-000001/i)).toBeInTheDocument();
+    expect(editedDiscount).toBe(5);
   });
 
   it("shows the unknown-barcode panel when the scan is not in the catalogue", async () => {

@@ -55,7 +55,7 @@ export function PurchaseOrderWorkspace({
     },
   });
 
-  const problem = toProblem(orders.error ?? create.error);
+  const problem = toProblem(create.error ?? orders.error);
   const productName =
     products.find((product) => product.id === effectiveProductId)?.name ?? "Item";
 

@@ -8,6 +8,7 @@ import {
   type BillingPlan,
 } from "../api/billing-queries";
 import { Button } from "../../../shared/ui/button";
+import { useConfirmDialog } from "../../../shared/ui/use-confirm-dialog";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
 import { UsageMeter } from "../../marketing/plans/usage-meter";
 import { cn } from "@/shared/utils/cn";
@@ -22,6 +23,7 @@ import {
 } from "./plan-presentation";
 
 export function PlanComparison() {
+  const { confirm, dialog } = useConfirmDialog();
   const plans = useBillingPlans();
   const subscription = useBillingSubscription();
   const upgrade = useMutation({ mutationFn: upgradePlan });
@@ -48,9 +50,14 @@ export function PlanComparison() {
     const currentRank = current ? planRank(current) : 0;
     const targetRank = planRank(plan);
     if (targetRank < currentRank) {
-      if (window.confirm("Downgrade takes effect at period end. Continue?")) {
-        downgrade.mutate(plan.id);
-      }
+      confirm({
+        title: `Downgrade to ${plan.name}?`,
+        description: "The downgrade takes effect at period end.",
+        actionLabel: "Downgrade plan",
+        onConfirm: () => {
+          downgrade.mutate(plan.id);
+        },
+      });
       return;
     }
     upgrade.mutate(plan.id);
@@ -223,6 +230,7 @@ export function PlanComparison() {
           />
         </div>
       ) : null}
+      {dialog}
     </section>
   );
 }

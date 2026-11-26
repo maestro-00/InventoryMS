@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { http, HttpResponse } from "msw";
@@ -182,7 +182,6 @@ describe("billing surfaces", () => {
 
   it("upgrades and downgrades plans via change form", async () => {
     const user = userEvent.setup();
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
     let upgraded: string | undefined;
     let downgraded: string | undefined;
     server.use(
@@ -217,17 +216,19 @@ describe("billing surfaces", () => {
     await user.type(screen.getByLabelText(/target plan id/i), "pro");
     await user.click(screen.getByRole("button", { name: /upgrade now/i }));
     await user.click(screen.getByRole("button", { name: /downgrade at period end/i }));
+    await user.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: "Downgrade plan",
+      }),
+    );
     await vi.waitFor(() => {
       expect(upgraded).toBe("pro");
       expect(downgraded).toBe("pro");
     });
-    expect(confirm).toHaveBeenCalled();
-    confirm.mockRestore();
   });
 
   it("cancels and reactivates with retention purge messaging", async () => {
     const user = userEvent.setup();
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
     let cancelled = false;
     let reactivated = false;
     server.use(
@@ -259,12 +260,16 @@ describe("billing surfaces", () => {
     renderBilling(<CancellationPanel />);
     expect(await screen.findByText(/retention purge at/i)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /cancel subscription/i }));
+    await user.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: "Cancel subscription",
+      }),
+    );
     await user.click(screen.getByRole("button", { name: /reactivate/i }));
     await vi.waitFor(() => {
       expect(cancelled).toBe(true);
       expect(reactivated).toBe(true);
     });
-    confirm.mockRestore();
   });
 
   it("renders four API plans and withholds switch actions on contact-sales", async () => {

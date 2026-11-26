@@ -100,7 +100,6 @@ describe("RegisterEditForm", () => {
 
   it("deactivates a till after confirm", async () => {
     const user = userEvent.setup();
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     let seenBody: unknown;
     server.use(
       http.patch(`*/api/v1/registers/${registerRecord.id}`, async ({ request }) => {
@@ -117,12 +116,14 @@ describe("RegisterEditForm", () => {
 
     await user.click(screen.getByRole("checkbox", { name: /active till/i }));
     await user.click(screen.getByRole("button", { name: /save till/i }));
+    expect(
+      screen.getByRole("alertdialog", { name: /deactivate till/i }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Deactivate till" }));
 
     await waitFor(() => {
       expect(seenBody).toEqual({ name: null, isActive: false });
     });
-    expect(confirmSpy).toHaveBeenCalled();
     expect(await screen.findByRole("status")).toHaveTextContent(/till updated/i);
-    confirmSpy.mockRestore();
   });
 });

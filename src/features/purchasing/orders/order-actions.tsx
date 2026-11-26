@@ -9,6 +9,7 @@ import {
   type PurchaseOrderRecord,
 } from "../api/purchasing-api";
 import { Button } from "../../../shared/ui/button";
+import { useConfirmDialog } from "../../../shared/ui/use-confirm-dialog";
 import { TextField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
 
@@ -20,6 +21,7 @@ export function OrderActions({
   onChanged: (order: PurchaseOrderRecord) => void | Promise<void>;
 }) {
   const [cancelReason, setCancelReason] = useState("");
+  const { confirm, dialog } = useConfirmDialog();
   const mutation = useMutation({
     mutationFn: async (action: "submit" | "approve" | "reject" | "cancel" | "send") => {
       if (action === "submit") return submitPurchaseOrder(order.id);
@@ -87,11 +89,18 @@ export function OrderActions({
       <Button
         type="button"
         onClick={() => {
-          if (window.confirm("Cancel this purchase order?")) mutation.mutate("cancel");
+          confirm({
+            title: "Cancel this purchase order?",
+            actionLabel: "Cancel order",
+            onConfirm: () => {
+              mutation.mutate("cancel");
+            },
+          });
         }}
       >
         Cancel order
       </Button>
+      {dialog}
     </section>
   );
 }

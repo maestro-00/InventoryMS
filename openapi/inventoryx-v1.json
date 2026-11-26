@@ -13552,7 +13552,26 @@
               "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Selling.CreateSalePaymentDto"
             },
             "nullable": true
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Selling.CompleteHeldSaleLineDto"
+            },
+            "nullable": true
           }
+        },
+        "additionalProperties": false,
+        "description": "Completes a held sale, optionally replacing quantities and discounts on its saved lines."
+      },
+      "InventoryX.Application.Commands.Requests.Selling.CompleteHeldSaleLineDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "qty": { "type": "number", "format": "double" },
+          "lineDiscount": { "type": "number", "format": "double" },
+          "note": { "type": "string", "nullable": true },
+          "discountAuthorizedBy": { "type": "string", "nullable": true }
         },
         "additionalProperties": false
       },

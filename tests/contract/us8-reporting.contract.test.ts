@@ -146,8 +146,8 @@ describe("reporting API contracts", () => {
           items: [
             {
               id: notificationId,
-              type: "LowStock",
-              channel: "InApp",
+              type: 0,
+              channel: 0,
               title: "Sugar",
               occurrences: 2,
               isRead: false,
@@ -160,9 +160,7 @@ describe("reporting API contracts", () => {
       http.post("*/api/v1/notifications/:id/read", () => HttpResponse.json(true)),
       http.post("*/api/v1/notifications/read-all", () => HttpResponse.json(1)),
       http.get("*/api/v1/notification-preferences", () =>
-        HttpResponse.json([
-          { type: "LowStock", channel: "Push", isEnabled: false, threshold: 5 },
-        ]),
+        HttpResponse.json([{ type: 0, channel: 2, isEnabled: false, threshold: 5 }]),
       ),
       http.put("*/api/v1/notification-preferences", async ({ request }) => {
         const body = (await request.json()) as { preferences: unknown[] };
@@ -187,11 +185,11 @@ describe("reporting API contracts", () => {
     expect((await fetchNotifications()).totalCount).toBe(1);
     await markNotificationRead(notificationId);
     expect(await markAllNotificationsRead()).toBe(1);
-    expect((await fetchNotificationPreferences())[0]?.channel).toBe("Push");
+    expect((await fetchNotificationPreferences())[0]?.channel).toBe(2);
     expect(
       (
         await updateNotificationPreferences([
-          { type: "LowStock", channel: "Push", isEnabled: true, threshold: 5 },
+          { type: 0, channel: 2, isEnabled: true, threshold: 5 },
         ])
       )[0]?.isEnabled,
     ).toBe(true);

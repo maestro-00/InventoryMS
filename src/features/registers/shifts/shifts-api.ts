@@ -85,19 +85,19 @@ export async function recordCashMovement(
 
 const zReportSchema = z.object({
   shiftId: uuidSchema,
-  salesTotal: apiDecimalSchema,
-  refundTotal: apiDecimalSchema.optional(),
-  discountTotal: apiDecimalSchema.optional(),
-  voidTotal: apiDecimalSchema.optional(),
+  sales: apiDecimalSchema,
+  cashTendered: apiDecimalSchema,
+  refunds: apiDecimalSchema,
+  discounts: apiDecimalSchema,
+  voids: z.number().int(),
   expectedCash: apiDecimalSchema,
-  countedCash: apiDecimalSchema,
-  variance: apiDecimalSchema,
-  tenders: z
-    .array(z.object({ tender: z.string(), amount: apiDecimalSchema }))
-    .default([]),
+  countedCash: apiDecimalSchema.nullable(),
+  variance: apiDecimalSchema.nullable(),
 });
 
 export type ZReportRecord = z.infer<typeof zReportSchema>;
+export const zReportQueryKey = (shiftId: string) =>
+  ["registers", "z-report", shiftId] as const;
 
 export async function fetchZReport(shiftId: string): Promise<ZReportRecord> {
   const outcome = await inventoryxClient.GET("/api/v1/shifts/{shiftId}/z-report", {

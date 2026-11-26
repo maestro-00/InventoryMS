@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchZReport } from "./shifts-api";
+import { formatGhanaMoney } from "../../../shared/money/decimal";
+import { fetchZReport, zReportQueryKey } from "./shifts-api";
 
 export function ZReport({ shiftId }: { shiftId: string }) {
   const report = useQuery({
-    queryKey: ["registers", "z-report", shiftId],
+    queryKey: zReportQueryKey(shiftId),
     queryFn: () => fetchZReport(shiftId),
   });
 
@@ -19,41 +20,46 @@ export function ZReport({ shiftId }: { shiftId: string }) {
         <tbody>
           <tr>
             <th scope="row">Sales</th>
-            <td>{report.data.salesTotal}</td>
+            <td>{formatGhanaMoney(report.data.sales)}</td>
+          </tr>
+          <tr>
+            <th scope="row">Cash tendered</th>
+            <td>{formatGhanaMoney(report.data.cashTendered)}</td>
           </tr>
           <tr>
             <th scope="row">Refunds</th>
-            <td>{report.data.refundTotal ?? "0"}</td>
+            <td>{formatGhanaMoney(report.data.refunds)}</td>
           </tr>
           <tr>
             <th scope="row">Discounts</th>
-            <td>{report.data.discountTotal ?? "0"}</td>
+            <td>{formatGhanaMoney(report.data.discounts)}</td>
           </tr>
           <tr>
             <th scope="row">Voids</th>
-            <td>{report.data.voidTotal ?? "0"}</td>
+            <td>{report.data.voids}</td>
           </tr>
           <tr>
             <th scope="row">Expected cash</th>
-            <td>{report.data.expectedCash}</td>
+            <td>{formatGhanaMoney(report.data.expectedCash)}</td>
           </tr>
           <tr>
             <th scope="row">Counted cash</th>
-            <td>{report.data.countedCash}</td>
+            <td>
+              {report.data.countedCash === null
+                ? "Pending count"
+                : formatGhanaMoney(report.data.countedCash)}
+            </td>
           </tr>
           <tr>
             <th scope="row">Variance</th>
-            <td>{report.data.variance}</td>
+            <td>
+              {report.data.variance === null
+                ? "Pending count"
+                : formatGhanaMoney(report.data.variance)}
+            </td>
           </tr>
         </tbody>
       </table>
-      <ul>
-        {report.data.tenders.map((tender) => (
-          <li key={tender.tender}>
-            {tender.tender}: {tender.amount}
-          </li>
-        ))}
-      </ul>
       <button
         type="button"
         onClick={() => {

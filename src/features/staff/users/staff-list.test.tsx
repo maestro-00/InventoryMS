@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { http, HttpResponse } from "msw";
@@ -8,6 +8,7 @@ import { sessionManager } from "../../../shared/auth/session-manager";
 import { ownerSession } from "../../../../tests/fixtures/provider/session";
 import { StaffList } from "./staff-list";
 import { selectRadixOption } from "../../../shared/test/select-radix";
+import { SessionProvider } from "../../../shared/auth/session-context";
 
 const roleId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const userId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -24,6 +25,17 @@ describe("staff list", () => {
       refreshToken: "refresh",
     });
     server.use(
+      http.get("*/api/v1/locations", () =>
+        HttpResponse.json([
+          {
+            id: "55555555-5555-4555-8555-555555555555",
+            name: "Branch",
+            address: null,
+            kind: "Shop",
+            isActive: true,
+          },
+        ]),
+      ),
       http.get("*/api/v1/users", () =>
         HttpResponse.json([
           {
@@ -60,18 +72,20 @@ describe("staff list", () => {
         return HttpResponse.json(true);
       }),
     );
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
-        <StaffList />
+        <SessionProvider>
+          <StaffList />
+        </SessionProvider>
       </QueryClientProvider>,
     );
 
     expect(await screen.findByText(/cashier@kwame.gh/i)).toBeInTheDocument();
     await user.type(screen.getByLabelText(/invite email/i), "new@kwame.gh");
     await selectRadixOption(user, screen.getByLabelText(/^role$/i), roleId);
-    await user.type(
+    await selectRadixOption(
+      user,
       screen.getByLabelText(/location scope/i),
       "55555555-5555-4555-8555-555555555555",
     );
@@ -86,6 +100,11 @@ describe("staff list", () => {
     expect(await screen.findByRole("status")).toHaveTextContent(/invitation token/i);
 
     await user.click(screen.getByRole("button", { name: /deactivate/i }));
+    await user.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: "Deactivate user",
+      }),
+    );
     await user.click(screen.getByRole("button", { name: /scope to main shop/i }));
     await waitFor(() => {
       expect(updated).toEqual(
@@ -95,7 +114,6 @@ describe("staff list", () => {
         ]),
       );
     });
-    confirm.mockRestore();
   });
 
   it("respects a declined deactivate confirmation", async () => {
@@ -125,16 +143,20 @@ describe("staff list", () => {
         return HttpResponse.json(true);
       }),
     );
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
-        <StaffList />
+        <SessionProvider>
+          <StaffList />
+        </SessionProvider>
       </QueryClientProvider>,
     );
     await screen.findByText(/cashier@kwame.gh/i);
     await user.click(screen.getByRole("button", { name: /deactivate/i }));
+    expect(
+      screen.getByRole("alertdialog", { name: /deactivate cashier/i }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
     expect(patched).toBe(0);
-    confirm.mockRestore();
   });
 });

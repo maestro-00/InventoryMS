@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useSyncExternalStore } from "react";
+import { useConfirmDialog } from "../ui/use-confirm-dialog";
 import { useSession } from "../auth/session-context";
 import { useLocations } from "../../features/inventory/locations/api/location-queries";
 import {
@@ -68,6 +69,7 @@ export function LocationSwitcher({
   onBlockedSwitch?: () => void;
 } = {}) {
   const queryClient = useQueryClient();
+  const { confirm, dialog } = useConfirmDialog();
   const { session } = useSession();
   const locations = useLocations();
   const activeLocationId = useActiveLocationId();
@@ -95,44 +97,56 @@ export function LocationSwitcher({
     );
   }
 
+  function switchLocation(next: string) {
+    if (!session?.tenantId) return;
+    void lockRegisterAuth({ persistPartition: true });
+    clearPosLocationGuard();
+    const previous = activeLocationId;
+    setActiveLocationId(session.tenantId, next);
+    if (previous && previous !== next) {
+      void clearLocationCaches(queryClient, previous);
+    }
+    void queryClient.invalidateQueries();
+  }
+
   return (
-    <Select
-      value={activeLocationId || active?.id || ""}
-      onValueChange={(next) => {
-        if (!session?.tenantId) return;
-        if (!locationInScope(next, locationScope)) return;
-        if (blocked) {
-          const confirmed = window.confirm(
-            "You have an active cart or a prepared till for offline sales. Switch location anyway? The current cart will be cleared and the till will lock.",
-          );
-          if (!confirmed) {
-            onBlockedSwitch?.();
+    <>
+      <Select
+        value={activeLocationId || active?.id || ""}
+        onValueChange={(next) => {
+          if (!session?.tenantId) return;
+          if (!locationInScope(next, locationScope)) return;
+          if (blocked) {
+            confirm({
+              title: "Switch location?",
+              description:
+                "You have an active cart or a prepared till for offline sales. The current cart will be cleared and the till will lock.",
+              actionLabel: "Switch location",
+              onConfirm: () => {
+                switchLocation(next);
+              },
+              onCancel: onBlockedSwitch,
+            });
             return;
           }
-        }
-        void lockRegisterAuth({ persistPartition: true });
-        clearPosLocationGuard();
-        const previous = activeLocationId;
-        setActiveLocationId(session.tenantId, next);
-        if (previous && previous !== next) {
-          void clearLocationCaches(queryClient, previous);
-        }
-        void queryClient.invalidateQueries();
-      }}
-    >
-      <SelectTrigger
-        className="h-8 max-w-48 border-none bg-transparent px-1 shadow-none"
-        aria-label="Switch location"
+          switchLocation(next);
+        }}
       >
-        <SelectValue placeholder="Select location" />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((location) => (
-          <SelectItem key={location.id} value={location.id}>
-            {location.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+        <SelectTrigger
+          className="h-8 max-w-48 border-none bg-transparent px-1 shadow-none"
+          aria-label="Switch location"
+        >
+          <SelectValue placeholder="Select location" />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((location) => (
+            <SelectItem key={location.id} value={location.id}>
+              {location.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {dialog}
+    </>
   );
 }

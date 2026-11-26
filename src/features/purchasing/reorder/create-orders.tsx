@@ -27,7 +27,7 @@ export function CreateOrdersFromReorder({
       await queryClient.invalidateQueries({ queryKey: ["purchasing", "orders"] });
     },
   });
-  const problem = toProblem(suggestions.error ?? apply.error);
+  const problem = toProblem(apply.error ?? suggestions.error);
 
   return (
     <section aria-label="Create orders from reorder" className="space-y-4">

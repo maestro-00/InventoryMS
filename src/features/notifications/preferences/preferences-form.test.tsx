@@ -14,8 +14,8 @@ describe("notification preferences", () => {
     let saved:
       | {
           preferences: Array<{
-            type: string;
-            channel: string;
+            type: number;
+            channel: number;
             isEnabled: boolean;
             threshold?: number | null;
           }>;
@@ -32,7 +32,7 @@ describe("notification preferences", () => {
       http.put("*/api/v1/notification-preferences", async ({ request }) => {
         saved = (await request.json()) as typeof saved;
         return HttpResponse.json([
-          { type: "LowStock", channel: "InApp", isEnabled: true, threshold: 9 },
+          { type: 0, channel: 0, isEnabled: true, threshold: 9 },
         ]);
       }),
     );
@@ -43,17 +43,15 @@ describe("notification preferences", () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByLabelText(/LowStock InApp/i)).toBeChecked();
-    const threshold = screen.getAllByLabelText(/LowStock threshold/i).at(0);
-    if (!threshold) throw new Error("missing LowStock threshold input");
+    expect(await screen.findByLabelText(/^LowStock InApp$/i)).toBeChecked();
+    const threshold = screen.getByLabelText(/LowStock InApp threshold/i);
     await user.clear(threshold);
     await user.type(threshold, "9");
     await user.click(screen.getByRole("button", { name: /save preferences/i }));
     await waitFor(() => {
       expect(
         saved?.preferences.some(
-          (row) =>
-            row.type === "LowStock" && row.channel === "InApp" && row.threshold === 9,
+          (row) => row.type === 0 && row.channel === 0 && row.threshold === 9,
         ),
       ).toBe(true);
     });
@@ -70,8 +68,8 @@ describe("notification preferences", () => {
     server.use(
       http.get("*/api/v1/notification-preferences", () =>
         HttpResponse.json([
-          { type: "Expiry", channel: "Email", isEnabled: false, threshold: null },
-          { type: "LowStock", channel: "Sms", isEnabled: true, threshold: "3" },
+          { type: 2, channel: 1, isEnabled: false, threshold: null },
+          { type: 0, channel: 3, isEnabled: true, threshold: "3" },
         ]),
       ),
     );
@@ -81,7 +79,7 @@ describe("notification preferences", () => {
         <NotificationPreferences />
       </QueryClientProvider>,
     );
-    expect(await screen.findByLabelText(/Expiry Email/i)).not.toBeChecked();
-    expect(screen.getByLabelText(/LowStock threshold/i)).toHaveValue("3");
+    expect(await screen.findByLabelText(/^ExpiringStock Email$/i)).not.toBeChecked();
+    expect(screen.getByLabelText(/LowStock Sms threshold/i)).toHaveValue("3");
   });
 });

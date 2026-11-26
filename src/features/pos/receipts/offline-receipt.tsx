@@ -1,4 +1,5 @@
 import { QRCodeSVG } from "qrcode.react";
+import { Alert, AlertDescription, AlertTitle } from "../../../shared/ui/alert";
 
 export interface OfflineReceiptProps {
   clientSaleId: string;
@@ -13,9 +14,16 @@ export interface OfflineReceiptProps {
 export function OfflineProvisionalReceipt(props: OfflineReceiptProps) {
   return (
     <article aria-label="Provisional offline receipt" className="space-y-3">
+      <Alert role="status" variant="success">
+        <AlertTitle>Sale saved on this register</AlertTitle>
+        <AlertDescription>
+          It is waiting to sync. This provisional receipt is not the final fiscal
+          receipt.
+        </AlertDescription>
+      </Alert>
       <header>
         <h2>Pending sync</h2>
-        <p>This is a provisional receipt. It is not the final fiscal document.</p>
+        <p>Keep this provisional receipt until the sale syncs.</p>
       </header>
       <dl>
         <div>

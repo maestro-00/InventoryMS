@@ -1,5 +1,8 @@
 import { z } from "zod";
 import { authorizedFetch } from "../../../shared/api/client/authorized-fetch";
+import { readProblem } from "../../../shared/api/client/inventoryx-client";
+import { ProblemError } from "../../../shared/api/errors/problem-error";
+import { ResponseValidationError } from "../../../shared/api/errors/response-validation-error";
 import {
   apiDecimalSchema,
   clampPageSize,
@@ -184,17 +187,31 @@ export async function fetchPurchaseOrders(
   if (query.supplierId) params.set("supplierId", query.supplierId);
   if (query.overdue) params.set("overdue", "true");
   const response = await authedFetch(`/api/v1/purchase-orders?${params}`);
-  if (!response.ok) throw new Error("Failed to load purchase orders");
+  if (!response.ok) {
+    const problem = await readProblem(response);
+    if (problem.title === "Request failed") {
+      problem.title = `Could not load purchase orders (HTTP ${String(response.status)})`;
+    }
+    throw new ProblemError(problem);
+  }
   const body: unknown = await response.json();
   if (Array.isArray(body)) {
+    const items = z.array(purchaseOrderSchema).safeParse(body);
+    if (!items.success) {
+      throw new ResponseValidationError("purchase orders", items.error.issues);
+    }
     return {
-      items: z.array(purchaseOrderSchema).parse(body),
+      items: items.data,
       page: 1,
       pageSize: body.length,
       totalCount: body.length,
     };
   }
-  return pagedOrdersSchema.parse(body);
+  const orders = pagedOrdersSchema.safeParse(body);
+  if (!orders.success) {
+    throw new ResponseValidationError("purchase orders", orders.error.issues);
+  }
+  return orders.data;
 }
 
 export async function createPurchaseOrder(input: {
@@ -224,8 +241,18 @@ export async function createPurchaseOrder(input: {
       })),
     }),
   });
-  if (!response.ok) throw new Error("Failed to create purchase order");
-  return purchaseOrderSchema.parse(await response.json());
+  if (!response.ok) {
+    const problem = await readProblem(response);
+    if (problem.title === "Request failed") {
+      problem.title = `Could not create draft order (HTTP ${String(response.status)})`;
+    }
+    throw new ProblemError(problem);
+  }
+  const order = purchaseOrderSchema.safeParse(await response.json());
+  if (!order.success) {
+    throw new ResponseValidationError("draft order", order.error.issues);
+  }
+  return order.data;
 }
 
 export async function patchPurchaseOrder(

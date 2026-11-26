@@ -14,8 +14,10 @@ export interface CartProduct {
 }
 
 export interface CartLine extends CartProduct {
+  heldLineId?: string;
   qty: string;
   lineDiscount: string;
+  discountPercent?: string | undefined;
   note: string;
 }
 
@@ -57,6 +59,7 @@ export type CartAction =
   | { type: "scan"; product: CartProduct }
   | { type: "setQuantity"; productId: string; qty: string }
   | { type: "setDiscount"; productId: string; lineDiscount: string }
+  | { type: "setDiscountPercent"; productId: string; percent: string }
   | { type: "setNote"; productId: string; note: string }
   | { type: "removeLine"; productId: string }
   | { type: "addTender"; tender: Tender; amount: string; reference?: string }
@@ -75,6 +78,9 @@ export function setQuantity(productId: string, qty: string): CartAction {
 }
 export function setDiscount(productId: string, lineDiscount: string): CartAction {
   return { type: "setDiscount", productId, lineDiscount };
+}
+export function setDiscountPercent(productId: string, percent: string): CartAction {
+  return { type: "setDiscountPercent", productId, percent };
 }
 export function setNote(productId: string, note: string): CartAction {
   return { type: "setNote", productId, note };
@@ -107,6 +113,35 @@ function incrementQty(qty: string): string {
   return qty.includes(".") ? next.toFixed(3) : next.toFixed(0);
 }
 
+function discountAmount(line: CartLine, qty: string, percent: string): string {
+  if (!/^\d*(?:\.\d{0,2})?$/.test(percent) || percent === "") return "0";
+  try {
+    return new Decimal(line.catalogUnitPrice)
+      .times(qty)
+      .times(percent)
+      .div(100)
+      .toFixed(4);
+  } catch {
+    return "0";
+  }
+}
+
+export function discountPercentForLine(line: CartLine): string {
+  if (line.discountPercent !== undefined) return line.discountPercent;
+  try {
+    const gross = new Decimal(line.catalogUnitPrice).times(line.qty);
+    return gross.gt(0)
+      ? new Decimal(line.lineDiscount)
+          .div(gross)
+          .times(100)
+          .toDecimalPlaces(2)
+          .toString()
+      : "0";
+  } catch {
+    return "0";
+  }
+}
+
 export function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case "scan": {
@@ -119,7 +154,19 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
           quote: null,
           lines: state.lines.map((line) =>
             line.productId === action.product.productId
-              ? { ...line, qty: incrementQty(line.qty) }
+              ? {
+                  ...line,
+                  qty: incrementQty(line.qty),
+                  ...(line.discountPercent !== undefined
+                    ? {
+                        lineDiscount: discountAmount(
+                          line,
+                          incrementQty(line.qty),
+                          line.discountPercent,
+                        ),
+                      }
+                    : {}),
+                }
               : line,
           ),
         };
@@ -133,6 +180,7 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
             ...action.product,
             qty: "1",
             lineDiscount: "0",
+            discountPercent: "0",
             note: "",
           },
         ],
@@ -143,7 +191,21 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
         ...state,
         quote: null,
         lines: state.lines.map((line) =>
-          line.productId === action.productId ? { ...line, qty: action.qty } : line,
+          line.productId === action.productId
+            ? {
+                ...line,
+                qty: action.qty,
+                ...(line.discountPercent !== undefined
+                  ? {
+                      lineDiscount: discountAmount(
+                        line,
+                        action.qty,
+                        line.discountPercent,
+                      ),
+                    }
+                  : {}),
+              }
+            : line,
         ),
       };
     case "setDiscount":
@@ -152,23 +214,45 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
         quote: null,
         lines: state.lines.map((line) =>
           line.productId === action.productId
-            ? { ...line, lineDiscount: action.lineDiscount }
+            ? { ...line, lineDiscount: action.lineDiscount, discountPercent: undefined }
+            : line,
+        ),
+      };
+    case "setDiscountPercent":
+      return {
+        ...state,
+        quote: null,
+        lines: state.lines.map((line) =>
+          line.productId === action.productId
+            ? {
+                ...line,
+                discountPercent: action.percent,
+                lineDiscount: discountAmount(line, line.qty, action.percent),
+              }
             : line,
         ),
       };
     case "setNote":
       return {
         ...state,
+        quote: state.heldSaleId ? null : state.quote,
         lines: state.lines.map((line) =>
           line.productId === action.productId ? { ...line, note: action.note } : line,
         ),
       };
-    case "removeLine":
-      return {
-        ...state,
-        quote: null,
-        lines: state.lines.filter((line) => line.productId !== action.productId),
-      };
+    case "removeLine": {
+      const lines = state.lines.filter((line) => line.productId !== action.productId);
+      // Once every recalled line is gone, the remaining products form a new sale.
+      // Keep the original held sale available for a later recall.
+      if (
+        state.heldSaleId &&
+        state.lines.some((line) => line.heldLineId) &&
+        !lines.some((line) => line.heldLineId)
+      ) {
+        return { ...createCart(), lines };
+      }
+      return { ...state, quote: null, lines };
+    }
     case "addTender":
       return {
         ...state,
@@ -228,19 +312,38 @@ export function cartErrors(cart: CartState): string[] {
   if (cart.completed) return ["This sale is already completed."];
   if (cart.lines.length === 0)
     return ["Add at least one product before taking payment."];
-  return cart.lines.flatMap((line) => {
-    const messages: string[] = [];
-    if (!quantityStringSchema.safeParse(line.qty).success) {
-      messages.push(
-        `${line.productName}: quantity allows at most three decimal places.`,
-      );
-    } else if (!line.allowFractional && !new Decimal(line.qty).isInteger()) {
-      messages.push(
-        `${line.productName}: this product does not allow fractional quantities.`,
-      );
-    }
-    return messages;
-  });
+  const errors =
+    cart.heldSaleId && cart.lines.some((line) => !line.heldLineId)
+      ? [
+          "Added products cannot be included in a recalled sale. Remove the recalled products to start a new sale, or remove the added products to complete the held sale.",
+        ]
+      : [];
+  return [
+    ...errors,
+    ...cart.lines.flatMap((line) => {
+      const messages: string[] = [];
+      if (!quantityStringSchema.safeParse(line.qty).success) {
+        messages.push(
+          `${line.productName}: enter a numeric quantity with at most three decimal places.`,
+        );
+      } else if (new Decimal(line.qty).lte(0)) {
+        messages.push(`${line.productName}: enter a quantity greater than zero.`);
+      } else if (!line.allowFractional && !new Decimal(line.qty).isInteger()) {
+        messages.push(
+          `${line.productName}: this product does not allow fractional quantities.`,
+        );
+      }
+      if (
+        line.discountPercent !== undefined &&
+        line.discountPercent !== "" &&
+        (!/^\d+(?:\.\d{0,2})?$/.test(line.discountPercent) ||
+          new Decimal(line.discountPercent).gt(100))
+      ) {
+        messages.push(`${line.productName}: enter a discount from 0% to 100%.`);
+      }
+      return messages;
+    }),
+  ];
 }
 
 export function toSaleLines(cart: CartState) {

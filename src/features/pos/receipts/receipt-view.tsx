@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatGhanaMoney } from "../../../shared/money/decimal";
 import { Button } from "../../../shared/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "../../../shared/ui/alert";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
 import { LoadingState } from "../../../shared/ui/states/ui-state";
 import type { SaleRecord } from "../sales/api/sales-api";
@@ -21,11 +22,44 @@ export function ReceiptView({
     queryFn: () => fetchReceipt(sale.id),
   });
 
-  if (receipt.isPending) return <LoadingState label="Loading receipt" />;
-  if (receipt.isError) return <ProblemSummary problem={toProblem(receipt.error)} />;
+  const completedNotice = (
+    <Alert role="status" variant="success">
+      <AlertTitle>Sale completed</AlertTitle>
+      <AlertDescription>
+        The payment was recorded. You can start a new sale or view this sale in history.
+      </AlertDescription>
+    </Alert>
+  );
+
+  if (receipt.isPending)
+    return (
+      <section className="flex flex-col gap-3">
+        {completedNotice}
+        <LoadingState label="Loading receipt" />
+      </section>
+    );
+  if (receipt.isError)
+    return (
+      <section className="flex flex-col gap-3">
+        {completedNotice}
+        <ProblemSummary
+          problem={toProblem(receipt.error)}
+          title="Receipt could not be loaded"
+        />
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" onClick={() => void receipt.refetch()}>
+            Try loading receipt again
+          </Button>
+          <Button type="button" variant="outline" onClick={onNewSale}>
+            Start a new sale
+          </Button>
+        </div>
+      </section>
+    );
 
   return (
     <section className="flex flex-col gap-3" aria-labelledby="receipt-heading">
+      {completedNotice}
       <h2 id="receipt-heading" className="text-lg font-semibold">
         Receipt {receipt.data.number}
       </h2>

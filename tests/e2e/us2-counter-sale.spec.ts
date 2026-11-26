@@ -105,6 +105,7 @@ test("@critical a cashier can scan, search, favourite, hold, split pay, and retu
   await page.getByLabel(/cash amount/i).fill("50.00");
   await page.getByRole("button", { name: /add card tender/i }).click();
   await page.getByLabel(/card amount/i).fill("35.00");
+  await page.getByLabel(/card reference/i).fill("AUTH-44");
   await page.getByRole("button", { name: /take split payment/i }).click();
 
   await expect(page.getByRole("heading", { name: /receipt/i })).toBeVisible({

@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Decimal from "decimal.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isProblemError } from "../../shared/api/errors/problem-error";
+import { formatGhanaMoney } from "../../shared/money/decimal";
 import { useSession } from "../../shared/auth/session-context";
 import {
   isRegisterUnlocked,
@@ -8,12 +10,17 @@ import {
 } from "../../shared/auth/register-auth-store";
 import { Button } from "../../shared/ui/button";
 import { TextField } from "../../shared/ui/forms/form-field";
-import { ProblemSummary, toProblem } from "../../shared/ui/forms/problem-summary";
+import {
+  fieldError,
+  ProblemSummary,
+  toProblem,
+} from "../../shared/ui/forms/problem-summary";
 import { LoadingState } from "../../shared/ui/states/ui-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../shared/ui/tabs";
 import {
   fetchProductByBarcode,
   fetchProducts,
+  fetchTaxTreatments,
 } from "../catalogue/products/api/products-api";
 import { useLocations } from "../inventory/locations/api/location-queries";
 import { useActiveLocationId } from "../../shared/location/use-active-location";
@@ -42,9 +49,10 @@ import {
   cartErrors,
   cartReducer,
   createCart,
+  discountPercentForLine,
   removeLine,
   scanProduct,
-  setDiscount,
+  setDiscountPercent,
   setNote,
   setQuantity,
   toSaleLines,
@@ -52,12 +60,18 @@ import {
   type CartState,
 } from "./cart/cart-store";
 import { PaymentPanel } from "./checkout/payment-panel";
+import { paymentDifference, previewSale } from "./cart/sale-preview";
+import { checkSaleStock, StockValidationError } from "./checkout/stock-validation";
 import {
   completeEligibleOfflineSale,
   type OfflineCompletionResult,
 } from "./checkout/offline-checkout";
-import { completeSale, SaleSubmissionGuard } from "./checkout/online-checkout";
-import { holdSale } from "./held-sales/api/held-sales-api";
+import {
+  completeSale,
+  salePaymentInputSchema,
+  SaleSubmissionGuard,
+} from "./checkout/online-checkout";
+import { completeHeldSale, holdSale } from "./held-sales/api/held-sales-api";
 import { HeldSalesPanel } from "./held-sales/held-sales-panel";
 import { OfflineProvisionalReceipt } from "./receipts/offline-receipt";
 import { ReceiptView } from "./receipts/receipt-view";
@@ -102,14 +116,20 @@ export function PosWorkspace({
   });
   const stock = useQuery({
     queryKey: ["stock", locationId],
-    queryFn: () => fetchStock({ locationId }),
+    queryFn: () => fetchStock({ locationId, pageSize: 200 }),
     enabled: locationId !== "" && isOnline,
   });
 
   const [shift, setShift] = useState<ShiftRecord | null>(null);
   const [cart, setCart] = useState<CartState>(() => createCart());
+  const taxTreatments = useQuery({
+    queryKey: ["pos-tax-treatments"],
+    queryFn: fetchTaxTreatments,
+    enabled: isOnline && cart.lines.some((line) => Boolean(line.taxTreatmentCode)),
+  });
   const [cashReceived, setCashReceived] = useState("");
   const [clientErrors, setClientErrors] = useState<string[]>([]);
+  const [stockIssues, setStockIssues] = useState(new Map<string, string>());
   const [sale, setSale] = useState<SaleRecord | null>(null);
   const [provisional, setProvisional] = useState<OfflineCompletionResult | null>(null);
   const [panel, setPanel] = useState<Panel>("sell");
@@ -134,6 +154,7 @@ export function PosWorkspace({
       setCart(createCart());
       setCashReceived("");
       setClientErrors([]);
+      setStockIssues(new Map());
       setShift(null);
       setSale(null);
       setProvisional(null);
@@ -190,6 +211,24 @@ export function PosWorkspace({
     }
   };
 
+  async function validateOnlineStock() {
+    let issues;
+    try {
+      issues = await checkSaleStock(cart.lines, locationId);
+    } catch {
+      setClientErrors([
+        "Could not check current stock. Check your connection and try the sale again.",
+      ]);
+      throw new StockValidationError();
+    }
+    setStockIssues(new Map(issues.map((issue) => [issue.productId, issue.message])));
+    if (issues.length > 0) {
+      setClientErrors(issues.map((issue) => issue.message));
+      throw new StockValidationError();
+    }
+    setClientErrors([]);
+  }
+
   const checkout = useMutation({
     mutationFn: async (): Promise<
       | { mode: "offline"; result: OfflineCompletionResult }
@@ -222,15 +261,22 @@ export function PosWorkspace({
             }),
           };
         }
+        await validateOnlineStock();
         return {
           mode: "online" as const,
-          result: await completeSale({
-            clientSaleId: cart.clientSaleId,
-            registerId: activeShift?.registerId ?? "",
-            shiftId: activeShift?.id ?? "",
-            lines: toSaleLines(cart),
-            payments,
-          }),
+          result: cart.heldSaleId
+            ? await completeHeldSale(
+                cart.heldSaleId,
+                payments,
+                cart.quote ? undefined : cart.lines,
+              )
+            : await completeSale({
+                clientSaleId: cart.clientSaleId,
+                registerId: activeShift?.registerId ?? "",
+                shiftId: activeShift?.id ?? "",
+                lines: toSaleLines(cart),
+                payments,
+              }),
         };
       }),
     onSuccess: (outcome) => {
@@ -253,6 +299,8 @@ export function PosWorkspace({
     onSuccess: () => {
       setCart(createCart());
       setCashReceived("");
+      setClientErrors([]);
+      checkout.reset();
       void queryClient.invalidateQueries({ queryKey: ["held-sales"] });
     },
   });
@@ -260,13 +308,19 @@ export function PosWorkspace({
   const stockByProduct = useMemo(() => {
     const map = new Map<string, string>();
     for (const level of stock.data?.items ?? []) {
-      map.set(level.productId, level.qtyOnHand);
+      if (level.variantId != null) continue;
+      map.set(
+        level.productId,
+        new Decimal(map.get(level.productId) ?? "0").plus(level.qtyOnHand).toString(),
+      );
     }
     return map;
   }, [stock.data]);
 
   const addProduct = useCallback((product: CartProduct) => {
     setCart((current) => cartReducer(current, scanProduct(product)));
+    setClientErrors([]);
+    setStockIssues(new Map());
     setUnknownBarcode(null);
   }, []);
 
@@ -324,12 +378,24 @@ export function PosWorkspace({
     setPanel("sell");
     guard.current.reset();
     checkout.reset();
+    setClientErrors([]);
+    setStockIssues(new Map());
   }
 
   function takePayment() {
     const errors = cartErrors(cart);
-    if (cashReceived.trim() === "")
+    if (cashReceived.trim() === "") {
       errors.push("Enter the cash received from the customer.");
+    } else if (
+      !salePaymentInputSchema.safeParse({ tender: "Cash", amount: cashReceived })
+        .success
+    ) {
+      errors.push(
+        "Enter a cash amount greater than zero using numbers, such as 25.00.",
+      );
+    } else if (cart.heldSaleId && cashDifference?.kind === "remaining") {
+      errors.push("Cash received is less than the held sale total.");
+    }
     if (errors.length > 0) {
       setClientErrors(errors);
       return;
@@ -338,9 +404,19 @@ export function PosWorkspace({
     checkout.mutate();
   }
 
-  const problem = toProblem(checkout.error);
+  const problem =
+    checkout.error instanceof StockValidationError ? null : toProblem(checkout.error);
+  const offlineCheckoutMessage =
+    !isOnline && checkout.error instanceof Error && !isProblemError(checkout.error)
+      ? checkout.error.message
+      : null;
+  const cashError =
+    fieldError(problem, "Payments[0].Amount", "payments.0.amount", "payments") ??
+    clientErrors.find((message) => /cash (received|amount)/i.test(message));
   const registerId = activeShift?.registerId ?? registers.data?.[0]?.id ?? "";
   const tenantId = session?.tenantId ?? "";
+  const preview = previewSale(cart, taxTreatments.data, isOnline);
+  const cashDifference = paymentDifference(preview.grandTotal, cashReceived);
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row">
@@ -479,7 +555,14 @@ export function PosWorkspace({
                       title="Check the sale"
                     />
                   ) : null}
-                  {problem ? <ProblemSummary problem={problem} /> : null}
+                  {offlineCheckoutMessage ? (
+                    <ProblemSummary
+                      title="Offline sale needs attention"
+                      messages={[offlineCheckoutMessage]}
+                    />
+                  ) : problem ? (
+                    <ProblemSummary problem={problem} />
+                  ) : null}
                   {toProblem(hold.error) ? (
                     <ProblemSummary problem={toProblem(hold.error)} />
                   ) : null}
@@ -509,71 +592,208 @@ export function PosWorkspace({
                   ) : null}
 
                   <ul className="flex min-h-32 flex-col gap-3">
-                    {cart.lines.map((line) => (
-                      <li
-                        key={line.productId}
-                        className="flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-end"
-                      >
-                        <TextField
-                          label={`Quantity for ${line.productName}`}
-                          inputMode="decimal"
-                          value={line.qty}
-                          onChange={(event) => {
-                            const value = event.target.value;
-                            setCart((current) =>
-                              cartReducer(current, setQuantity(line.productId, value)),
-                            );
-                          }}
-                        />
-                        <TextField
-                          label={`Discount for ${line.productName}`}
-                          inputMode="decimal"
-                          value={line.lineDiscount}
-                          onChange={(event) => {
-                            const value = event.target.value;
-                            setCart((current) =>
-                              cartReducer(current, setDiscount(line.productId, value)),
-                            );
-                          }}
-                        />
-                        <TextField
-                          label={`Note for ${line.productName}`}
-                          value={line.note}
-                          onChange={(event) => {
-                            const value = event.target.value;
-                            setCart((current) =>
-                              cartReducer(current, setNote(line.productId, value)),
-                            );
-                          }}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            setCart((current) =>
-                              cartReducer(current, removeLine(line.productId)),
-                            );
-                          }}
-                        >
-                          Remove {line.productName}
-                        </Button>
+                    {cart.lines.map((line, index) => (
+                      <li key={line.productId} className="rounded-md border p-3">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <h3 className="font-medium">{line.productName}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {formatGhanaMoney(line.catalogUnitPrice)} each
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            aria-label={`Remove ${line.productName}`}
+                            onClick={() => {
+                              setClientErrors([]);
+                              setStockIssues(new Map());
+                              setCart((current) =>
+                                cartReducer(current, removeLine(line.productId)),
+                              );
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-3">
+                          <TextField
+                            label="Quantity"
+                            aria-label={`Quantity for ${line.productName}`}
+                            inputMode="decimal"
+                            value={line.qty}
+                            error={
+                              fieldError(
+                                problem,
+                                `Lines[${String(index)}].Qty`,
+                                `lines.${String(index)}.qty`,
+                              ) ??
+                              clientErrors.find(
+                                (message) =>
+                                  message.startsWith(`${line.productName}:`) &&
+                                  !message.toLowerCase().includes("discount"),
+                              ) ??
+                              stockIssues.get(line.productId)
+                            }
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              setClientErrors([]);
+                              setStockIssues(new Map());
+                              checkout.reset();
+                              setCart((current) =>
+                                cartReducer(
+                                  current,
+                                  setQuantity(line.productId, value),
+                                ),
+                              );
+                            }}
+                          />
+                          <TextField
+                            label="Discount (%)"
+                            aria-label={`Discount (%) for ${line.productName}`}
+                            inputMode="decimal"
+                            value={discountPercentForLine(line)}
+                            hint={
+                              line.lineDiscount !== "0"
+                                ? `${formatGhanaMoney(line.lineDiscount)} off this line`
+                                : "Enter 5 for 5% off this line."
+                            }
+                            error={
+                              fieldError(
+                                problem,
+                                `Lines[${String(index)}].LineDiscount`,
+                                `lines.${String(index)}.lineDiscount`,
+                              ) ??
+                              clientErrors.find(
+                                (message) =>
+                                  message.startsWith(`${line.productName}:`) &&
+                                  message.toLowerCase().includes("discount"),
+                              )
+                            }
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              setClientErrors([]);
+                              checkout.reset();
+                              setCart((current) =>
+                                cartReducer(
+                                  current,
+                                  setDiscountPercent(line.productId, value),
+                                ),
+                              );
+                            }}
+                          />
+                          <TextField
+                            label="Note"
+                            aria-label={`Note for ${line.productName}`}
+                            value={line.note}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              setCart((current) =>
+                                cartReducer(current, setNote(line.productId, value)),
+                              );
+                            }}
+                          />
+                        </div>
+                        <div className="mt-3 flex items-center justify-between gap-3 border-t pt-3 text-sm">
+                          <span>Line total</span>
+                          <strong>
+                            {preview.lines[index]?.total == null
+                              ? "—"
+                              : formatGhanaMoney(preview.lines[index].total)}
+                          </strong>
+                        </div>
                       </li>
                     ))}
                   </ul>
 
+                  {cart.lines.length > 0 ? (
+                    <section
+                      className="rounded-lg border bg-background p-4"
+                      aria-label="Sale summary"
+                    >
+                      <h2 className="mb-3 font-semibold">Sale summary</h2>
+                      <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 text-sm [&_dd]:text-right">
+                        <dt>Items subtotal</dt>
+                        <dd>
+                          {preview.subtotal === null
+                            ? "—"
+                            : formatGhanaMoney(preview.subtotal)}
+                        </dd>
+                        <dt>Discounts</dt>
+                        <dd>
+                          {preview.discountTotal === null
+                            ? "—"
+                            : `−${formatGhanaMoney(preview.discountTotal)}`}
+                        </dd>
+                        {preview.taxes.map((tax) => (
+                          <div className="contents" key={tax.name}>
+                            <dt>{tax.name}</dt>
+                            <dd>{formatGhanaMoney(tax.amount)}</dd>
+                          </div>
+                        ))}
+                        <dt>Tax and levies</dt>
+                        <dd>
+                          {preview.taxTotal === null
+                            ? "—"
+                            : formatGhanaMoney(preview.taxTotal)}
+                        </dd>
+                        <dt>Other fees</dt>
+                        <dd>{formatGhanaMoney("0")}</dd>
+                        <dt className="border-t pt-3 text-base font-semibold">
+                          Total payable
+                        </dt>
+                        <dd className="border-t pt-3 text-base font-semibold">
+                          {preview.grandTotal === null
+                            ? "—"
+                            : formatGhanaMoney(preview.grandTotal)}
+                        </dd>
+                      </dl>
+                      <p className="mt-3 text-xs text-muted-foreground">
+                        {preview.provisional
+                          ? "Offline provisional amount; tax and final total are confirmed on sync."
+                          : cart.heldSaleId && cart.quote
+                            ? "Held sale totals from InventoryX. The final receipt confirms the amount."
+                            : "Estimate from current catalog prices and tax rates. The final receipt confirms the total."}
+                      </p>
+                      {preview.grandTotal === null ? (
+                        <p className="mt-2 text-sm text-muted-foreground" role="status">
+                          {taxTreatments.isError
+                            ? "Could not load tax rates. Check your connection and reload this page."
+                            : taxTreatments.isFetching
+                              ? "Loading tax rates to calculate the amount due…"
+                              : "Enter a valid quantity for every item to see the amount due."}
+                        </p>
+                      ) : null}
+                    </section>
+                  ) : null}
+
                   <TextField
                     label="Cash received"
                     inputMode="decimal"
-                    hint={
-                      isOnline
-                        ? "InventoryX calculates the total, tax, and change due."
-                        : "Provisional total uses catalog prices until sync confirms."
-                    }
+                    error={cashError}
+                    hint="Enter the cash the customer gives you."
                     value={cashReceived}
                     onChange={(event) => {
                       setCashReceived(event.target.value);
+                      setClientErrors([]);
+                      checkout.reset();
                     }}
                   />
+                  {cashReceived && cashDifference ? (
+                    <div
+                      className="flex items-center justify-between rounded-lg border bg-background p-4"
+                      role="status"
+                    >
+                      <span className="font-medium">
+                        {cashDifference.kind === "change"
+                          ? "Change to give"
+                          : "Still to pay"}
+                      </span>
+                      <strong className="text-lg">
+                        {formatGhanaMoney(cashDifference.amount)}
+                      </strong>
+                    </div>
+                  ) : null}
                   <span className="flex flex-wrap gap-2">
                     <Button
                       type="button"
@@ -606,10 +826,16 @@ export function PosWorkspace({
 
                   <PaymentPanel
                     cart={cart}
+                    previewTotal={preview.grandTotal}
                     registerId={registerId}
                     shiftId={activeShift.id}
                     tenantId={tenantId}
                     isOnline={isOnline}
+                    onValidateStock={validateOnlineStock}
+                    onPaymentInteraction={() => {
+                      setClientErrors([]);
+                      checkout.reset();
+                    }}
                     onCartChange={setCart}
                     onCompleted={onCompleted}
                     onProvisionalCompleted={onProvisionalCompleted}
@@ -623,16 +849,23 @@ export function PosWorkspace({
                         heldSaleId: heldSale.id,
                         quote: heldSale,
                         clientSaleId: heldSale.clientSaleId,
-                        lines: heldSale.lines.map((line) => ({
-                          productId: line.productId,
-                          productName: line.productName,
-                          allowFractional: true,
-                          catalogUnitPrice: line.unitPrice,
-                          status: "Active",
-                          qty: line.qty,
-                          lineDiscount: line.lineDiscount,
-                          note: line.note ?? "",
-                        })),
+                        lines: heldSale.lines.map((line) => {
+                          const recalled = {
+                            heldLineId: line.id,
+                            productId: line.productId,
+                            productName: line.productName,
+                            allowFractional: true,
+                            catalogUnitPrice: line.unitPrice,
+                            status: "Active",
+                            qty: line.qty,
+                            lineDiscount: line.lineDiscount,
+                            note: line.note ?? "",
+                          };
+                          return {
+                            ...recalled,
+                            discountPercent: discountPercentForLine(recalled),
+                          };
+                        }),
                       }));
                     }}
                   />
@@ -661,13 +894,12 @@ export function PosWorkspace({
         <h2 className="text-lg font-semibold">Stock on hand</h2>
         <p className="text-sm text-muted-foreground">
           {isOnline
-            ? "Other-location availability requires a live connection."
-            : "Other-location availability is live-only and hidden while offline."}
+            ? "Showing stock at this location."
+            : "Connect to the internet to check stock here or at other locations."}
         </p>
         {!isOnline ? (
           <p className="text-sm text-muted-foreground" role="status">
-            Live stock levels are unavailable offline. Effective quantities come from
-            the prepared register snapshot after scan.
+            Offline sales use the stock saved on this register.
           </p>
         ) : stock.isLoading ? (
           <LoadingState label="Loading stock" />

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import Decimal from "decimal.js";
 import { inventoryxClient } from "../../../shared/api/client/inventoryx-client";
 import { parseValue } from "../../../shared/api/client/api-result";
 import { toApiNullish, toApiNumber } from "../../../shared/api/client/boundary-schema";
@@ -10,7 +11,10 @@ import { saleSchema, TENDERS, type SaleRecord } from "../sales/api/sales-api";
 
 export const salePaymentInputSchema = z.object({
   tender: z.enum(TENDERS),
-  amount: decimalStringSchema,
+  amount: decimalStringSchema.refine(
+    (value) => new Decimal(value).gt(0),
+    "Enter an amount greater than zero.",
+  ),
   reference: z.string().optional(),
 });
 
