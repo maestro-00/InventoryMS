@@ -320,7 +320,20 @@ describe("billing surfaces", () => {
     createObjectURL.mockRestore();
   });
 
-  it("rejects an invoice download when the response is not a PDF", async () => {
+  it("rejects failed invoice downloads and responses that are not PDFs", async () => {
+    server.use(
+      http.get("*/api/v2/billing/invoices/:id/pdf", () =>
+        HttpResponse.json(
+          { title: "Invoice unavailable", status: 503 },
+          { status: 503 },
+        ),
+      ),
+    );
+    renderBilling(<div />);
+    await expect(
+      downloadInvoicePdf("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
+    ).rejects.toMatchObject({ problem: { status: 503 } });
+
     server.use(
       http.get(
         "*/api/v2/billing/invoices/:id/pdf",
@@ -330,7 +343,6 @@ describe("billing surfaces", () => {
           }),
       ),
     );
-    renderBilling(<div />);
     await expect(
       downloadInvoicePdf("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
     ).rejects.toThrow("The invoice response was not a PDF.");
