@@ -18,6 +18,7 @@ import {
   SubscriptionGateProvider,
   useSubscriptionGate,
 } from "../../app/providers/subscription-gate";
+import { downloadInvoicePdf } from "./api/billing-queries";
 import { billingPlansFixture } from "../../../tests/fixtures/billing-plans";
 import { ownerSession } from "../../../tests/fixtures/provider/session";
 import { SessionProvider } from "../../shared/auth/session-context";
@@ -317,6 +318,22 @@ describe("billing surfaces", () => {
     expect(createObjectURL).toHaveBeenCalled();
     click.mockRestore();
     createObjectURL.mockRestore();
+  });
+
+  it("rejects an invoice download when the response is not a PDF", async () => {
+    server.use(
+      http.get(
+        "*/api/v2/billing/invoices/:id/pdf",
+        () =>
+          new HttpResponse("not a PDF", {
+            headers: { "Content-Type": "text/plain" },
+          }),
+      ),
+    );
+    renderBilling(<div />);
+    await expect(
+      downloadInvoicePdf("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
+    ).rejects.toThrow("The invoice response was not a PDF.");
   });
 
   it("treats a card return as pending until the server confirms the intent", async () => {
