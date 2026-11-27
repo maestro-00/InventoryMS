@@ -10,6 +10,9 @@ export const planSchema = z.object({
   tier: z.string().nullish(),
   monthlyPrice: optionalMoney,
   annualPrice: optionalMoney,
+  currency: z.string().optional(),
+  annualSavings: optionalMoney,
+  contactSales: z.boolean().optional(),
   maxLocations: optionalLimit,
   maxUsers: optionalLimit,
   maxProducts: optionalLimit,
@@ -26,6 +29,9 @@ export type BillingPlan = {
   tier: string;
   monthlyPrice?: number;
   annualPrice?: number;
+  currency?: string;
+  annualSavings?: number;
+  contactSales?: boolean;
   maxLocations?: number | null;
   maxUsers?: number | null;
   maxProducts?: number | null;
@@ -43,12 +49,16 @@ function toMoney(value: string | number | undefined): number | undefined {
 export function normalizeBillingPlan(dto: BillingPlanDto): BillingPlan {
   const monthlyPrice = toMoney(dto.monthlyPrice);
   const annualPrice = toMoney(dto.annualPrice);
+  const annualSavings = toMoney(dto.annualSavings);
   return {
     id: dto.id,
     name: dto.name ?? "",
     tier: dto.tier ?? "",
     ...(monthlyPrice === undefined ? {} : { monthlyPrice }),
     ...(annualPrice === undefined ? {} : { annualPrice }),
+    ...(annualSavings === undefined ? {} : { annualSavings }),
+    ...(dto.currency === undefined ? {} : { currency: dto.currency }),
+    ...(dto.contactSales === undefined ? {} : { contactSales: dto.contactSales }),
     ...(dto.maxLocations === undefined ? {} : { maxLocations: dto.maxLocations }),
     ...(dto.maxUsers === undefined ? {} : { maxUsers: dto.maxUsers }),
     ...(dto.maxProducts === undefined ? {} : { maxProducts: dto.maxProducts }),

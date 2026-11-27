@@ -90,6 +90,26 @@ function collectParameters(
 }
 
 describe("OpenAPI surface", () => {
+  it("records the v1 billing mutation surface before migration", () => {
+    const doc = loadSnapshot();
+    for (const path of [
+      "/api/v1/billing/subscription/upgrade",
+      "/api/v1/billing/subscription/downgrade",
+      "/api/v1/billing/subscription/cancel",
+      "/api/v1/billing/subscription/reactivate",
+      "/api/v1/billing/payment-method",
+    ]) {
+      expect(doc.paths[path]?.post, `missing POST ${path}`).toBeDefined();
+    }
+
+    const checkScript = readFileSync("scripts/openapi-check.mjs", "utf8");
+    const generateScript = readFileSync("scripts/openapi-generate.mjs", "utf8");
+    expect(checkScript).toContain('for (const version of ["v1", "v2"])');
+    expect(checkScript).toContain("`openapi/inventoryx-${version}.json`");
+    expect(checkScript).toContain("`src/shared/api/generated/${filename}`");
+    expect(generateScript).toContain('for (const version of ["v1", "v2"])');
+    expect(generateScript).toContain("`openapi/inventoryx-${version}.json`");
+  });
   it("captures every consumed /api/v1 operation", () => {
     const doc = loadSnapshot();
     expect(doc.openapi.startsWith("3.")).toBe(true);

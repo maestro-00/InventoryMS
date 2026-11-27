@@ -99,6 +99,11 @@ authorization. Regenerate the OpenAPI snapshot only from a running instance:
 ```bash
 curl --fail "$VITE_INVENTORYX_ORIGIN/swagger/v1/swagger.json" -o openapi/inventoryx-v1.json
 pnpm api:generate && pnpm api:check
+
+Billing mutations use the owner-only `/api/v2/billing` contract. The v2 snapshot and
+generated client are checked in together; run `pnpm api:check` before release. During
+rollout, keep the API collection flags disabled until provider smoke and recovery
+journeys are signed off.
 ```
 
 ## License

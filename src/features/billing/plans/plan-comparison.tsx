@@ -1,11 +1,14 @@
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check } from "lucide-react";
 import {
   downgradePlan,
+  createBillingQuote,
   upgradePlan,
   useBillingPlans,
   useBillingSubscription,
   type BillingPlan,
+  type BillingQuote,
 } from "../api/billing-queries";
 import { Button } from "../../../shared/ui/button";
 import { useConfirmDialog } from "../../../shared/ui/use-confirm-dialog";
@@ -14,6 +17,7 @@ import { UsageMeter } from "../../marketing/plans/usage-meter";
 import { cn } from "@/shared/utils/cn";
 import { formatUtcDateTime } from "../../../shared/utils/date-time";
 import { PlanComparisonTable } from "./plan-comparison-table";
+import { PaymentMethodForm } from "../payment-method/payment-method-form";
 import {
   buildPlanFeatureBullets,
   formatPlanPrice,
@@ -32,22 +36,72 @@ const usageLabels: Record<string, string> = {
 };
 
 export function PlanComparison() {
+  const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
+  const [quote, setQuote] = useState<BillingQuote | null>(null);
+  const [showPayment, setShowPayment] = useState(false);
+  const [quoteError, setQuoteError] = useState<unknown>(null);
+  const [quotePending, setQuotePending] = useState(false);
+  const quoteController = useRef<AbortController | null>(null);
+  useEffect(() => () => quoteController.current?.abort(), []);
   const { confirm, dialog } = useConfirmDialog();
   const queryClient = useQueryClient();
   const plans = useBillingPlans();
   const subscription = useBillingSubscription();
-  const refreshSubscription = () => queryClient.invalidateQueries({
-    predicate: (query) => query.queryKey[4] === "billing-subscription",
+  const refreshSubscription = () =>
+    queryClient.invalidateQueries({
+      predicate: (query) => query.queryKey[4] === "billing-subscription",
+    });
+  const upgrade = useMutation({
+    mutationFn: upgradePlan,
+    onSuccess: refreshSubscription,
   });
-  const upgrade = useMutation({ mutationFn: upgradePlan, onSuccess: refreshSubscription });
-  const downgrade = useMutation({ mutationFn: downgradePlan, onSuccess: refreshSubscription });
+  const downgrade = useMutation({
+    mutationFn: downgradePlan,
+    onSuccess: refreshSubscription,
+  });
   const problem = toProblem(
-    plans.error ?? subscription.error ?? upgrade.error ?? downgrade.error,
+    plans.error ?? subscription.error ?? quoteError ?? upgrade.error ?? downgrade.error,
   );
 
   const currentPlanName = subscription.data?.plan ?? "";
   const planList = sortPlansByRank(plans.data ?? []);
   const highlightIndex = recommendedHighlightIndex(planList);
+  const initialPurchase = subscription.data?.plan === "Free";
+
+  function changeCycle(next: "monthly" | "annual") {
+    quoteController.current?.abort();
+    setCycle(next);
+    setQuote(null);
+    setShowPayment(false);
+    setQuoteError(null);
+    setQuotePending(false);
+  }
+
+  async function chooseInitialPlan(plan: BillingPlan) {
+    quoteController.current?.abort();
+    const controller = new AbortController();
+    quoteController.current = controller;
+    setQuote(null);
+    setShowPayment(false);
+    setQuoteError(null);
+    setQuotePending(true);
+    try {
+      const result = await createBillingQuote(
+        {
+          targetPlanId: plan.id,
+          billingCycle: cycle === "annual" ? 1 : 0,
+          purpose: 0,
+        },
+        crypto.randomUUID(),
+        controller.signal,
+      );
+      if (!controller.signal.aborted) setQuote(result);
+    } catch (error) {
+      if (!controller.signal.aborted) setQuoteError(error);
+    } finally {
+      if (!controller.signal.aborted) setQuotePending(false);
+    }
+  }
 
   function planRank(plan: BillingPlan): number {
     return plan.monthlyPrice ?? plan.annualPrice ?? 0;
@@ -89,7 +143,7 @@ export function PlanComparison() {
 
       {subscription.data ? (
         <div className="rounded-lg bg-navy p-5 sm:p-6 md:p-7">
-          <p className="text-xs font-bold uppercase tracking-widest text-primary">
+          <p className="text-xs font-bold uppercase tracking-widest text-sky-300">
             Current plan
           </p>
           <div className="mt-1 flex flex-wrap items-end gap-2">
@@ -133,6 +187,30 @@ export function PlanComparison() {
 
       <div>
         <h2 className="mb-5 text-base font-semibold text-foreground">Change plan</h2>
+        {initialPurchase ? (
+          <div role="group" aria-label="Billing cycle" className="mb-5 flex gap-2">
+            <Button
+              type="button"
+              variant={cycle === "monthly" ? "default" : "outline"}
+              aria-pressed={cycle === "monthly"}
+              onClick={() => {
+                changeCycle("monthly");
+              }}
+            >
+              Monthly billing
+            </Button>
+            <Button
+              type="button"
+              variant={cycle === "annual" ? "default" : "outline"}
+              aria-pressed={cycle === "annual"}
+              onClick={() => {
+                changeCycle("annual");
+              }}
+            >
+              Annual billing
+            </Button>
+          </div>
+        ) : null}
         <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
           {planList.map((plan) => {
             const isCurrent =
@@ -171,10 +249,12 @@ export function PlanComparison() {
                       isCurrent ? "text-secondary-foreground" : "text-foreground",
                     )}
                   >
-                    {contactSales ? "Custom" : formatPlanPrice(plan, "monthly")}
+                    {contactSales ? "Custom" : formatPlanPrice(plan, cycle)}
                   </span>
                   {contactSales ? null : (
-                    <span className="mb-1 text-xs text-muted-foreground">/ month</span>
+                    <span className="mb-1 text-xs text-muted-foreground">
+                      / {cycle === "annual" ? "year" : "month"}
+                    </span>
                   )}
                 </div>
                 <ul className="mb-6 flex flex-1 flex-col gap-2.5">
@@ -214,20 +294,53 @@ export function PlanComparison() {
                     type="button"
                     variant="outline"
                     className="w-full"
-                    disabled={upgrade.isPending || downgrade.isPending}
+                    disabled={quotePending || upgrade.isPending || downgrade.isPending}
                     onClick={() => {
-                      handlePlanAction(plan);
+                      if (initialPurchase) void chooseInitialPlan(plan);
+                      else handlePlanAction(plan);
                     }}
                   >
-                    {upgrade.isPending || downgrade.isPending
+                    {quotePending || upgrade.isPending || downgrade.isPending
                       ? "Updating…"
-                      : `Switch to ${plan.name}`}
+                      : `${initialPurchase ? "Choose" : "Switch to"} ${plan.name}`}
                   </Button>
                 )}
               </article>
             );
           })}
         </div>
+        {quote ? (
+          <div
+            className="mt-5 rounded-lg border border-border bg-card p-5"
+            aria-label="Purchase quote"
+          >
+            <h3 className="font-semibold">Your quote</h3>
+            <p>
+              Plan price: {quote.currency} {quote.baseAmount.toLocaleString("en-GH")}
+            </p>
+            <p>
+              Tax: {quote.currency} {quote.taxAmount.toLocaleString("en-GH")}
+            </p>
+            <p className="font-semibold">
+              Total: {quote.currency} {quote.totalAmount.toLocaleString("en-GH")}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Payment activates the plan only after confirmation.
+            </p>
+            {showPayment ? (
+              <PaymentMethodForm quote={quote} />
+            ) : (
+              <Button
+                type="button"
+                onClick={() => {
+                  setShowPayment(true);
+                }}
+              >
+                Continue to payment
+              </Button>
+            )}
+          </div>
+        ) : null}
       </div>
 
       {planList.length > 0 ? (

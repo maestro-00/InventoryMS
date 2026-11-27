@@ -63,7 +63,7 @@ function NavList({
             className={cn(
               "mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest",
               variant === "sidebar"
-                ? "text-navy-foreground/45"
+                ? "text-navy-foreground/65"
                 : "text-muted-foreground",
             )}
           >

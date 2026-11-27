@@ -20,12 +20,17 @@ const REGISTER_ID = "88888888-8888-4888-8888-888888888888";
 const SHIFT_ID = "99999999-9999-4999-8999-999999999999";
 const SALE_ID = "a9999999-9999-4999-8999-999999999999";
 const RECEIPT_ID = "e9999999-9999-4999-8999-999999999999";
+let mockLoginRole = "Owner";
 
-function accessToken(): string {
+export function setMockLoginRole(role: "Owner" | "Staff"): void {
+  mockLoginRole = role;
+}
+
+function accessToken(role = "Owner"): string {
   const claims = {
     sub: USER_ID,
     tenantId: TENANT_ID,
-    role: "Owner",
+    role,
     permissions: [
       "Sell",
       "Refund",
@@ -310,6 +315,7 @@ function sale(qty: number) {
 }
 
 export function resetUs1Scenario(): void {
+  mockLoginRole = "Owner";
   state.checklist = {};
   state.locations = [];
   state.registers = [];
@@ -339,17 +345,19 @@ export const us1ScenarioHandlers = [
       { status: 201 },
     ),
   ),
-  http.post("*/api/v1/auth/login", () =>
-    HttpResponse.json({
+  http.post("*/api/v1/auth/login", async ({ request }) => {
+    const body = (await request.json()) as { email?: string };
+    mockLoginRole = body.email?.startsWith("staff@") ? "Staff" : "Owner";
+    return HttpResponse.json({
       requiresTwoFactor: false,
-      accessToken: accessToken(),
+      accessToken: accessToken(mockLoginRole),
       accessTokenExpiresAt: new Date(Date.now() + 3_600_000).toISOString(),
       refreshToken: "refresh-token",
-    }),
-  ),
+    });
+  }),
   http.post("*/api/v1/auth/refresh", () =>
     HttpResponse.json({
-      accessToken: accessToken(),
+      accessToken: accessToken(mockLoginRole),
       accessTokenExpiresAt: new Date(Date.now() + 3_600_000).toISOString(),
       refreshToken: "refresh-token",
     }),
@@ -392,6 +400,259 @@ export const us1ScenarioHandlers = [
       userCount: 1,
       productCount: state.products.length,
     }),
+  ),
+
+  http.get("*/api/v2/billing/plans", () =>
+    HttpResponse.json([
+      {
+        id: "aaaaaaaa-0000-4000-8000-000000000001",
+        name: "Free",
+        tier: "Free",
+        monthlyPrice: 0,
+        annualPrice: 0,
+        currency: "GHS",
+        contactSales: false,
+      },
+      {
+        id: "aaaaaaaa-0000-4000-8000-000000000002",
+        name: "Standard",
+        tier: "Standard",
+        monthlyPrice: 249,
+        annualPrice: 2390,
+        currency: "GHS",
+        annualSavings: 598,
+        contactSales: false,
+      },
+      {
+        id: "aaaaaaaa-0000-4000-8000-000000000003",
+        name: "Professional",
+        tier: "Professional",
+        monthlyPrice: 499,
+        annualPrice: 4790,
+        currency: "GHS",
+        annualSavings: 1198,
+        contactSales: false,
+      },
+    ]),
+  ),
+  http.get("*/api/v2/billing/subscription", ({ request }) => {
+    const billingState = request.headers.get("x-e2e-billing-state");
+    return HttpResponse.json({
+      id: "11111111-1111-4111-8111-111111111111",
+      plan: "Free",
+      status:
+        billingState === "grace"
+          ? "PastDue"
+          : billingState === "readonly"
+            ? "ReadOnly"
+            : "Active",
+      billingCycle: "Monthly",
+      currentPeriodStart: "2026-11-01T00:00:00Z",
+      currentPeriodEnd: "2026-12-01T00:00:00Z",
+      trialEndsAt: null,
+      graceExpiresAt:
+        billingState === "grace"
+          ? "2026-12-08T00:00:00Z"
+          : billingState === "readonly"
+            ? "2026-12-08T00:00:00Z"
+            : null,
+      canPerformPaidMutations: billingState !== "readonly",
+      outstandingAmount:
+        billingState === "grace" || billingState === "readonly" ? 249 : null,
+      retryStatus: billingState === "grace" ? "retrying" : null,
+      usage: [],
+    });
+  }),
+  http.get("*/api/v2/billing/payment-methods", () =>
+    HttpResponse.json([
+      {
+        id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+        kind: "card",
+        status: "Active",
+        provider: "paystack",
+        maskedIdentifier: "**** 4242",
+        brand: "Visa",
+        expiryMonth: 12,
+        expiryYear: 2028,
+        renewalMode: "Automatic",
+      },
+    ]),
+  ),
+  http.get("*/api/v2/billing/payment-methods/quote", () =>
+    HttpResponse.json({ baseAmount: 1, taxAmount: 0, totalAmount: 1, currency: "GHS" }),
+  ),
+  http.post("*/api/v2/billing/payment-methods", () =>
+    HttpResponse.json(
+      {
+        intentId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        pendingMethodId: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+        reference: "replacement-ref",
+        status: "awaiting_approval",
+        amount: 1,
+        currency: "GHS",
+        authorizationUrl: null,
+        approvalMessage: "Approve the verification charge",
+        pollAfterSeconds: 5,
+      },
+      { status: 202 },
+    ),
+  ),
+  http.get("*/api/v2/billing/invoices", () =>
+    HttpResponse.json({
+      items: [
+        {
+          id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+          number: "BILL-RENEWAL-1",
+          status: "Paid",
+          amount: 30,
+          taxAmount: 0,
+          currency: "GHS",
+          createdAt: "2026-11-26T00:00:00Z",
+        },
+      ],
+      page: 1,
+      pageSize: 50,
+      totalCount: 1,
+    }),
+  ),
+  http.get(
+    "*/api/v2/billing/invoices/:id/pdf",
+    () =>
+      new HttpResponse("%PDF-1.4\n%%EOF", {
+        headers: { "Content-Type": "application/pdf" },
+      }),
+  ),
+  http.patch("*/api/v2/billing/contact", () => new HttpResponse(null, { status: 204 })),
+  http.post("*/api/v2/billing/quotes", async ({ request }) => {
+    const body = (await request.json()) as { billingCycle?: number };
+    const amount = body.billingCycle === 1 ? 2390 : 249;
+    return HttpResponse.json({
+      quoteId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      expiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
+      currency: "GHS",
+      baseAmount: amount,
+      taxAmount: 0,
+      totalAmount: amount,
+      prorationCredit: 0,
+      effectiveAt: new Date().toISOString(),
+      nextRenewalAt: new Date(Date.now() + 30 * 86_400_000).toISOString(),
+      nextRenewalTotal: amount,
+      exceededLimits: [],
+      requiresAcknowledgement: false,
+    });
+  }),
+  http.post("*/api/v2/billing/payment-intents", async ({ request }) => {
+    const body = (await request.json()) as { methodKind?: string };
+    const card = body.methodKind === "card";
+    return HttpResponse.json(
+      {
+        intentId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        status: card ? "pending" : "awaiting_approval",
+        authorizationUrl: card ? "https://checkout.paystack.com/mock-checkout" : null,
+        approvalMessage: card ? null : "Approve the payment on your phone",
+        pollAfterSeconds: 5,
+      },
+      { status: card ? 201 : 202 },
+    );
+  }),
+  http.get("*/api/v2/billing/payment-intents/:id", () =>
+    HttpResponse.json({
+      intentId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      status: "pending",
+      pollAfterSeconds: 5,
+    }),
+  ),
+  http.post("*/api/v2/billing/subscription/upgrade", () =>
+    HttpResponse.json({
+      id: "11111111-1111-4111-8111-111111111111",
+      plan: "Professional",
+      status: "Active",
+      billingCycle: "Monthly",
+      currentPeriodStart: "2026-11-01T00:00:00Z",
+      currentPeriodEnd: "2026-12-01T00:00:00Z",
+      trialEndsAt: null,
+      usage: [],
+      canPerformPaidMutations: true,
+    }),
+  ),
+  http.post("*/api/v2/billing/subscription/downgrade", () =>
+    HttpResponse.json({
+      id: "11111111-1111-4111-8111-111111111111",
+      plan: "Standard",
+      status: "Active",
+      billingCycle: "Monthly",
+      currentPeriodStart: "2026-11-01T00:00:00Z",
+      currentPeriodEnd: "2026-12-01T00:00:00Z",
+      trialEndsAt: null,
+      usage: [],
+      canPerformPaidMutations: true,
+    }),
+  ),
+  http.post("*/api/v2/billing/changes", () =>
+    HttpResponse.json({
+      id: "11111111-1111-4111-8111-111111111111",
+      plan: "Standard",
+      status: "Active",
+      billingCycle: "Monthly",
+      currentPeriodStart: "2026-11-01T00:00:00Z",
+      currentPeriodEnd: "2026-12-01T00:00:00Z",
+      trialEndsAt: null,
+      usage: [],
+      scheduledChangeId: "12121212-1212-4121-8121-121212121212",
+      scheduledChangeKind: "Downgrade",
+      scheduledChangeEffectiveAt: "2026-12-01T00:00:00Z",
+      canPerformPaidMutations: true,
+    }),
+  ),
+  http.delete(
+    "*/api/v2/billing/changes/:id",
+    () => new HttpResponse(null, { status: 204 }),
+  ),
+  http.post("*/api/v2/billing/cancellation", () =>
+    HttpResponse.json({
+      id: "11111111-1111-4111-8111-111111111111",
+      plan: "Standard",
+      status: "Active",
+      billingCycle: "Monthly",
+      currentPeriodStart: "2026-11-01T00:00:00Z",
+      currentPeriodEnd: "2026-12-01T00:00:00Z",
+      trialEndsAt: null,
+      cancelledAt: "2026-12-01T00:00:00Z",
+      purgeAt: "2027-03-01T00:00:00Z",
+      usage: [],
+      canPerformPaidMutations: true,
+    }),
+  ),
+  http.post("*/api/v2/billing/subscription/cancel", () =>
+    HttpResponse.json({
+      id: "11111111-1111-4111-8111-111111111111",
+      plan: "Standard",
+      status: "Active",
+      billingCycle: "Monthly",
+      currentPeriodStart: "2026-11-01T00:00:00Z",
+      currentPeriodEnd: "2026-12-01T00:00:00Z",
+      trialEndsAt: null,
+      cancelledAt: "2026-12-01T00:00:00Z",
+      purgeAt: "2027-03-01T00:00:00Z",
+      usage: [],
+      canPerformPaidMutations: true,
+    }),
+  ),
+  http.delete(
+    "*/api/v2/billing/cancellation",
+    () => new HttpResponse(null, { status: 204 }),
+  ),
+  http.post("*/api/v2/billing/recovery", () =>
+    HttpResponse.json(
+      {
+        intentId: "abababab-abab-4aba-8aba-abababababab",
+        status: "awaiting_approval",
+        authorizationUrl: null,
+        approvalMessage: "Approve recovery on your phone",
+        pollAfterSeconds: 5,
+      },
+      { status: 202 },
+    ),
   ),
 
   http.get("*/api/v1/locations", () => HttpResponse.json(state.locations)),

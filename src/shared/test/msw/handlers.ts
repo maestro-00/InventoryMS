@@ -52,6 +52,62 @@ export const handlers = [
   http.get(`${origin}/api/v1/billing/plans`, () =>
     HttpResponse.json(billingPlansFixture),
   ),
+  http.get(`${origin}/api/v2/billing/plans`, () =>
+    HttpResponse.json(billingPlansFixture),
+  ),
+  http.get(`${origin}/api/v2/billing/payment-methods`, () => HttpResponse.json([])),
+  http.get(`${origin}/api/v2/billing/payment-methods/quote`, () =>
+    HttpResponse.json({ baseAmount: 1, taxAmount: 0, totalAmount: 1, currency: "GHS" }),
+  ),
+  http.get(`${origin}/api/v2/billing/subscription`, () =>
+    HttpResponse.json({
+      id: "11111111-1111-4111-8111-111111111111",
+      plan: "Free",
+      status: "Active",
+      billingCycle: "Monthly",
+      currentPeriodStart: "2026-11-01T00:00:00Z",
+      currentPeriodEnd: "2026-12-01T00:00:00Z",
+      trialEndsAt: null,
+      usage: [],
+    }),
+  ),
+  http.post(`${origin}/api/v2/billing/quotes`, () =>
+    HttpResponse.json({
+      quoteId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      expiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
+      currency: "GHS",
+      baseAmount: 2390,
+      taxAmount: 0,
+      totalAmount: 2390,
+      prorationCredit: 0,
+      effectiveAt: "2026-11-26T12:00:00Z",
+      nextRenewalAt: "2027-11-26T12:00:00Z",
+      nextRenewalTotal: 2390,
+      exceededLimits: [],
+      requiresAcknowledgement: false,
+    }),
+  ),
+  http.post(`${origin}/api/v2/billing/payment-intents`, async ({ request }) => {
+    const body = (await request.json()) as { methodKind?: string };
+    const card = body.methodKind === "card";
+    return HttpResponse.json(
+      {
+        intentId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        status: card ? "pending" : "awaiting_approval",
+        authorizationUrl: card ? "https://checkout.paystack.com/mock-checkout" : null,
+        approvalMessage: card ? null : "Approve the payment on your phone",
+        pollAfterSeconds: 5,
+      },
+      { status: card ? 201 : 202 },
+    );
+  }),
+  http.get(`${origin}/api/v2/billing/payment-intents/:id`, () =>
+    HttpResponse.json({
+      intentId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      status: "pending",
+      pollAfterSeconds: 5,
+    }),
+  ),
   http.get(`${origin}/api/v1/registers/:registerId/favourites`, () =>
     HttpResponse.json({
       registerId: "88888888-8888-4888-8888-888888888888",

@@ -3,6 +3,7 @@ import {
   cancelSubscription,
   reactivateSubscription,
   useBillingSubscription,
+  reverseSubscriptionChange,
 } from "../api/billing-queries";
 import { Button } from "../../../shared/ui/button";
 import { useConfirmDialog } from "../../../shared/ui/use-confirm-dialog";
@@ -13,13 +14,24 @@ export function CancellationPanel() {
   const subscription = useBillingSubscription();
   const cancel = useMutation({ mutationFn: cancelSubscription });
   const reactivate = useMutation({ mutationFn: reactivateSubscription });
+  const reverse = useMutation({ mutationFn: reverseSubscriptionChange });
   const problem = toProblem(subscription.error ?? cancel.error ?? reactivate.error);
 
   return (
     <section aria-label="Cancellation" className="space-y-3">
       <h2>Cancel or reactivate</h2>
       {subscription.data?.purgeAt ? (
-        <p>Retention purge at {subscription.data.purgeAt}</p>
+        <p>
+          Retention purge at {subscription.data.purgeAt}. Retained data can be exported
+          or reactivated; final deletion is never earlier than 90 days after paid access
+          ends.
+        </p>
+      ) : null}
+      {subscription.data?.scheduledChangeKind ? (
+        <p role="status">
+          Scheduled {subscription.data.scheduledChangeKind} effective{" "}
+          {subscription.data.scheduledChangeEffectiveAt}.
+        </p>
       ) : null}
       {problem ? <ProblemSummary problem={problem} /> : null}
       <div className="flex flex-wrap gap-2">
@@ -45,6 +57,17 @@ export function CancellationPanel() {
         >
           Reactivate
         </Button>
+        {subscription.data?.scheduledChangeId ? (
+          <Button
+            type="button"
+            onClick={() => {
+              const changeId = subscription.data.scheduledChangeId;
+              if (changeId) reverse.mutate(changeId);
+            }}
+          >
+            Reverse scheduled change
+          </Button>
+        ) : null}
       </div>
       {dialog}
     </section>

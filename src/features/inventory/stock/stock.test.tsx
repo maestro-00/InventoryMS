@@ -26,9 +26,13 @@ describe("stock levels and profit fields", () => {
     renderWithProviders(<StockLevelsView />);
     expect(await screen.findByText(/avg unit cost/i)).toBeInTheDocument();
     expect(screen.getByText(/6\.00/)).toBeInTheDocument();
-    expect(screen.getByRole("cell", { name: us1.locationRecord.name })).toBeInTheDocument();
+    expect(
+      screen.getByRole("cell", { name: us1.locationRecord.name }),
+    ).toBeInTheDocument();
     expect(screen.queryByText(us1.locationRecord.id)).not.toBeInTheDocument();
-    expect(screen.queryByText(/thresholds are provider-defined/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/thresholds are provider-defined/i),
+    ).not.toBeInTheDocument();
   });
 
   it("resolves location names for a business-wide location scope", async () => {

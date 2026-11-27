@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add v2 billing plan, payment, renewal, recovery, cancellation, invoice, and export
+  journeys with generated OpenAPI contract coverage.
+
 - Initial release of InventoryMS
 - Cookie-based authentication system with secure HTTP-only cookies
 - User registration and login with client-side validation

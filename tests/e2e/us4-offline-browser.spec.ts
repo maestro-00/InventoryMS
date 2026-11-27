@@ -283,6 +283,80 @@ test.describe("@us4 offline browser durability", () => {
     expect(sw.supported).toBe(true);
   });
 
+  test("expired offline authorization denies a new paid mutation", async ({ page }) => {
+    await signIn(page);
+    await waitForBridge(page);
+    await page
+      .evaluate(
+        async ({ tenantId: tid, registerId: rid, shiftId: sid, productId: pid }) => {
+          const bridge = window.__inventorymsOffline;
+          if (!bridge) throw new Error("offline bridge missing");
+          await bridge.prepareRegister({
+            tenantId: tid,
+            registerId: rid,
+            shiftId: sid,
+            credentialExpiresAt: new Date(Date.now() - 1_000).toISOString(),
+            fetchSnapshot: () =>
+              Promise.resolve({
+                watermark: "EXPIRED=",
+                registerId: rid,
+                locationId: "55555555-5555-4555-8555-555555555555",
+                bundleVersion: "2026.08.offline-expired.1",
+                products: [
+                  {
+                    id: pid,
+                    name: "Sugar",
+                    sku: "SUG",
+                    barcode: "6001",
+                    sellingPrice: 10,
+                    taxTreatmentId: null,
+                    allowFractional: false,
+                    trackingMode: "Simple",
+                    allowsDiscount: true,
+                    version: "1",
+                  },
+                ],
+                taxTreatments: [],
+                stock: [],
+                favourites: { registerId: rid, layoutJson: "{}", version: "1" },
+                receiptTemplate: { templateJson: "{}", version: "1" },
+                deleted: [],
+              }),
+          });
+          try {
+            await bridge.completeOfflineSale({
+              tenantId: tid,
+              registerId: rid,
+              shiftId: sid,
+              cart: {
+                lines: [
+                  {
+                    productId: pid,
+                    qty: "1",
+                    unitPrice: "10.00",
+                    taxComponentsJson: "[]",
+                    taxAmount: "0",
+                    lineTotal: "10.00",
+                    name: "Sugar",
+                  },
+                ],
+                payments: [{ tender: "Cash", amount: "10.00" }],
+                subtotal: "10.00",
+                discountTotal: "0",
+                taxTotal: "0",
+                grandTotal: "10.00",
+              },
+            });
+          } catch (error) {
+            return String(error);
+          }
+          throw new Error("Expected expired offline authorization to deny the sale");
+        },
+        { tenantId, registerId, shiftId, productId },
+      )
+      .then((error) => expect(error).toMatch(/readiness deadline has passed/i));
+  });
+
   test("100-sale recovery after reload keeps every clientSaleId", async ({ page }) => {
     test.setTimeout(180_000);
     await signIn(page);
