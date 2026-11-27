@@ -11,6 +11,7 @@ import {
   type OnlineSaleRequest,
 } from "../../checkout/online-checkout";
 import { saleSchema, type SaleRecord, type Tender } from "../../sales/api/sales-api";
+import type { CartLine } from "../../cart/cart-store";
 
 export async function holdSale(
   request: Omit<OnlineSaleRequest, "status" | "payments">,
@@ -33,11 +34,33 @@ export async function fetchHeldSale(id: string): Promise<SaleRecord> {
 export async function completeHeldSale(
   saleId: string,
   payments: { tender: Tender; amount: string; reference?: string }[],
+  lines?: CartLine[],
 ): Promise<SaleRecord> {
   const body = z.array(salePaymentInputSchema).parse(payments);
+  if (lines?.some((line) => !line.heldLineId)) {
+    throw new Error(
+      "Added products cannot be included when completing a recalled sale.",
+    );
+  }
   const outcome = await inventoryxClient.POST("/api/v1/sales/{id}/complete", {
     params: { path: { id: saleId } },
     body: {
+      ...(lines
+        ? {
+            lines: lines.map((line) => {
+              if (!line.heldLineId) {
+                throw new Error("Held sale line ID is required.");
+              }
+              return {
+                id: line.heldLineId,
+                qty: toApiNumber(line.qty),
+                lineDiscount: toApiNumber(line.lineDiscount),
+                note: toApiNullish(line.note),
+                discountAuthorizedBy: null,
+              };
+            }),
+          }
+        : {}),
       payments: body.map((payment) => ({
         tender: payment.tender,
         amount: toApiNumber(payment.amount),

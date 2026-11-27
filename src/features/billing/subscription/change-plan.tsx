@@ -5,11 +5,13 @@ import {
   useBillingSubscription,
 } from "../api/billing-queries";
 import { Button } from "../../../shared/ui/button";
+import { useConfirmDialog } from "../../../shared/ui/use-confirm-dialog";
 import { TextField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
 import { useState } from "react";
 
 export function ChangePlanForm() {
+  const { confirm, dialog } = useConfirmDialog();
   const [planId, setPlanId] = useState("");
   const subscription = useBillingSubscription();
   const upgrade = useMutation({ mutationFn: upgradePlan });
@@ -43,14 +45,20 @@ export function ChangePlanForm() {
         <Button
           type="button"
           onClick={() => {
-            if (window.confirm("Acknowledge period-end downgrade?")) {
-              downgrade.mutate(planId);
-            }
+            const targetPlanId = planId;
+            confirm({
+              title: "Acknowledge period-end downgrade?",
+              actionLabel: "Downgrade plan",
+              onConfirm: () => {
+                downgrade.mutate(targetPlanId);
+              },
+            });
           }}
         >
           Downgrade at period end
         </Button>
       </div>
+      {dialog}
     </section>
   );
 }

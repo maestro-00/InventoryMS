@@ -106,16 +106,20 @@ describe("shifts-api", () => {
       http.get(`*/api/v1/shifts/${shiftRecord.id}/z-report`, () =>
         HttpResponse.json({
           shiftId: shiftRecord.id,
-          salesTotal: 100,
+          sales: 100,
+          cashTendered: 80,
+          refunds: 0,
+          discounts: 0,
+          voids: 0,
           expectedCash: 100,
-          countedCash: 100,
-          variance: 0,
-          tenders: [{ tender: "Cash", amount: 100 }],
+          countedCash: null,
+          variance: null,
         }),
       ),
     );
 
     const report = await fetchZReport(shiftRecord.id);
-    expect(report.salesTotal).toBe("100");
+    expect(report.sales).toBe("100");
+    expect(report.countedCash).toBeNull();
   });
 });

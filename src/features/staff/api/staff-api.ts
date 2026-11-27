@@ -16,7 +16,15 @@ export const staffUserSchema = z.object({
   name: z.string().nullish(),
   roleId: uuidSchema.nullish(),
   locationScope: z.string().nullish(),
-  status: z.string(),
+  status: z.preprocess(
+    (status) => {
+      if (typeof status === "number") {
+        return ["Invited", "Active", "Deactivated"][status] ?? status;
+      }
+      return status;
+    },
+    z.enum(["Invited", "Active", "Deactivated"]),
+  ),
   isOwner: z.boolean().optional(),
 });
 
@@ -26,8 +34,18 @@ export async function fetchStaffUsers(): Promise<StaffUser[]> {
   const response = await authedFetch("/api/v1/users");
   if (!response.ok) throw new Error("Failed to load staff");
   const body: unknown = await response.json();
-  if (Array.isArray(body)) return z.array(staffUserSchema).parse(body);
-  return z.object({ items: z.array(staffUserSchema) }).parse(body).items;
+  if (Array.isArray(body)) {
+    const parsed = z.array(staffUserSchema).safeParse(body);
+    if (!parsed.success) {
+      throw new Error("Staff data could not be loaded. Please refresh and try again.");
+    }
+    return parsed.data;
+  }
+  const parsed = z.object({ items: z.array(staffUserSchema) }).safeParse(body);
+  if (!parsed.success) {
+    throw new Error("Staff data could not be loaded. Please refresh and try again.");
+  }
+  return parsed.data.items;
 }
 
 export async function fetchRoles() {

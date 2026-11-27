@@ -34,12 +34,26 @@ describe("shift reconciliation", () => {
       accessToken: "access",
       refreshToken: "refresh",
     });
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
     let cashBody: unknown;
     let closeBody: unknown;
+    let expectedCash = 100;
     server.use(
+      http.get(`*/api/v1/shifts/${shiftId}/z-report`, () =>
+        HttpResponse.json({
+          shiftId,
+          sales: 0,
+          cashTendered: 0,
+          refunds: 0,
+          discounts: 0,
+          voids: 0,
+          expectedCash,
+          countedCash: null,
+          variance: null,
+        }),
+      ),
       http.post(`*/api/v1/shifts/${shiftId}/cash-movements`, async ({ request }) => {
         cashBody = await request.json();
+        expectedCash = 80;
         return HttpResponse.json({
           id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
           type: "CashOut",
@@ -67,16 +81,27 @@ describe("shift reconciliation", () => {
         <CloseShiftForm shiftId={shiftId} onClosed={onClosed} />
       </QueryClientProvider>,
     );
+    expect(await screen.findByText("GH₵100.00")).toBeInTheDocument();
+    const counted = screen.getByLabelText(/closing counted cash/i);
+    await user.type(counted, "80.00");
+    expect(screen.getByText("Projected variance").nextElementSibling).toHaveTextContent(
+      "-GH₵20.00",
+    );
     await selectRadixOption(user, screen.getByLabelText(/^direction/i), "CashOut");
     await selectRadixOption(user, screen.getByLabelText(/^reason/i), "Banking");
     const amount = screen.getByLabelText(/^amount/i);
     await user.clear(amount);
     await user.type(amount, "20.00");
     await user.click(screen.getByRole("button", { name: /record movement/i }));
-    const counted = screen.getByLabelText(/closing counted cash/i);
-    await user.clear(counted);
-    await user.type(counted, "80.00");
+    expect(await screen.findByText("GH₵80.00")).toBeInTheDocument();
+    expect(screen.getByText("Projected variance").nextElementSibling).toHaveTextContent(
+      "GH₵0.00",
+    );
     await user.click(screen.getByRole("button", { name: /close with count/i }));
+    expect(
+      screen.getByRole("alertdialog", { name: /close shift/i }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Close shift" }));
     await vi.waitFor(() => {
       expect(cashBody).toMatchObject({
         type: "CashOut",
@@ -87,7 +112,6 @@ describe("shift reconciliation", () => {
       expect(onClosed).toHaveBeenCalled();
     });
     expect(await screen.findByRole("status")).toHaveTextContent(/shift closed/i);
-    confirm.mockRestore();
   });
 
   it("shows an actionable error when InventoryX rejects the close", async () => {
@@ -98,8 +122,20 @@ describe("shift reconciliation", () => {
       accessToken: "access",
       refreshToken: "refresh",
     });
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
     server.use(
+      http.get(`*/api/v1/shifts/${shiftId}/z-report`, () =>
+        HttpResponse.json({
+          shiftId,
+          sales: 0,
+          cashTendered: 0,
+          refunds: 0,
+          discounts: 0,
+          voids: 0,
+          expectedCash: 100,
+          countedCash: null,
+          variance: null,
+        }),
+      ),
       http.post(`*/api/v1/shifts/${shiftId}/close`, () =>
         HttpResponse.json(
           {
@@ -119,9 +155,10 @@ describe("shift reconciliation", () => {
         <CloseShiftForm shiftId={shiftId} />
       </QueryClientProvider>,
     );
+    await user.type(screen.getByLabelText(/closing counted cash/i), "0.00");
     await user.click(screen.getByRole("button", { name: /close with count/i }));
+    await user.click(screen.getByRole("button", { name: "Close shift" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(/open shift not found/i);
-    confirm.mockRestore();
   });
 
   it("loads a Z report with tender breakdown", async () => {
@@ -135,11 +172,14 @@ describe("shift reconciliation", () => {
       http.get(`*/api/v1/shifts/${shiftId}/z-report`, () =>
         HttpResponse.json({
           shiftId,
-          salesTotal: "100.00",
+          sales: "100.00",
+          cashTendered: "78.00",
+          refunds: "0.00",
+          discounts: "0.00",
+          voids: 0,
           expectedCash: "80.00",
           countedCash: "78.00",
           variance: "-2.00",
-          tenders: [{ tender: "Cash", amount: "78.00" }],
         }),
       ),
     );
@@ -152,7 +192,11 @@ describe("shift reconciliation", () => {
     expect(
       await screen.findByRole("article", { name: /z report/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Cash: 78.00")).toBeInTheDocument();
-    expect(screen.getByRole("row", { name: /variance/i })).toHaveTextContent("-2.00");
+    expect(screen.getByRole("row", { name: /cash tendered/i })).toHaveTextContent(
+      "GH₵78.00",
+    );
+    expect(screen.getByRole("row", { name: /variance/i })).toHaveTextContent(
+      "-GH₵2.00",
+    );
   });
 });

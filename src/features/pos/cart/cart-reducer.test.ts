@@ -15,6 +15,7 @@ import {
   scanProduct,
   selectServerTotals,
   setDiscount,
+  setDiscountPercent,
   setNote,
   setQuantity,
   setTenderAmount,
@@ -76,12 +77,50 @@ describe("scan dedupe and quantities", () => {
     expect(selectServerTotals(noted)).toBeNull();
   });
 
+  it("turns a percentage into a line discount and keeps it when quantity changes", () => {
+    const cart = cartReducer(createCart(), scanProduct(sugar));
+    const discounted = cartReducer(cart, setDiscountPercent(us1.PRODUCT_ID, "5"));
+    expect(discounted.lines[0]?.lineDiscount).toBe("0.5000");
+    expect(toSaleLines(discounted)[0]?.lineDiscount).toBe("0.5000");
+
+    const twoUnits = cartReducer(discounted, setQuantity(us1.PRODUCT_ID, "2"));
+    expect(twoUnits.lines[0]?.discountPercent).toBe("5");
+    expect(twoUnits.lines[0]?.lineDiscount).toBe("1.0000");
+  });
+
   it("removes a line without touching remaining identities", () => {
     let cart = cartReducer(createCart(), scanProduct(sugar));
     cart = cartReducer(cart, scanProduct(oil));
     cart = cartReducer(cart, removeLine(us1.PRODUCT_ID));
 
     expect(cart.lines.map((line) => line.productId)).toEqual([us2.OIL_ID]);
+  });
+
+  it("starts a new sale when the last recalled product is removed", () => {
+    const savedLine = cartReducer(createCart(), scanProduct(sugar)).lines[0];
+    const heldLine = us2.heldSale.lines[0];
+    if (!savedLine || !heldLine) throw new Error("Expected held sale line");
+    const held = {
+      ...cartReducer(createCart(), scanProduct(sugar)),
+      heldSaleId: us2.HELD_SALE_ID,
+      clientSaleId: us2.heldSale.clientSaleId,
+      lines: [
+        {
+          ...savedLine,
+          heldLineId: heldLine.id,
+        },
+      ],
+    };
+    const mixed = cartReducer(held, scanProduct(oil));
+    expect(cartErrors(mixed)).toContain(
+      "Added products cannot be included in a recalled sale. Remove the recalled products to start a new sale, or remove the added products to complete the held sale.",
+    );
+
+    const fresh = cartReducer(mixed, removeLine(sugar.productId));
+    expect(fresh.lines.map((line) => line.productId)).toEqual([oil.productId]);
+    expect(fresh.heldSaleId).toBeNull();
+    expect(fresh.clientSaleId).not.toBe(held.clientSaleId);
+    expect(cartErrors(fresh)).toEqual([]);
   });
 });
 
@@ -121,6 +160,16 @@ describe("tenders and duplicate completion", () => {
     expect(createCart().clientSaleId).not.toBe(createCart().clientSaleId);
     expect(cartErrors(createCart())).toContain(
       "Add at least one product before taking payment.",
+    );
+  });
+
+  it("explains when a sale quantity must be greater than zero", () => {
+    const cart = cartReducer(
+      cartReducer(createCart(), scanProduct(sugar)),
+      setQuantity(sugar.productId, "0"),
+    );
+    expect(cartErrors(cart)).toContain(
+      "Sugar 1kg: enter a quantity greater than zero.",
     );
   });
 

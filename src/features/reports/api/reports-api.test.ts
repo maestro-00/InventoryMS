@@ -109,8 +109,8 @@ describe("reports api", () => {
         HttpResponse.json([
           {
             id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
-            type: "LowStock",
-            channel: "InApp",
+            type: 0,
+            channel: 0,
             title: "Low",
             occurrences: 1,
             isRead: false,
@@ -138,9 +138,7 @@ describe("reports api", () => {
       ),
       http.delete("*/api/v1/reports/schedules/:id", () => HttpResponse.json(true)),
       http.get("*/api/v1/notification-preferences", () =>
-        HttpResponse.json([
-          { type: "LowStock", channel: "InApp", isEnabled: true, threshold: 5 },
-        ]),
+        HttpResponse.json([{ type: 0, channel: 0, isEnabled: true, threshold: 5 }]),
       ),
       http.put("*/api/v1/notification-preferences", async ({ request }) => {
         const body = (await request.json()) as {
@@ -207,9 +205,7 @@ describe("reports api", () => {
     ).resolves.toBeUndefined();
     await expect(fetchNotificationPreferences()).resolves.toHaveLength(1);
     await expect(
-      updateNotificationPreferences([
-        { type: "LowStock", channel: "Push", isEnabled: true },
-      ]),
+      updateNotificationPreferences([{ type: 0, channel: 2, isEnabled: true }]),
     ).resolves.toBeDefined();
   });
 });

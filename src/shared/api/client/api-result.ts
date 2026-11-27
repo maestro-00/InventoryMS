@@ -1,6 +1,7 @@
 import type { z } from "zod";
 import { parseAppProblem } from "../errors/app-problem";
 import { ProblemError } from "../errors/problem-error";
+import { ResponseValidationError } from "../errors/response-validation-error";
 
 export interface FetchOutcome {
   data?: unknown;
@@ -32,7 +33,7 @@ export function parseResource<T>(
   if (!outcome.response.ok) fail(outcome);
   const result = schema.safeParse(outcome.data);
   if (!result.success) {
-    throw new Error(`${label} failed boundary validation`);
+    throw new ResponseValidationError(label, result.error.issues);
   }
   return {
     value: result.data,

@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
-import { describe, expect, it, vi } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { server } from "../../shared/test/msw/server";
 import { renderWithProviders, ownerSessionRecord } from "../../shared/test/render";
@@ -13,13 +13,6 @@ import { TwoFactorSettings } from "../settings/security/two-factor";
 
 const ROLE_ID = "22222222-aaaa-4222-8222-222222222222";
 const USER_ID = "c1111111-1111-4111-8111-111111111111";
-
-function pageConfirm(result: boolean) {
-  vi.stubGlobal(
-    "confirm",
-    vi.fn(() => result),
-  );
-}
 
 describe("staff administration", () => {
   it("invites a cashier and shows role explanations", async () => {
@@ -61,9 +54,9 @@ describe("staff administration", () => {
     );
 
     renderWithProviders(<StaffList />);
-    expect(await screen.findByText(/cycle 1 roles are fixed/i)).toBeInTheDocument();
     await user.type(screen.getByLabelText(/invite email/i), "cashier@kwame.gh");
     await selectRadixOption(user, screen.getByLabelText(/^role$/i), ROLE_ID);
+    expect(screen.getByLabelText(/^role$/i)).toHaveTextContent(/Cashier · Sell/i);
     await user.click(screen.getByRole("button", { name: /send invitation/i }));
     expect(await screen.findByRole("status")).toHaveTextContent(
       /invitation token issued/i,
@@ -93,11 +86,18 @@ describe("staff administration", () => {
       ),
     );
     renderWithProviders(<StaffList />);
-    pageConfirm(true);
     await user.click(await screen.findByRole("button", { name: /deactivate/i }));
+    await user.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: "Deactivate user",
+      }),
+    );
     await waitFor(() => {
-      expect(screen.getByText(/sole owner|open-shift/i)).toBeInTheDocument();
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        /this action could not be completed/i,
+      );
     });
+    expect(screen.getByText(/owner@kwame.gh/i)).toBeInTheDocument();
   });
 
   it("sets write-only PIN with confirmation", async () => {
@@ -110,9 +110,13 @@ describe("staff administration", () => {
       }),
     );
     renderWithProviders(<RegisterPinForm userId={USER_ID} />);
-    pageConfirm(true);
     await user.type(screen.getByLabelText(/new pin/i), "4321");
     await user.click(screen.getByRole("button", { name: /set pin/i }));
+    await user.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: "Set PIN",
+      }),
+    );
     expect(await screen.findByRole("status")).toHaveTextContent(/pin updated/i);
   });
 

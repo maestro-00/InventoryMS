@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "../../../shared/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "../../../shared/ui/alert";
 import { SelectField, TextField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
 import { formatGhanaMoney } from "../../../shared/money/decimal";
@@ -146,7 +147,12 @@ export function AfterSalePanel({
             Confirm return
           </Button>
           {returning.data ? (
-            <p role="status">Refund {formatGhanaMoney(returning.data.refundTotal)}</p>
+            <Alert role="status" variant="success">
+              <AlertTitle>Return recorded</AlertTitle>
+              <AlertDescription>
+                Refund: {formatGhanaMoney(returning.data.refundTotal)}
+              </AlertDescription>
+            </Alert>
           ) : null}
 
           {!compact ? (
@@ -175,7 +181,12 @@ export function AfterSalePanel({
                 Confirm exchange
               </Button>
               {exchanging.data ? (
-                <p role="status">Net amount {exchanging.data.refundTotal}</p>
+                <Alert role="status" variant="success">
+                  <AlertTitle>Exchange recorded</AlertTitle>
+                  <AlertDescription>
+                    Net amount: {formatGhanaMoney(exchanging.data.refundTotal)}
+                  </AlertDescription>
+                </Alert>
               ) : null}
             </>
           ) : null}
@@ -196,7 +207,12 @@ export function AfterSalePanel({
           >
             Void this sale
           </Button>
-          {voiding.data ? <p role="status">Sale voided</p> : null}
+          {voiding.data ? (
+            <Alert role="status" variant="success">
+              <AlertTitle>Sale voided</AlertTitle>
+              <AlertDescription>The void was recorded.</AlertDescription>
+            </Alert>
+          ) : null}
           {toProblem(returning.error) ? (
             <ProblemSummary problem={toProblem(returning.error)} />
           ) : null}

@@ -36,6 +36,17 @@ describe("online sale request", () => {
     expect(noPayments.error?.issues[0]?.message).toBe("Record at least one payment");
   });
 
+  it("points to a non-positive payment amount before submitting", () => {
+    const result = onlineSaleSchema.safeParse({
+      ...request,
+      payments: [{ tender: "Cash", amount: "0" }],
+    });
+    expect(result.error?.issues[0]).toMatchObject({
+      path: ["payments", 0, "amount"],
+      message: "Enter an amount greater than zero.",
+    });
+  });
+
   it("defaults the status to Completed and preserves decimal strings", () => {
     const parsed = onlineSaleSchema.parse(request);
 

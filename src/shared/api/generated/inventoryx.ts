@@ -9522,8 +9522,20 @@ export interface components {
             /** Format: double */
             openingFloat?: number;
         };
+        /** @description Completes a held sale, optionally replacing quantities and discounts on its saved lines. */
         "InventoryX.Presentation.Controllers.v1.SalesController.CompleteHeldSaleRequest": {
             payments?: components["schemas"]["InventoryX.Application.Commands.Requests.Selling.CreateSalePaymentDto"][] | null;
+            lines?: components["schemas"]["InventoryX.Application.Commands.Requests.Selling.CompleteHeldSaleLineDto"][] | null;
+        };
+        "InventoryX.Application.Commands.Requests.Selling.CompleteHeldSaleLineDto": {
+            /** Format: uuid */
+            id?: string;
+            /** Format: double */
+            qty?: number;
+            /** Format: double */
+            lineDiscount?: number;
+            note?: string | null;
+            discountAuthorizedBy?: string | null;
         };
         "InventoryX.Presentation.Controllers.v1.SalesController.DeliverReceiptRequest": {
             channel?: string | null;

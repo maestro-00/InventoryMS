@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "../../../shared/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "../../../shared/ui/alert";
 import { TextField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
 import { deliverReceipt } from "./api/receipts-api";
@@ -34,9 +35,21 @@ export function ReceiptDelivery({ saleId }: { saleId: string }) {
       >
         Send email
       </Button>
-      {emailSend.data?.success ? <p role="status">Email queued</p> : null}
+      {emailSend.data?.success ? (
+        <Alert role="status" variant="success">
+          <AlertTitle>Email queued</AlertTitle>
+          <AlertDescription>
+            The receipt is queued for delivery to {emailSend.data.destination}.
+          </AlertDescription>
+        </Alert>
+      ) : null}
       {emailSend.data && !emailSend.data.success ? (
-        <p role="status">{emailSend.data.message}</p>
+        <ProblemSummary
+          title="Email was not queued"
+          messages={[
+            emailSend.data.message ?? "Check the email address and try again.",
+          ]}
+        />
       ) : null}
 
       <TextField
@@ -56,9 +69,19 @@ export function ReceiptDelivery({ saleId }: { saleId: string }) {
         Send SMS
       </Button>
       {smsSend.data && !smsSend.data.success ? (
-        <p role="status">{smsSend.data.message}</p>
+        <ProblemSummary
+          title="SMS was not queued"
+          messages={[smsSend.data.message ?? "Check the phone number and try again."]}
+        />
       ) : null}
-      {smsSend.data?.success ? <p role="status">SMS queued</p> : null}
+      {smsSend.data?.success ? (
+        <Alert role="status" variant="success">
+          <AlertTitle>SMS queued</AlertTitle>
+          <AlertDescription>
+            The receipt is queued for delivery to {smsSend.data.destination}.
+          </AlertDescription>
+        </Alert>
+      ) : null}
       {toProblem(emailSend.error) ? (
         <ProblemSummary problem={toProblem(emailSend.error)} />
       ) : null}

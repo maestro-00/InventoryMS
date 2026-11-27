@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../shared/ui/tabs";
@@ -151,6 +151,13 @@ function RegistersPage() {
         </TabsContent>
 
         <TabsContent value="manage" className="flex flex-col gap-4">
+          <p className="text-sm text-muted-foreground">
+            Register PINs are set for staff accounts in{" "}
+            <Link to="/staff" className="underline">
+              Staff administration
+            </Link>
+            . A staff member uses the same PIN on tills they are assigned to.
+          </p>
           {registerList.length > 0 ? (
             <ul className="flex flex-col gap-4">
               {registerList.map((register) => (

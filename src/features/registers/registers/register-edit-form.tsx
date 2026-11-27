@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { Button } from "../../../shared/ui/button";
+import { useConfirmDialog } from "../../../shared/ui/use-confirm-dialog";
 import { TextField } from "../../../shared/ui/forms/form-field";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
 import { updateRegister, type RegisterRecord } from "./api/registers-api";
@@ -14,6 +15,7 @@ export function RegisterEditForm({
 }) {
   const [name, setName] = useState(register.name);
   const [isActive, setIsActive] = useState(register.isActive);
+  const { confirm, dialog } = useConfirmDialog();
   const mutation = useMutation({
     mutationFn: () =>
       updateRegister(
@@ -33,7 +35,15 @@ export function RegisterEditForm({
   function submit(event: FormEvent) {
     event.preventDefault();
     if (!isActive && register.isActive) {
-      if (!window.confirm(`Deactivate till "${register.name}"?`)) return;
+      confirm({
+        title: `Deactivate till "${register.name}"?`,
+        description: "This till will no longer be available for new shifts.",
+        actionLabel: "Deactivate till",
+        onConfirm: () => {
+          mutation.mutate();
+        },
+      });
+      return;
     }
     mutation.mutate();
   }
@@ -72,6 +82,7 @@ export function RegisterEditForm({
       <Button type="submit" disabled={mutation.isPending}>
         Save till
       </Button>
+      {dialog}
     </form>
   );
 }

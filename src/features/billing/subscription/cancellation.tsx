@@ -5,9 +5,11 @@ import {
   useBillingSubscription,
 } from "../api/billing-queries";
 import { Button } from "../../../shared/ui/button";
+import { useConfirmDialog } from "../../../shared/ui/use-confirm-dialog";
 import { ProblemSummary, toProblem } from "../../../shared/ui/forms/problem-summary";
 
 export function CancellationPanel() {
+  const { confirm, dialog } = useConfirmDialog();
   const subscription = useBillingSubscription();
   const cancel = useMutation({ mutationFn: cancelSubscription });
   const reactivate = useMutation({ mutationFn: reactivateSubscription });
@@ -28,9 +30,13 @@ export function CancellationPanel() {
         <Button
           type="button"
           onClick={() => {
-            if (window.confirm("Cancel subscription at period end?")) {
-              cancel.mutate();
-            }
+            confirm({
+              title: "Cancel subscription at period end?",
+              actionLabel: "Cancel subscription",
+              onConfirm: () => {
+                cancel.mutate();
+              },
+            });
           }}
         >
           Cancel subscription
@@ -44,6 +50,7 @@ export function CancellationPanel() {
           Reactivate
         </Button>
       </div>
+      {dialog}
     </section>
   );
 }
