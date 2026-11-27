@@ -354,7 +354,9 @@ test.describe("@us4 offline browser durability", () => {
         },
         { tenantId, registerId, shiftId, productId },
       )
-      .then((error) => expect(error).toMatch(/readiness deadline has passed/i));
+      .then((error) => {
+        expect(error).toMatch(/readiness deadline has passed/i);
+      });
   });
 
   test("100-sale recovery after reload keeps every clientSaleId", async ({ page }) => {
