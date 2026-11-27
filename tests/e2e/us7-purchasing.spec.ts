@@ -80,11 +80,14 @@ test("@critical replenishment through receipt, close-short, invoice variance, an
   await receipt.getByRole("button", { name: /record receipt/i }).click();
   await expect(page.getByText(/partiallyreceived/i)).toBeVisible();
 
-  page.once("dialog", (dialog) => dialog.accept());
   await page
     .getByLabel(/close-short reason/i)
     .fill("Supplier short-shipped remaining bags");
   await page.getByRole("button", { name: /close short/i }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: /^close short$/i })
+    .click();
   await expect(page.getByRole("form", { name: /close short/i })).toBeHidden({
     timeout: 15_000,
   });
