@@ -51,7 +51,9 @@ test("@critical replenishment through receipt, close-short, invoice variance, an
   );
   await orders.getByLabel(/ordered qty/i).fill("20");
   await orders.getByLabel(/unit cost/i).fill("6.00");
-  const createDraft = orders.getByRole("button", { name: /^create draft order$/i });
+  const createDraft = orders.getByRole("button", {
+    name: /^create one draft order$/i,
+  });
   await expect(createDraft).toBeVisible();
   await createDraft.evaluate((el: HTMLButtonElement) => {
     el.click();

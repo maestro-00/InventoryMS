@@ -40,7 +40,10 @@ test("@critical owner invites cashier, sets PIN, enrolls 2FA, and reviews audit"
   });
 
   page.once("dialog", (dialog) => dialog.accept());
-  await page.getByLabel(/new pin/i).fill("2468");
+  await page
+    .getByRole("form", { name: "Register PIN" })
+    .getByLabel("New PIN")
+    .fill("2468");
   await submitNamedButton(page, /set pin/i);
   await expect(page.getByText(/pin updated/i)).toBeVisible({ timeout: 15_000 });
 

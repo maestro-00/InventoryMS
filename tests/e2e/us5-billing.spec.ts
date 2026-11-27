@@ -202,7 +202,7 @@ test("@critical owner keeps billing/export visible through grace and can recover
   await expect(page.getByText(/outstanding balance: 249/i)).toBeVisible();
   await expect(
     page.getByRole("status").filter({ hasText: /Payment failed/ }),
-  ).toContainText("2026-12-08T00:00:00Z");
+  ).toContainText(/8 Dec 2026, 12:00 am UTC/);
   await expect(page.getByText(/paid actions remain available until/i)).toBeVisible();
   await expect(page.getByRole("button", { name: /start export/i })).toBeVisible();
 
