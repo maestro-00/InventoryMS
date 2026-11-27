@@ -15,7 +15,7 @@ export function AppBrand({ className }: { className?: string }) {
         />
       </div>
       <span className="text-base font-semibold tracking-tight text-navy-foreground">
-        Inventory<span className="text-primary">MS</span>
+        Inventory<span className="text-sky-300">MS</span>
       </span>
     </div>
   );

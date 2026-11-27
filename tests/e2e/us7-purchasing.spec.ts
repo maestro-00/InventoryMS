@@ -51,7 +51,9 @@ test("@critical replenishment through receipt, close-short, invoice variance, an
   );
   await orders.getByLabel(/ordered qty/i).fill("20");
   await orders.getByLabel(/unit cost/i).fill("6.00");
-  const createDraft = orders.getByRole("button", { name: /^create draft order$/i });
+  const createDraft = orders.getByRole("button", {
+    name: /^create one draft order$/i,
+  });
   await expect(createDraft).toBeVisible();
   await createDraft.evaluate((el: HTMLButtonElement) => {
     el.click();
@@ -78,11 +80,14 @@ test("@critical replenishment through receipt, close-short, invoice variance, an
   await receipt.getByRole("button", { name: /record receipt/i }).click();
   await expect(page.getByText(/partiallyreceived/i)).toBeVisible();
 
-  page.once("dialog", (dialog) => dialog.accept());
   await page
     .getByLabel(/close-short reason/i)
     .fill("Supplier short-shipped remaining bags");
   await page.getByRole("button", { name: /close short/i }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: /^close short$/i })
+    .click();
   await expect(page.getByRole("form", { name: /close short/i })).toBeHidden({
     timeout: 15_000,
   });

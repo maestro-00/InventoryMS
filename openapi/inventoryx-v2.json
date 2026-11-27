@@ -1,0 +1,1987 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "InventoryX Billing API",
+    "description": "Owner billing and payment flows.",
+    "version": "v2"
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {
+    "/api/v2/billing/quotes": {
+      "post": {
+        "tags": ["Billing v2"],
+        "summary": "Preview the price and timing of a plan purchase.",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Presentation.Controllers.v2.CreateBillingQuoteRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Presentation.Controllers.v2.CreateBillingQuoteRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Presentation.Controllers.v2.CreateBillingQuoteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.BillingQuoteDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.BillingQuoteDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.BillingQuoteDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/billing/payment-intents": {
+      "post": {
+        "tags": ["Billing v2"],
+        "summary": "Start hosted card checkout or a Ghana mobile money approval.",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Presentation.Controllers.v2.CreateBillingPurchaseRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Presentation.Controllers.v2.CreateBillingPurchaseRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Presentation.Controllers.v2.CreateBillingPurchaseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.CreatePaymentIntentDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.CreatePaymentIntentDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.CreatePaymentIntentDto"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.CreatePaymentIntentDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.CreatePaymentIntentDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.CreatePaymentIntentDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Client Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/billing/plans": {
+      "get": {
+        "tags": ["Billing v2"],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingPlanDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingPlanDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingPlanDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/billing/payment-intents/{id}": {
+      "get": {
+        "tags": ["Billing v2"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.PaymentIntentStatusDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.PaymentIntentStatusDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.PaymentIntentStatusDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/billing/subscription": {
+      "get": {
+        "tags": ["Billing v2"],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/billing/payment-methods": {
+      "get": {
+        "tags": ["Billing v2"],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingPaymentMethodDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingPaymentMethodDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingPaymentMethodDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": ["Billing v2"],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Presentation.Controllers.v2.ReplacePaymentMethodRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Presentation.Controllers.v2.ReplacePaymentMethodRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Presentation.Controllers.v2.ReplacePaymentMethodRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.InitializePaymentMethodResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.InitializePaymentMethodResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.InitializePaymentMethodResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/billing/payment-methods/quote": {
+      "get": {
+        "tags": ["Billing v2"],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Presentation.Controllers.v2.MethodVerificationQuoteDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Presentation.Controllers.v2.MethodVerificationQuoteDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Presentation.Controllers.v2.MethodVerificationQuoteDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/billing/invoices": {
+      "get": {
+        "tags": ["Billing v2"],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.DTOs.Common.PagedResult`1[[InventoryX.Application.Queries.Requests.Billing.BillingInvoiceDto, InventoryX.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.DTOs.Common.PagedResult`1[[InventoryX.Application.Queries.Requests.Billing.BillingInvoiceDto, InventoryX.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.DTOs.Common.PagedResult`1[[InventoryX.Application.Queries.Requests.Billing.BillingInvoiceDto, InventoryX.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/billing/invoices/{id}/pdf": {
+      "get": {
+        "tags": ["Billing v2"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/billing/contact": {
+      "patch": {
+        "tags": ["Billing v2"],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.UpdateBillingContactCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.UpdateBillingContactCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.UpdateBillingContactCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/billing/subscription/upgrade": {
+      "post": {
+        "tags": ["Billing v2"],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.UpgradeSubscriptionCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.UpgradeSubscriptionCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.UpgradeSubscriptionCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/billing/subscription/downgrade": {
+      "post": {
+        "tags": ["Billing v2"],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.DowngradeSubscriptionCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.DowngradeSubscriptionCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.DowngradeSubscriptionCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/billing/subscription/cancel": {
+      "post": {
+        "tags": ["Billing v2"],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/billing/subscription/reactivate": {
+      "post": {
+        "tags": ["Billing v2"],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/billing/changes": {
+      "post": {
+        "tags": ["Billing v2"],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.ScheduleSubscriptionChangeCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.ScheduleSubscriptionChangeCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.ScheduleSubscriptionChangeCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/billing/changes/{id}": {
+      "delete": {
+        "tags": ["Billing v2"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/billing/cancellation": {
+      "delete": {
+        "tags": ["Billing v2"],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": ["Billing v2"],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/billing/recovery": {
+      "post": {
+        "tags": ["Billing v2"],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Presentation.Controllers.v2.RecoveryRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Presentation.Controllers.v2.RecoveryRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryX.Presentation.Controllers.v2.RecoveryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.CreatePaymentIntentDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.CreatePaymentIntentDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryX.Application.Commands.Requests.Billing.CreatePaymentIntentDto"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Client Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "InventoryX.Application.Commands.Requests.Billing.BillingQuoteDto": {
+        "type": "object",
+        "properties": {
+          "quoteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "baseAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "taxAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "prorationCredit": {
+            "type": "number",
+            "format": "double"
+          },
+          "effectiveAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "nextRenewalAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "nextRenewalTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "exceededLimits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "requiresAcknowledgement": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventoryX.Application.Commands.Requests.Billing.CreatePaymentIntentDto": {
+        "type": "object",
+        "properties": {
+          "intentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "authorizationUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "approvalMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "pollAfterSeconds": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventoryX.Application.Commands.Requests.Billing.DowngradeSubscriptionCommand": {
+        "type": "object",
+        "properties": {
+          "planDefinitionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "acknowledgeOverLimit": {
+            "type": "boolean"
+          },
+          "auditAction": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "auditEntityType": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "auditEntityId": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventoryX.Application.Commands.Requests.Billing.InitializePaymentMethodResult": {
+        "type": "object",
+        "properties": {
+          "intentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pendingMethodId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "authorizationUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "approvalMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "pollAfterSeconds": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventoryX.Application.Commands.Requests.Billing.ScheduleSubscriptionChangeCommand": {
+        "type": "object",
+        "properties": {
+          "quoteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "acknowledgeExceededLimits": {
+            "type": "boolean"
+          },
+          "auditAction": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "auditEntityType": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "auditEntityId": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventoryX.Application.Commands.Requests.Billing.UpdateBillingContactCommand": {
+        "type": "object",
+        "properties": {
+          "billingEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "auditAction": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "auditEntityType": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "auditEntityId": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventoryX.Application.Commands.Requests.Billing.UpgradeSubscriptionCommand": {
+        "type": "object",
+        "properties": {
+          "planDefinitionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "billingCycle": {
+            "$ref": "#/components/schemas/InventoryX.Domain.Models.Tenancy.BillingCycle"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "auditAction": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "auditEntityType": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "auditEntityId": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventoryX.Application.DTOs.Common.PagedResult`1[[InventoryX.Application.Queries.Requests.Billing.BillingInvoiceDto, InventoryX.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingInvoiceDto"
+            },
+            "nullable": true
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasNext": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasPrevious": {
+            "type": "boolean",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Standard paged list envelope for all list endpoints (research R10)."
+      },
+      "InventoryX.Application.Queries.Requests.Billing.BillingInvoiceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "taxAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "emailedTo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventoryX.Application.Queries.Requests.Billing.BillingMethodSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "nullable": true
+          },
+          "provider": {
+            "type": "string",
+            "nullable": true
+          },
+          "maskedIdentifier": {
+            "type": "string",
+            "nullable": true
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "expiryMonth": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "expiryYear": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "renewalMode": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventoryX.Application.Queries.Requests.Billing.BillingPaymentMethodDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "provider": {
+            "type": "string",
+            "nullable": true
+          },
+          "maskedIdentifier": {
+            "type": "string",
+            "nullable": true
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "expiryMonth": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "expiryYear": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "renewalMode": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventoryX.Application.Queries.Requests.Billing.BillingPlanDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tier": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "monthlyPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "annualPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxLocations": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "maxUsers": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "maxProducts": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "maxRegisters": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "monthlySaleCap": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "features": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "annualSavings": {
+            "type": "number",
+            "format": "double"
+          },
+          "contactSales": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventoryX.Application.Queries.Requests.Billing.BillingSubscriptionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "plan": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "billingCycle": {
+            "type": "string",
+            "nullable": true
+          },
+          "currentPeriodStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "currentPeriodEnd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "trialEndsAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "graceExpiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "purgeAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "usage": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.UsageVsLimitDto"
+            },
+            "nullable": true
+          },
+          "nextRenewalAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "nextRenewalAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "methodSummary": {
+            "$ref": "#/components/schemas/InventoryX.Application.Queries.Requests.Billing.BillingMethodSummaryDto"
+          },
+          "canPerformPaidMutations": {
+            "type": "boolean"
+          },
+          "readOnlyReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "scheduledChangeId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "scheduledChangeKind": {
+            "type": "string",
+            "nullable": true
+          },
+          "scheduledChangeEffectiveAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "outstandingAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "lastChargeAttemptAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "failedChargeAttempts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "retryStatus": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventoryX.Application.Queries.Requests.Billing.PaymentIntentStatusDto": {
+        "type": "object",
+        "properties": {
+          "intentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "pollAfterSeconds": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Safe, server-confirmed status for one tenant-owned payment intent."
+      },
+      "InventoryX.Application.Queries.Requests.Billing.UsageVsLimitDto": {
+        "type": "object",
+        "properties": {
+          "metric": {
+            "type": "string",
+            "nullable": true
+          },
+          "current": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventoryX.Domain.Models.Tenancy.BillingCycle": {
+        "enum": [0, 1],
+        "type": "integer",
+        "format": "int32"
+      },
+      "InventoryX.Domain.Models.Tenancy.PaymentIntentPurpose": {
+        "enum": [0, 1, 2, 3, 4, 5, 6],
+        "type": "integer",
+        "format": "int32"
+      },
+      "InventoryX.Presentation.Controllers.v2.CreateBillingPurchaseRequest": {
+        "type": "object",
+        "properties": {
+          "quoteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "methodKind": {
+            "type": "string",
+            "nullable": true
+          },
+          "provider": {
+            "type": "string",
+            "nullable": true
+          },
+          "phoneNumber": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Confirmed quote and payment channel for a first purchase."
+      },
+      "InventoryX.Presentation.Controllers.v2.CreateBillingQuoteRequest": {
+        "type": "object",
+        "properties": {
+          "targetPlanId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "billingCycle": {
+            "$ref": "#/components/schemas/InventoryX.Domain.Models.Tenancy.BillingCycle"
+          },
+          "purpose": {
+            "$ref": "#/components/schemas/InventoryX.Domain.Models.Tenancy.PaymentIntentPurpose"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Published plan and cycle to preview before payment."
+      },
+      "InventoryX.Presentation.Controllers.v2.MethodVerificationQuoteDto": {
+        "type": "object",
+        "properties": {
+          "baseAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "taxAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventoryX.Presentation.Controllers.v2.RecoveryRequest": {
+        "type": "object",
+        "properties": {
+          "methodKind": {
+            "type": "string",
+            "nullable": true
+          },
+          "provider": {
+            "type": "string",
+            "nullable": true
+          },
+          "phoneNumber": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventoryX.Presentation.Controllers.v2.ReplacePaymentMethodRequest": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "nullable": true
+          },
+          "provider": {
+            "type": "string",
+            "nullable": true
+          },
+          "msisdn": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Microsoft.AspNetCore.Mvc.ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": {}
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "description": "JWT access token from POST /api/v1/auth/login or /auth/register.",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

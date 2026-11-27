@@ -27,9 +27,9 @@ export function LiveStatusBadge({
         online && "bg-success/15 text-success",
         syncing && "bg-warning/15 text-warning",
         !isOnline && "bg-destructive/10 text-destructive",
-        variant === "dark" && online && "bg-success/20 text-success",
-        variant === "dark" && syncing && "bg-warning/20 text-warning",
-        variant === "dark" && !isOnline && "bg-destructive/15 text-destructive",
+        variant === "dark" && online && "bg-success/20 text-emerald-300",
+        variant === "dark" && syncing && "bg-warning/20 text-amber-300",
+        variant === "dark" && !isOnline && "bg-destructive/15 text-red-300",
         className,
       )}
       data-testid="live-status-badge"

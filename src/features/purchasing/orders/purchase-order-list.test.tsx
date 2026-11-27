@@ -71,7 +71,7 @@ describe("purchase order workspace", () => {
         />
       </QueryClientProvider>,
     );
-    await user.click(screen.getByRole("button", { name: /create draft order/i }));
+    await user.click(screen.getByRole("button", { name: /create one draft order/i }));
     await vi.waitFor(() => {
       expect(onSelectOrder).toHaveBeenCalledWith(
         expect.objectContaining({ id: orderId, status: "Draft" }),

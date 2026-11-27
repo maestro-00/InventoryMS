@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { createContext, useContext, type ReactNode } from "react";
 import { useBillingSubscription } from "../../features/billing/api/billing-queries";
+import { formatUtcDateTime } from "../../shared/utils/date-time";
 
 export interface SubscriptionGateValue {
   readOnly: boolean;
@@ -16,10 +17,9 @@ export function SubscriptionGateProvider({ children }: { children: ReactNode }) 
   const subscription = useBillingSubscription();
   const status = subscription.data?.status ?? null;
   const readOnly =
+    subscription.data?.canPerformPaidMutations === false ||
     Boolean(subscription.data?.readOnly) ||
-    status === "PastDue" ||
-    status === "ReadOnly" ||
-    status === "Grace";
+    status === "ReadOnly";
 
   return (
     <SubscriptionGateContext.Provider value={{ readOnly, status }}>
@@ -34,7 +34,20 @@ export function SubscriptionGateProvider({ children }: { children: ReactNode }) 
  */
 export function SubscriptionBanner() {
   const { readOnly, status } = useSubscriptionGate();
-  if (!readOnly) return null;
+  const subscription = useBillingSubscription();
+  if (!readOnly && status !== "PastDue") return null;
+  if (status === "PastDue" && !readOnly) {
+    const graceExpiresAt = subscription.data?.graceExpiresAt;
+    const graceDeadline = graceExpiresAt
+      ? formatUtcDateTime(graceExpiresAt)
+      : "the deadline";
+    return (
+      <div role="status" className="border-b border-amber-700 bg-amber-50 p-3 text-sm">
+        Payment failed; paid actions remain available during grace until {graceDeadline}
+        . <Link to="/settings/billing">Recover billing</Link>
+      </div>
+    );
+  }
 
   return (
     <div role="status" className="border-b border-amber-700 bg-amber-50 p-3 text-sm">

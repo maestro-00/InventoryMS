@@ -33,4 +33,24 @@ for (const viewport of VIEWPORTS) {
     );
     expect(serious, JSON.stringify(serious.map((item) => item.id))).toEqual([]);
   });
+
+  test(`@responsive billing has no horizontal overflow and keyboard reachable actions at ${viewport.name}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await signIn(page);
+    await navigateApp(page, "Billing");
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    const firstAction = page.getByRole("button").first();
+    await firstAction.focus();
+    await expect(firstAction).toBeFocused();
+    await page.keyboard.press("Tab");
+    expect(await page.evaluate(() => document.activeElement?.tagName)).toMatch(
+      /BUTTON|A|INPUT|SELECT/,
+    );
+  });
 }

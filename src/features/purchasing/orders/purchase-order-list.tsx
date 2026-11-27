@@ -149,7 +149,7 @@ export function PurchaseOrderWorkspace({
             setUnitCost(e.target.value);
           }}
         />
-        <Button type="submit">Create draft order</Button>
+        <Button type="submit">Create one draft order</Button>
       </form>
 
       <table>

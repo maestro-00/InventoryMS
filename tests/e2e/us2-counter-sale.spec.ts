@@ -51,6 +51,15 @@ async function seedTill(page: Page) {
     await expect(page.getByRole("cell", { name: product.name })).toBeVisible();
   }
 
+  await navigateApp(page, "Opening stock");
+  await selectFieldOption(page, /location/i, { label: "Main Shop" });
+  await selectFieldOption(page, /product/i, { label: "Sugar 1kg" });
+  await page.getByLabel(/opening quantity/i).fill("10");
+  await page.getByRole("button", { name: /^record opening stock$/i }).click();
+  await expect(page.getByRole("status").filter({ hasText: /applied/i })).toBeVisible({
+    timeout: 15_000,
+  });
+
   await navigateApp(page, "Sell");
   const registerName = page.getByLabel(/register name/i);
   await expect(registerName).toBeVisible({ timeout: 15_000 });
@@ -94,7 +103,7 @@ test("@critical a cashier can scan, search, favourite, hold, split pay, and retu
   await expect(page.getByRole("button", { name: /recall held sale/i })).toBeVisible();
 
   await page.getByRole("button", { name: /add sugar 1kg/i }).click();
-  await page.getByLabel(/cash received/i).fill("25.00");
+  await page.getByLabel(/cash received/i).fill("100.00");
   await page.getByRole("button", { name: /take cash payment/i }).click();
   await expect(page.getByRole("heading", { name: /receipt/i })).toBeVisible({
     timeout: 15_000,

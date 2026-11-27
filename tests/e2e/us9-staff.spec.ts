@@ -39,9 +39,13 @@ test("@critical owner invites cashier, sets PIN, enrolls 2FA, and reviews audit"
     timeout: 15_000,
   });
 
-  page.once("dialog", (dialog) => dialog.accept());
-  await page.getByLabel(/new pin/i).fill("2468");
-  await submitNamedButton(page, /set pin/i);
+  const pinForm = page.getByRole("form", { name: "Register PIN" });
+  await pinForm.getByLabel("New PIN").fill("2468");
+  await pinForm.getByRole("button", { name: /^set pin$/i }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: /^set pin$/i })
+    .click();
   await expect(page.getByText(/pin updated/i)).toBeVisible({ timeout: 15_000 });
 
   await expect(page.getByText(/userinvited|registerpinset/i).first()).toBeVisible();

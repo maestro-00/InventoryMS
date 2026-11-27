@@ -65,7 +65,7 @@ function matchesContactTier(plan: BillingPlan): boolean {
 }
 
 export function isContactSalesPlan(plan: BillingPlan): boolean {
-  return matchesContactTier(plan) || !hasPublishedPrice(plan);
+  return plan.contactSales ?? (matchesContactTier(plan) || !hasPublishedPrice(plan));
 }
 
 export function sortPlansByRank(plans: BillingPlan[]): BillingPlan[] {

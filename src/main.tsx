@@ -9,10 +9,14 @@ if (!root) {
 
 async function startMocks(): Promise<void> {
   if (import.meta.env.VITE_API_MOCKING !== "true") return;
-  const [{ setupWorker }, { us1ScenarioHandlers }] = await Promise.all([
-    import("msw/browser"),
-    import("./shared/test/msw/us1-scenario"),
-  ]);
+  const [{ setupWorker }, { us1ScenarioHandlers, setMockLoginRole }] =
+    await Promise.all([
+      import("msw/browser"),
+      import("./shared/test/msw/us1-scenario"),
+    ]);
+  if (sessionStorage.getItem("mockBillingRole") === "Staff") {
+    setMockLoginRole("Staff");
+  }
   await setupWorker(...us1ScenarioHandlers).start({ onUnhandledRequest: "bypass" });
 }
 

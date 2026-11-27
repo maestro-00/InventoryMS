@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   formatCreatedAt,
   formatOccurredAt,
+  formatUtcDateTime,
   isUtcInstant,
   toUtcInstant,
 } from "./date-time";
@@ -21,5 +22,12 @@ describe("date-time", () => {
     expect(toUtcInstant(occurredAt)).toBe(occurredAt);
     expect(toUtcInstant(createdAt)).toBe(createdAt);
     expect(() => toUtcInstant("2026-08-13T12:00:00")).toThrow(/UTC instants/);
+  });
+
+  it("formats UTC instants for display without exposing ISO timestamps", () => {
+    const formatted = formatUtcDateTime("2026-11-16T17:44:19.264509Z");
+    expect(formatted).toContain("Nov 2026");
+    expect(formatted).toContain("UTC");
+    expect(formatted).not.toContain("T17:44");
   });
 });

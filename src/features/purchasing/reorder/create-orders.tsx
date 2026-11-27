@@ -20,6 +20,7 @@ export function CreateOrdersFromReorder({
   const suggestions = useQuery({
     queryKey: ["reorder-suggestions", effectiveLocationId],
     queryFn: () => fetchReorderSuggestions(effectiveLocationId || undefined),
+    enabled: Boolean(effectiveLocationId),
   });
   const apply = useMutation({
     mutationFn: applyReorderSuggestions,
@@ -28,10 +29,26 @@ export function CreateOrdersFromReorder({
     },
   });
   const problem = toProblem(apply.error ?? suggestions.error);
+  const selections = (suggestions.data ?? []).flatMap((item) => {
+    if (!item.supplierId || !selected[`${item.productId}:${item.supplierId}`]) {
+      return [];
+    }
+    return [
+      {
+        productId: item.productId,
+        supplierId: item.supplierId,
+        qty: Number(item.suggestedQty),
+        unitCost: Number(item.unitCost),
+      },
+    ];
+  });
 
   return (
     <section aria-label="Create orders from reorder" className="space-y-4">
       <h2>Reorder into draft POs</h2>
+      <p className="text-sm text-muted-foreground">
+        Select reorder suggestions to create draft orders for their suppliers.
+      </p>
       {problem ? <ProblemSummary problem={problem} /> : null}
       <SelectField
         label="Deliver to location"
@@ -42,8 +59,14 @@ export function CreateOrdersFromReorder({
         }))}
         onChange={(event) => {
           setLocationId(event.target.value);
+          setSelected({});
         }}
       />
+      {suggestions.isSuccess && suggestions.data.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No reorder suggestions for this location.
+        </p>
+      ) : null}
       <ul className="space-y-2">
         {(suggestions.data ?? []).map((item) => {
           const supplierId = item.supplierId ?? "";
@@ -54,6 +77,7 @@ export function CreateOrdersFromReorder({
                 <input
                   type="checkbox"
                   checked={Boolean(selected[key])}
+                  disabled={!item.supplierId}
                   onChange={(event) => {
                     setSelected((current) => ({
                       ...current,
@@ -64,6 +88,7 @@ export function CreateOrdersFromReorder({
                 <span>
                   {item.productName} via {item.supplierName ?? "supplier"} · suggest{" "}
                   {item.suggestedQty} @ {formatGhanaMoney(item.unitCost)}
+                  {!item.supplierId ? " · Add a supplier to use this suggestion" : null}
                 </span>
               </label>
             </li>
@@ -72,25 +97,12 @@ export function CreateOrdersFromReorder({
       </ul>
       <Button
         type="button"
-        disabled={apply.isPending || !effectiveLocationId}
+        disabled={apply.isPending || suggestions.isPending || selections.length === 0}
         onClick={() => {
-          const selections = (suggestions.data ?? []).flatMap((item) => {
-            if (!item.supplierId) return [];
-            const key = `${item.productId}:${item.supplierId}`;
-            if (!selected[key]) return [];
-            return [
-              {
-                productId: item.productId,
-                supplierId: item.supplierId,
-                qty: Number(item.suggestedQty),
-                unitCost: Number(item.unitCost),
-              },
-            ];
-          });
           apply.mutate({ deliverToLocationId: effectiveLocationId, selections });
         }}
       >
-        Create draft orders
+        Create orders from selected suggestions
       </Button>
       {apply.data?.length ? (
         <p>{apply.data.length} draft purchase order(s) created.</p>
